@@ -1,0 +1,31 @@
+Unit,Attack,Health,Ability,Tags,Color,Notes
+Squire,3,3,No Ability,Human,Red,
+Soldier,2,4,No Ability,Human,Red,
+Fighter,1,1,"At the end of your turn, if this is in the front row, gain +1/+1.",Dwarf,Red,
+Villager,1,1,Unleash: Give the other slot in this column +1/+1.,Human,Red,Unleash: When this unit is summoned.
+Fire Whelp,2,1,Unleash: Gain 1 Dragon Soul.,Dragon,Red,Dragon Soul: Will buff or activate abilities from future Dragons.
+Worker,1,1,"At the start of your turn, give this slot +1/+1.",Dwarf,Red,
+Hawk,2,2,Flying,Beast,Yellow,Flying: Front row units can't attack this.
+Bear Cub,3,2,Trample.,Beast,Yellow,Trample: Excess damage dealt when attacking a unit is dealt to the unit or player behind it.
+Wolf Pup,2,2,Sneaky.,Beast,Yellow,"Sneaky: The first time this attacks, it targets the enemy player."
+Piglet,2,3,Your Beasts have +1 Attack.,Beast,Yellow,
+Bee Swarm,1,3,Rush. Flying,Beast,Yellow,Rush: Can attack the turn its played. 
+Cow,2,2,Kindred: Heal your player 1.,Beast,Yellow,
+Archer,2,2,Ranged. ,Elf,Green,Ranged: Ignore the Front Row when attacking.
+Scout,2,1,Unleash: Give a random back row slot +1/+1.,Elf,Green,
+Forager,1,1,"Can't attack. At the start of your turn, draw 1.",Elf,Green,
+Knife Goblin,1,1,Rush. Kindred: Gain +1/+1.,Goblin,Green,"Kindred: When summoned, do this if you have another unit with the same tag. While in play, do this when you summon another unit with the same tag."
+Spear Goblin,1,1,Ranged. Kindred: Gain +1/+1.,Goblin,Green,
+Muscle Goblin,1,1,Trample. Kindred: Gain +1/+1.,Goblin,Green,
+Wisp,2,3,Manacharge: Gain +1/+1,Mystic,Blue,"Manacharge: When you use a Blue Unleash ability, do this."
+Fae,2,2,Manacharge: Deal 1 damage in this column.,Mystic,Blue,
+Fairy,1,2,Unleash: Give a random slot +0/+2.,Mystic,Blue,
+Apprentice,1,2,Unleash: Deal 1 damage to a random enemy unit.,Human,Blue,
+Conduit,2,2,Last Gasp: Add a Mana Surge to your hand.,Mystic,Blue,Mana Surge: 1/1 Blue Unit with no tag and Unleash: Banish this.
+Novice,3,2,Unleash: Deal 1 damage to both players.,Human,Blue,
+Rat,1,3,+3/+0 while it's your turn.,Beast,Purple,
+Spider,5,1,No Ability,Beast,Purple,
+Zombie,2,2,Last Gasp: Banish this.,Undead,Purple,Last Gasp: When the unit is destroyed.
+Gravedigger,1,2,Unleash: Add a Skeleton to your hand. ,Human,Purple,
+Reanimated,3,1,Last Gasp: Add a Skeleton to your hand.,Undead,Purple,"Skeleton: A 1/1 Undead with ""Last Gasp: Banish this."" that many Purple cards will generate."
+Cultist,2,1,Unleash: Give an Undead +2/+2.,Human,Purple,

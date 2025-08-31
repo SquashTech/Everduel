@@ -1,0 +1,11 @@
+Unleash: Do the effect when the unit is summoned.
+Flying: Always attacks the opposing player, unless there is an opposing Flying unit in the column. 
+Trample: Excess damage dealt when attacking a unit is dealt to the unit or player behind it.
+Sneaky: The first time this attacks, it targets the enemy player no matter what.
+Rush: Can attack the turn its played. 
+Ranged: Ignore the front row when attacking.
+Kindred: Do this when you summon a unit with the same Tag.
+Manacharge: When you use a Blue Unleash ability, do this.
+Last Gasp: When the unit is destroyed.
+Skeleton: A 1/1 Undead with "Last Gasp: Banish this." that many Purple cards will generate.
+Banish: Remove from the game (does not enter deck)

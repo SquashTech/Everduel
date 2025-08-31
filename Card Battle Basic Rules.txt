@@ -1,0 +1,35 @@
+Card Battle Basic Rules:
+
+Both players start with a max of 2 gold and 20 HP. The max gold increases by 1 every turn and they start each turn with their next max gold total.
+Tier 1 units cost 2 gold
+Tier 2 units cost 4 gold
+Tier 3 units cost 6 gold
+Tier 4 units cost 8 gold
+Tier 5 units cost 10 gold
+
+Units played onto the 3x2 field can not attack on the turn they are played unless they have Rush. 
+On all subsequent turns, they can attack.
+Attacks happen deterministically in the column that the unit is in. By default, units look to attack the enemy that is in the Front Row.
+Next they check the Back Row. Finally, they deal damage equal to their attack directly to the opposing player.
+
+Ranged units ignore the Front Row when deterministically attacking.
+Flying units always attack the opposing player unless there is an enemy Flying unit in the column, in which case they target that unit.
+
+When units battle, each one deals their attack value to the health value of the opposing unit.
+
+When a unit is destroyed or defeated in any way, they are put onto the bottom of the player's deck. The deck starts empty at the beginning
+of the game. Drawing from the deck costs 3 gold.
+
+Many units have a keyword on them:
+Unleash: Do the effect when the unit is summoned.
+Flying: Always attacks the opposing player, unless there is an opposing Flying unit in the column. 
+Trample: Excess damage dealt when attacking a unit is dealt to the opposing player.
+Sneaky: The first time this attacks, it targets the enemy player no matter what.
+Rush: Can attack the turn its played. 
+Ranged: Ignore the front row when attacking.
+Kindred: Do this when the units enter play if another unit shares its tag. Also do this if this unit is in play and a unit with the same tag enters play.
+Manacharge: When you use a Blue Unleash ability, do this.
+Last Gasp: When the unit is destroyed.
+Banish: Remove from the game (does not enter deck)
+
+The AI should have a simple gameplan where it tries to spend all of its gold and play units onto the field. The AI will generally attack any time it controls a unit that can legally attack. 
