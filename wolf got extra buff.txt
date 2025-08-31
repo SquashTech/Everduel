@@ -1,0 +1,29 @@
+Turn 5 - Player's turn begins
+BattlefieldComponent.js:95 🖱️ Raw slot click on player slot 1, target: <div class=​"card-ability">​…​</div>​
+BattlefieldComponent.js:706 🖱️ SLOT CLICK DEBUG: Object
+BattlefieldComponent.js:743 🖱️ Unit found: Wolf
+BattlefieldComponent.js:796 🖱️ Attempting attack with Wolf
+BattlefieldComponent.js:438 🖱️ Unit clicked: slot=1, player=player
+BattlefieldComponent.js:448 🎯 Wolf attempting attack...
+CombatSystem.js:41 ⚔️ CombatSystem.handleUnitClick received: Object
+CombatSystem.js:46 ⚔️ Current player: player Clicked by: player
+CombatSystem.js:77 ⚔️ Unit validated: Object
+CombatSystem.js:447 ⚔️ getDeterministicTarget: attacker=Wolf in column 1, enemyPlayer=ai
+CombatSystem.js:448 ⚔️ Enemy battlefield: Array(6)
+CombatSystem.js:454 ⚔️ Checking column 1: front slot 1, back slot 4
+CombatSystem.js:476 ⚔️ Sneaky unit Wolf attacks player directly on first attack
+CombatSystem.js:92 ⚔️ Wolf attacking player
+4UIManager.js:85 🔄 UI updating - Current player: player, Turn: 5
+AbilitySystem.js:1982 🐺 Wolf attacked, checking for after-attack abilities
+AbilitySystem.js:1987 🐺 Wolf triggered slot buff after attacking
+GameState.js:75 No reducer found for action type: INITIALIZE_SLOT_BUFFS
+dispatch @ GameState.js:75Understand this warning
+2UIManager.js:85 🔄 UI updating - Current player: player, Turn: 5
+GameState.js:75 No reducer found for action type: UPDATE_SLOT_BUFF
+dispatch @ GameState.js:75Understand this warning
+4UIManager.js:85 🔄 UI updating - Current player: player, Turn: 5
+AbilitySystem.js:958 📊 Wolf slot gained +1/+1 from Wolf ability
+AbilitySystem.js:2030 🎯 Slot 1 permanently buffed +1/+1
+2UIManager.js:85 🔄 UI updating - Current player: player, Turn: 5
+2BattlefieldComponent.js:221 Updated slot buff: player slot 1 -> +1/+1
+2UIManager.js:85 🔄 UI updating - Current player: player, Turn: 5

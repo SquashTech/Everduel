@@ -1112,6 +1112,9 @@ class AbilitySystem {
         // Remove "Unleash:" prefix and parse the effect
         const effectText = abilityText.replace(/^.*?unleash:\s*/i, '');
         
+        // Debug Mana Surge owner issue
+        console.log(`🔧 [UNLEASH DEBUG] Unit: ${unit.name}, unit.owner: ${unit.owner}, context.playerId: ${context.playerId}`);
+        
         // Handle Banish effect specially for Unleash (like Mana Surge)
         if (effectText.toLowerCase().includes('banish this')) {
             console.log(`⚰️ [BANISH] ${unit.name} banishes itself on Unleash - removed from game permanently`);
@@ -1124,14 +1127,21 @@ class AbilitySystem {
             // Mark unit as banished so it won't be added to deck when it dies
             if (unit) {
                 unit.banished = true;
+                // Ensure unit has owner set before banishing
+                if (!unit.owner && context.playerId) {
+                    unit.owner = context.playerId;
+                    console.log(`🔧 Set owner to ${unit.owner} before banishing ${unit.name}`);
+                }
             }
             
             // Immediately destroy the unit since it banishes itself
             setTimeout(() => {
+                const owner = unit.owner || context.playerId;
+                console.log(`💀 About to emit unit:dies for ${unit.name} with owner: ${owner}, slotIndex: ${context.slotIndex}`);
                 this.eventBus.emit('unit:dies', {
                     unit,
                     cause: 'banished',
-                    playerId: unit.owner || context.playerId,
+                    owner: owner,
                     slotIndex: context.slotIndex
                 });
             }, 500); // Small delay to ensure Unleash effect is processed
@@ -1942,12 +1952,13 @@ class AbilitySystem {
     }
     
     /**
-     * Handle units that survived attacking (for Wolf ability)
+     * Handle units that survived attacking (for old Wolf ability - deprecated)
+     * Note: Current Wolf uses "After this attacks" which is handled in handleAfterAttack
      */
     handleSurvivedAttacking(data) {
         const { unit, owner, slotIndex } = data;
         
-        // Check for Wolf's ability
+        // Check for old Wolf ability text (deprecated - kept for backwards compatibility)
         if (unit.ability && unit.ability.toLowerCase().includes('when this survives attacking')) {
             console.log(`🐺 ${unit.name} survived attacking, triggering ability`);
             
@@ -2003,37 +2014,47 @@ class AbilitySystem {
                     });
                 }
                 
-                // Apply buff to the slot
+                // Apply buff to the slot (this will persist for future units)
                 this.gameEngine.dispatch({
-                    type: 'UPDATE_SLOT_BUFF',
+                    type: 'APPLY_SLOT_BUFF',
                     payload: {
                         playerId,
                         slotIndex: attackerSlot,
-                        buff: { attack: 1, health: 1 }
+                        attackBuff: 1,
+                        healthBuff: 1
                     }
                 });
                 
-                // If there's still a unit in the slot, apply the buff immediately
-                const currentUnit = state.players[playerId].battlefield[attackerSlot];
-                if (currentUnit) {
+                // Wolf benefits from the slot buff immediately
+                // Get the updated state after slot buff was applied
+                const updatedState = this.gameState.getState();
+                const currentUnit = updatedState.players[playerId].battlefield[attackerSlot];
+                const slotBuff = updatedState.players[playerId].slotBuffs[attackerSlot];
+                
+                if (currentUnit && currentUnit.id === attacker.id) {
+                    // Recalculate Wolf's stats: base stats + total slot buff
+                    const baseAttack = currentUnit.attack;
+                    const baseHealth = currentUnit.health;
+                    
                     const updates = {
-                        attack: currentUnit.attack + 1,
-                        health: currentUnit.health + 1,
-                        currentAttack: (currentUnit.currentAttack || currentUnit.attack) + 1,
-                        currentHealth: (currentUnit.currentHealth || currentUnit.health) + 1,
-                        maxHealth: (currentUnit.maxHealth || currentUnit.health) + 1
+                        currentAttack: baseAttack + slotBuff.attack,
+                        currentHealth: baseHealth + slotBuff.health,
+                        maxHealth: baseHealth + slotBuff.health
                     };
-                    const reason = 'slot gained +1/+1 from Wolf ability';
+                    const reason = `buffed to ${updates.currentAttack}/${updates.currentHealth} from slot buff`;
                     this.updateUnitStats(playerId, attackerSlot, updates, reason);
                 }
                 
                 console.log(`🎯 Slot ${attackerSlot} permanently buffed +1/+1`);
                 
-                this.eventBus.emit('slot:buff', {
-                    playerId: attacker.owner,
-                    slotIndex: attackerSlot,
-                    buff: { attack: 1, health: 1 },
-                    permanent: true
+                // Update the UI to show the slot buff (reuse updatedState from above)
+                const currentSlotBuff = updatedState.players[playerId].slotBuffs[attackerSlot];
+                this.eventBus.emit('slot:buff-updated', {
+                    player: playerId,
+                    slot: attackerSlot,
+                    attack: currentSlotBuff.attack,
+                    health: currentSlotBuff.health,
+                    type: 'wolf'
                 });
             }
         }

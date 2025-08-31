@@ -400,8 +400,13 @@ class SimpleGameEngine {
         
         console.log(`💀 Unit death: ${unit.name} (${owner}, slot ${slotIndex})`);
         
+        // Check if unit is already marked as banished (from Unleash or other effects)
+        let isBanished = unit.banished || false;
+        if (isBanished) {
+            console.log(`🚫 ${unit.name} is marked as banished (from Unleash or other effect)`);
+        }
+        
         // Check for Last Gasp ability
-        let isBanished = false;
         if (unit.ability && unit.ability.toLowerCase().includes('last gasp')) {
             console.log(`🔮 Triggering Last Gasp for ${unit.name}: ${unit.ability}`);
             
@@ -546,15 +551,20 @@ class SimpleGameEngine {
         const currentUnit = state.players[playerId].battlefield[slotIndex];
         
         if (currentUnit && (slotBuff.attack > 0 || slotBuff.health > 0)) {
-            const currentAttack = currentUnit.currentAttack || currentUnit.attack;
-            const currentHealth = currentUnit.currentHealth || currentUnit.health;
+            // Calculate stats from base + total slot buff
+            // Base stats are the original attack/health values
+            const baseAttack = currentUnit.attack;
+            const baseHealth = currentUnit.health;
             
+            // Apply the TOTAL slot buff to the BASE stats
             const buffedUnit = {
                 ...currentUnit,
-                currentAttack: currentAttack + slotBuff.attack,
-                currentHealth: currentHealth + slotBuff.health,
-                health: currentUnit.health + slotBuff.health
+                currentAttack: baseAttack + slotBuff.attack,
+                currentHealth: baseHealth + slotBuff.health,
+                maxHealth: baseHealth + slotBuff.health
             };
+            
+            console.log(`📊 Updating unit in buffed slot: ${currentUnit.name} base(${baseAttack}/${baseHealth}) + slot(${slotBuff.attack}/${slotBuff.health}) = ${buffedUnit.currentAttack}/${buffedUnit.currentHealth}`);
             
             this.dispatch({
                 type: 'UPDATE_UNIT',
@@ -564,7 +574,7 @@ class SimpleGameEngine {
                     updates: {
                         currentAttack: buffedUnit.currentAttack,
                         currentHealth: buffedUnit.currentHealth,
-                        health: buffedUnit.health
+                        maxHealth: buffedUnit.maxHealth
                     }
                 }
             });
