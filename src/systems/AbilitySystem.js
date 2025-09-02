@@ -27,7 +27,6 @@ class AbilitySystem {
         }
         
         this.setupEventHandlers();
-        console.log('⚡ AbilitySystem initialized');
     }
 
     /**
@@ -48,6 +47,7 @@ class AbilitySystem {
         this.eventBus.on('unit:survived-attacking', (data) => this.handleSurvivedAttacking(data));
         this.eventBus.on('combat:attack-completed', (data) => this.handleAfterAttack(data));
         this.eventBus.on('card:played', (data) => this.handleOpponentSummoned(data));
+        this.eventBus.on('unit:dies', (data) => this.handleUnitDeath(data));
     }
 
     /**
@@ -140,6 +140,18 @@ class AbilitySystem {
      * @returns {Object} Damage effect object
      */
     parseDamageEffect(text, context) {
+        // Special pattern: "deal X damage to your player" (for Swamp Ooze Last Gasp)
+        const selfDamageMatch = text.match(/deal (\d+) damage to your player/i);
+        if (selfDamageMatch) {
+            const damage = parseInt(selfDamageMatch[1]);
+            return {
+                type: 'damage',
+                amount: damage,
+                targetType: 'own_player',
+                targetSelection: 'self'
+            };
+        }
+        
         // Special pattern: "deal X damage to both players"
         const bothPlayersMatch = text.match(/deal (\d+) damage to both players/i);
         if (bothPlayersMatch) {
@@ -160,6 +172,18 @@ class AbilitySystem {
                 type: 'damage',
                 amount: damage,
                 targetType: 'enemy_column',
+                targetSelection: 'column'
+            };
+        }
+        
+        // Special pattern: "deal X damage to the back row enemy here" (for Marksman)
+        const backRowHereMatch = text.match(/deal (\d+) damage to the back row enemy here/i);
+        if (backRowHereMatch) {
+            const damage = parseInt(backRowHereMatch[1]);
+            return {
+                type: 'damage',
+                amount: damage,
+                targetType: 'back_row_enemy_here',
                 targetSelection: 'column'
             };
         }
@@ -217,7 +241,7 @@ class AbilitySystem {
 
         let targets = [];
 
-        // Get potential targets based on target type
+        // Get targets
         if (effect.targetType === 'enemy_unit') {
             const enemyBattlefield = state.players[enemyId].battlefield;
             const validUnits = enemyBattlefield.filter(u => u !== null);
@@ -236,7 +260,6 @@ class AbilitySystem {
                 .filter(u => u !== null);
             
             targets = backRowUnits;
-            console.log(`🎯 Targeting enemy back row: found ${backRowUnits.length} units`);
         } else if (effect.targetType === 'enemy_front_row') {
             const enemyBattlefield = state.players[enemyId].battlefield;
             // Front row slots are indices 0, 1, 2
@@ -245,7 +268,6 @@ class AbilitySystem {
                 .filter(u => u !== null);
             
             targets = frontRowUnits;
-            console.log(`🎯 Targeting enemy front row: found ${frontRowUnits.length} units`);
         } else if (effect.targetType === 'enemy_player') {
             targets = [{ type: 'player', playerId: enemyId }];
         } else if (effect.targetType === 'both_players') {
@@ -254,7 +276,7 @@ class AbilitySystem {
                 { type: 'player', playerId: enemyId }
             ];
         } else if (effect.targetType === 'enemy_column') {
-            // Deal damage in column with priority: Front Row -> Back Row -> Player
+            // Column damage priority: Front → Back → Player
             const enemyBattlefield = state.players[enemyId].battlefield;
             const castingColumn = unit.slotIndex % 3; // 0, 1, or 2
             const frontSlot = castingColumn;      // 0, 1, or 2
@@ -266,18 +288,32 @@ class AbilitySystem {
             
             if (frontUnit) {
                 targets = [frontUnit];
-                console.log(`🎯 Column damage targeting front row unit: ${frontUnit.name}`);
             } else if (backUnit) {
                 targets = [backUnit];
-                console.log(`🎯 Column damage targeting back row unit: ${backUnit.name}`);
             } else {
                 // No units in column, hit player
                 targets = [{ type: 'player', playerId: enemyId }];
-                console.log(`🎯 Column damage targeting player (column ${castingColumn} empty)`);
+            }
+        } else if (effect.targetType === 'own_player') {
+            // Self-damage (for Swamp Ooze Last Gasp)
+            targets = [{ type: 'player', playerId: owner }];
+        } else if (effect.targetType === 'back_row_enemy_here') {
+            // Marksman: Deal damage to back row enemy in the same column
+            const enemyBattlefield = state.players[enemyId].battlefield;
+            const castingColumn = unit.slotIndex % 3; // 0, 1, or 2
+            const backSlot = castingColumn + 3;   // 3, 4, or 5
+            
+            const backUnit = enemyBattlefield[backSlot];
+            if (backUnit) {
+                targets = [backUnit];
+            } else {
+                // No back row unit in this column, no damage
+                console.log(`🎯 No back row enemy in column ${castingColumn} for Marksman`);
+                targets = [];
             }
         }
 
-        // Apply damage to each target
+        // Apply damage
         targets.forEach((target, index) => {
             if (target.type === 'player') {
                 // Damage player
@@ -287,8 +323,6 @@ class AbilitySystem {
                     source: unit
                 });
                 
-                // Enhanced logging for player damage
-                const abilitySource = context.triggerUnit ? 'Manacharge' : 'Unleash';
             } else {
                 // Damage unit
                 const slotIndex = state.players[enemyId].battlefield.findIndex(u => u === target);
@@ -298,20 +332,6 @@ class AbilitySystem {
                     source: unit
                 });
 
-                // Enhanced logging for unit damage with targeting context
-                const abilitySource = context.triggerUnit ? 'Manacharge' : 'Unleash';
-                let targetingDescription = '';
-                
-                if (effect.targetSelection === 'random' && effect.targetType === 'enemy_unit') {
-                    targetingDescription = ' (randomly targeted)';
-                } else if (effect.targetType === 'enemy_back_row') {
-                    targetingDescription = ' (back row)';
-                } else if (effect.targetType === 'enemy_front_row') {
-                    targetingDescription = ' (front row)';
-                } else if (effect.targetType === 'enemy_column') {
-                    targetingDescription = ` (column ${slotIndex % 3})`;
-                }
-                
             }
         });
     }
@@ -323,7 +343,7 @@ class AbilitySystem {
      * @returns {Object} Buff effect object
      */
     parseBuffEffect(text, context) {
-        // Handle "another unit with ability" pattern like "Give another Flying unit +1/+1"
+        // Pattern: "Give another Flying unit +1/+1"
         const anotherAbilityMatch = text.match(/give another ([a-z]+) unit \+(\d+)\/\+(\d+)/i);
         if (anotherAbilityMatch) {
             return {
@@ -337,7 +357,7 @@ class AbilitySystem {
             };
         }
         
-        // Handle health-only effects like "Give all of your units +2 Health"
+        // Health-only buffs
         const healthOnlyMatch = text.match(/give all (?:of )?your units \+(\d+) health/i);
         if (healthOnlyMatch) {
             return {
@@ -350,7 +370,7 @@ class AbilitySystem {
             };
         }
         
-        // Handle multiple tags with permanent attack like "Give Beasts and Elves +2 Attack"
+        // Multiple tags permanent
         const multiTagPermMatch = text.match(/give ([a-z]+)s? and ([a-z]+)s? \+(\d+) attack/i);
         if (multiTagPermMatch) {
             return {
@@ -364,7 +384,7 @@ class AbilitySystem {
             };
         }
 
-        // Handle multiple tags with temporary attack like "Beasts and Elves have +3 Attack this turn"
+        // Multiple tags temporary
         const multiTagTempMatch = text.match(/([a-z]+)s? and ([a-z]+)s? have \+(\d+) attack this turn/i);
         if (multiTagTempMatch) {
             return {
@@ -378,7 +398,7 @@ class AbilitySystem {
             };
         }
 
-        // Handle front row buff like "Your front slots gain +2/+2" (for Paladin)
+        // Front row buff
         const frontSlotsMatch = text.match(/your front slots gain \+(\d+)\/\+(\d+)/i);
         if (frontSlotsMatch) {
             return {
@@ -391,7 +411,7 @@ class AbilitySystem {
             };
         }
 
-        // Handle other slots in row buff like "Give the other slots in this row +1/+1"
+        // Other slots in row
         const otherSlotsInRowMatch = text.match(/give the other slots in this row \+(\d+)\/\+(\d+)/i);
         if (otherSlotsInRowMatch) {
             return {
@@ -404,7 +424,7 @@ class AbilitySystem {
             };
         }
 
-        // Handle adjacent slots buff like "Give adjacent slots +1/+1" (keep for backward compatibility)
+        // Adjacent slots
         const adjacentSlotsMatch = text.match(/give adjacent slots \+(\d+)\/\+(\d+)/i);
         if (adjacentSlotsMatch) {
             return {
@@ -417,7 +437,7 @@ class AbilitySystem {
             };
         }
 
-        // Handle slot with specific tag buff like "Give a slot with a Human or Dwarf +2/+2" or "Give a slot with another Human or Dwarf +2/+2"
+        // Slot with specific tags
         const slotWithTagMatch = text.match(/give a slot with (?:another |a )?(?:random )?([a-z]+) or ([a-z]+) \+(\d+)\/\+(\d+)/i);
         if (slotWithTagMatch) {
             return {
@@ -431,7 +451,7 @@ class AbilitySystem {
             };
         }
 
-        // Handle special tag-based effects like "Give your Beasts +0/+1" or "Give your other Humans +1/+2"
+        // Tag-based effects
         const tagBuffMatch = text.match(/give (?:your |an? )(?:other )?([a-z]+?)s? \+(\d+)\/\+(\d+)/i);
         if (tagBuffMatch) {
             const excludeSelf = text.includes('other');
@@ -491,30 +511,20 @@ class AbilitySystem {
             };
         }
 
-        // Handle other slot-targeting patterns that weren't caught by specific matchers above
+        // General slot targeting
         const slotBuffMatch = text.match(/give (?:the )?(.+?) \+(\d+)\/\+(\d+)/i);
         if (slotBuffMatch) {
             const targetDescription = slotBuffMatch[1].toLowerCase().trim();
             const attack = parseInt(slotBuffMatch[2]);
             const health = parseInt(slotBuffMatch[3]);
             
-            // Debug logging for Villager
-            if (text.includes('other slot in this column')) {
-                console.log(`🏘️ [VILLAGER PARSE DEBUG] Text: "${text}"`);
-                console.log(`🏘️ [VILLAGER PARSE DEBUG] Regex match:`, slotBuffMatch);
-                console.log(`🏘️ [VILLAGER PARSE DEBUG] Target description: "${targetDescription}"`);
-                console.log(`🏘️ [VILLAGER PARSE DEBUG] Attack: ${attack}, Health: ${health}`);
-            }
             
             let target = 'self';
             let targetSlot = null;
             
-            // Determine target type based on description
+            // Set target type
             if (targetDescription.includes('other slot in this column') || targetDescription.includes('other slot in column')) {
                 target = 'other-slot-in-column';
-                if (text.includes('other slot in this column')) {
-                    console.log(`🏘️ [VILLAGER PARSE DEBUG] Target set to: ${target}`);
-                }
             } else if (targetDescription.includes('random back row slot')) {
                 target = 'random-back-row-slot';
             } else if (targetDescription.includes('random slot')) {
@@ -559,8 +569,6 @@ class AbilitySystem {
         } else if (effect.target === 'other-slot-in-column') {
             // Buff the other slot in the same column
             const targetSlot = this.getOtherSlotInColumn(context.slotIndex);
-            console.log(`🏘️ [VILLAGER BUFF DEBUG] Current slot: ${context.slotIndex}, Target slot: ${targetSlot}`);
-            console.log(`🏘️ [VILLAGER BUFF DEBUG] Unit owner: ${context.unit.owner}, Effect: +${effect.attack}/+${effect.health}`);
             
             if (targetSlot !== null) {
                 const buffData = {
@@ -572,19 +580,12 @@ class AbilitySystem {
                     }
                 };
                 
-                console.log(`🏘️ [VILLAGER BUFF DEBUG] Emitting slot:buff event:`, buffData);
                 this.eventBus.emit('slot:buff', buffData);
-                
-                console.log(`🏘️ Villager at slot ${context.slotIndex} buffed slot ${targetSlot} (+${effect.attack}/+${effect.health})`);
-            } else {
-                console.error(`🏘️ [VILLAGER BUFF DEBUG] Target slot is null! Cannot buff.`);
             }
         } else if (effect.target === 'random-back-row-slot') {
             // Buff a random back row slot (slots 3, 4, 5)
             const backRowSlots = [3, 4, 5];
             const targetSlot = backRowSlots[Math.floor(Math.random() * backRowSlots.length)];
-            
-            console.log(`🎯 SCOUT UNLEASH: ${context.unit.name} at slot ${context.slotIndex} is about to buff random back row slot ${targetSlot} with +${effect.attack}/+${effect.health}`);
             
             this.eventBus.emit('slot:buff', {
                 slotIndex: targetSlot,
@@ -594,8 +595,6 @@ class AbilitySystem {
                     health: effect.health
                 }
             });
-            
-            console.log(`✅ SCOUT UNLEASH: Emitted slot:buff event for slot ${targetSlot}`);
         } else if (effect.target === 'random-slot') {
             // Buff a random slot (any of the 6 slots)
             const allSlots = [0, 1, 2, 3, 4, 5];
@@ -609,8 +608,6 @@ class AbilitySystem {
                     health: effect.health
                 }
             });
-            
-            console.log(`🎲 ${context.unit.name} at slot ${context.slotIndex} buffed random slot ${targetSlot} (+${effect.attack}/+${effect.health})`);
         } else if (effect.target === 'all-friendly-units') {
             // Buff all friendly units on the battlefield
             const battlefield = this.stateSelectors.getPlayerBattlefield(context.unit.owner);
@@ -633,7 +630,6 @@ class AbilitySystem {
                 }
             });
             
-            console.log(`🌟 ${context.unit.name} buffed all ${unitsBuffed} friendly units (+${effect.attack}/+${effect.health})`);
         } else if (effect.target === 'multi-tag-based') {
             // Buff units with multiple specific tags (for Tracker ability)
             const state = this.gameState.getState();
@@ -651,7 +647,6 @@ class AbilitySystem {
                         if (effect.temporary) {
                             // Temporary buff - only modify current stats
                             updates.currentAttack = (unit.currentAttack || unit.attack) + effect.attack;
-                            console.log(`🏷️ ${unit.name} gained +${effect.attack} Attack this turn`);
                         } else {
                             // Permanent buff - modify base and current stats
                             updates.attack = unit.attack + effect.attack;
@@ -661,7 +656,6 @@ class AbilitySystem {
                                 updates.currentHealth = (unit.currentHealth || unit.health) + effect.health;
                                 updates.maxHealth = (unit.maxHealth || unit.health) + effect.health;
                             }
-                            console.log(`🏷️ ${unit.name} permanently gained +${effect.attack} Attack`);
                         }
                         
                         // Use centralized update method
@@ -672,8 +666,6 @@ class AbilitySystem {
                 });
             });
             
-            const duration = effect.temporary ? ' this turn' : '';
-            console.log(`🌟 ${context.unit.name} gave ${effect.tags.join(' and ')}s +${effect.attack} Attack${duration}`);
         } else if (effect.target === 'slot-with-tag') {
             // Buff slot that contains a unit with specified tags (for Blacksmith)
             const playerId = context.unit.owner || context.playerId;
@@ -687,7 +679,6 @@ class AbilitySystem {
                     item.slotIndex !== context.slotIndex); // Exclude own slot
             
             if (eligibleSlots.length === 0) {
-                console.log(`🏷️ No slots with ${effect.tags.join(' or ')} found to buff (excluding own slot)`);
                 return;
             }
             
@@ -702,9 +693,7 @@ class AbilitySystem {
                     attack: effect.attack,
                     health: effect.health
                 }
-            });
-            
-            console.log(`🔨 ${context.unit.name} buffed slot ${targetSlot.slotIndex} with ${targetSlot.unit.name} (+${effect.attack}/+${effect.health})`);            
+            });            
         } else if (effect.target === 'front-slots') {
             // Buff all front row slots (for Paladin)
             const frontSlots = [0, 1, 2]; // Front row slots
@@ -728,8 +717,6 @@ class AbilitySystem {
                     unitsBuffed++;
                 }
             });
-            
-            console.log(`⚔️ ${context.unit.name} buffed ${unitsBuffed} front row units (+${effect.attack}/+${effect.health})`);
         } else if (effect.target === 'other-slots-in-row') {
             // Buff other slots in the same row (for Ice Mage)
             const currentSlot = context.slotIndex;
@@ -757,8 +744,6 @@ class AbilitySystem {
                     }
                 });
             });
-            
-            console.log(`❄️ ${context.unit.name} buffed ${otherSlotsInRow.length} other slots in this row (+${effect.attack}/+${effect.health})`);
         } else if (effect.target === 'adjacent-slots') {
             // Buff adjacent slots (for backward compatibility)
             const currentSlot = context.slotIndex;
@@ -779,7 +764,6 @@ class AbilitySystem {
                 });
             });
             
-            console.log(`❄️ ${context.unit.name} buffed ${adjacentSlots.length} adjacent slots (+${effect.attack}/+${effect.health})`);
         } else if (effect.target === 'another-with-ability') {
             // Buff another unit with a specific ability (e.g., "another Flying unit")
             const battlefield = this.stateSelectors.getPlayerBattlefield(context.unit.owner);
@@ -793,7 +777,6 @@ class AbilitySystem {
             
             
             if (unitsWithAbility.length === 0) {
-                console.log(`🦅 No other ${effect.ability} units found to buff`);
                 return;
             }
             
@@ -803,7 +786,6 @@ class AbilitySystem {
             // Apply buff to the unit
             this.applyBuffToUnit(context.unit.owner, target.slotIndex, effect.attack, effect.health);
             
-            console.log(`🦅 ${context.unit.name} buffed ${target.unit.name} (+${effect.attack}/+${effect.health})`);
         } else if (effect.target === 'tag-based') {
             // Buff units with specific tag (random or all based on ability text)
             const battlefield = this.stateSelectors.getPlayerBattlefield(context.unit.owner);
@@ -820,7 +802,6 @@ class AbilitySystem {
             }
             
             if (taggedUnits.length === 0) {
-                console.log(`🏷️ No ${effect.tag} units found to buff`);
                 return;
             }
 
@@ -833,22 +814,18 @@ class AbilitySystem {
                 // Random selection for "Give an Undead"
                 const randomIndex = Math.floor(Math.random() * taggedUnits.length);
                 unitsToBuffer = [taggedUnits[randomIndex]];
-                console.log(`🎲 Randomly targeting ${effect.tag} unit at slot ${unitsToBuffer[0].slotIndex}`);
             }
             
             unitsToBuffer.forEach(({ unit, slotIndex }) => {
                 this.applyBuffToUnit(context.unit.owner, slotIndex, effect.attack, effect.health);
             });
             
-            const targetDesc = isRandomTarget ? `a random ${effect.tag}` : `all ${unitsToBuffer.length} ${effect.tag}`;
-            console.log(`🏷️ ${context.unit.name} buffed ${targetDesc} unit(s) (+${effect.attack}/+${effect.health})`);
         } else {
             // Buff the unit itself
             const { unit } = context;
             const playerId = context.playerId || unit.owner;
             const slotIndex = context.slotIndex !== undefined ? context.slotIndex : unit.slotIndex;
             
-            console.log(`🔧 Buffing ${unit.name} - Before: ${unit.attack}/${unit.health} (current: ${unit.currentAttack || unit.attack}/${unit.currentHealth || unit.health})`);
             
             if (effect.temporary) {
                 // For temporary buffs, modify currentAttack directly (not permanent stats)
@@ -863,7 +840,6 @@ class AbilitySystem {
                 const reason = `gained temporary buff (+${effect.attack}/+${effect.health}) this turn`;
                 this.updateUnitStats(playerId, slotIndex, updates, reason);
                 
-                console.log(`⏰ ${unit.name} gained temporary buff (+${effect.attack}/+${effect.health}) this turn`);
             } else {
                 // Permanent buffs modify base stats
                 const oldCurrentAttack = unit.currentAttack || unit.attack;
@@ -886,7 +862,6 @@ class AbilitySystem {
                 const reason = `gained permanent buff (+${effect.attack}/+${effect.health})`;
                 this.updateUnitStats(playerId, slotIndex, updates, reason, false);
                 
-                console.log(`🔧 Buffing ${unit.name} - After: ${newAttack}/${newHealth} (current: ${newCurrentAttack}/${newCurrentHealth})`);
                 
                 // Force UI refresh with the updated stats (use calculated values instead of state lookup)
                 setTimeout(() => {
@@ -906,18 +881,26 @@ class AbilitySystem {
     }
 
     /**
+     * Apply a buff to a unit (helper method)
+     * @param {Object} unit - Unit to buff
+     * @param {number} attackBuff - Attack buff amount
+     * @param {number} healthBuff - Health buff amount
+     * @param {string} playerId - Player ID
+     * @param {number} slotIndex - Slot index
+     */
+    applyUnitBuff(unit, attackBuff, healthBuff, playerId, slotIndex) {
+        const updates = {
+            attack: unit.attack + attackBuff,
+            health: unit.health + healthBuff,
+            currentAttack: (unit.currentAttack || unit.attack) + attackBuff,
+            currentHealth: (unit.currentHealth || unit.health) + healthBuff
+        };
+        const reason = `gained +${attackBuff}/+${healthBuff} buff`;
+        this.updateUnitStats(playerId, slotIndex, updates, reason);
+    }
+    
+    /**
      * Centralized method for updating unit stats through Redux
-     * 
-     * This method consolidates all UPDATE_UNIT dispatch patterns to reduce code duplication
-     * and ensure consistent stat updates across the entire ability system. All stat changes
-     * should go through this method to maintain predictable state flow and proper UI updates.
-     * 
-     * Architecture Benefits:
-     * - Single source of truth for stat updates
-     * - Consistent event emission for UI responsiveness  
-     * - Standardized logging and debugging
-     * - Reduced code duplication (eliminated 8+ duplicate patterns)
-     * 
      * @param {string} playerId - Player ID ('player' or 'ai')
      * @param {number} slotIndex - Slot index of unit (0-5)
      * @param {Object} updates - Updates object with stat changes
@@ -1149,13 +1132,6 @@ class AbilitySystem {
             return; // Don't process further effects
         }
         
-        // Special debug logging for Villager
-        if (unit.name === 'Villager') {
-            console.log(`🏘️ [VILLAGER DEBUG] Original ability: "${abilityText}"`);
-            console.log(`🏘️ [VILLAGER DEBUG] Effect text after prefix removal: "${effectText}"`);
-            console.log(`🏘️ [VILLAGER DEBUG] Context:`, context);
-            console.log(`🏘️ [VILLAGER DEBUG] Unit owner: ${unit.owner}, Context playerId: ${context.playerId}`);
-        }
         
         // Enhanced game log for Unleash activation
         this.eventBus.emit('ability:activated', {
@@ -1171,13 +1147,9 @@ class AbilitySystem {
         
         const result = this.parseAndExecuteAbility(effectText, { unit, ...context });
         
-        // Special debug logging for Villager result
+        // Manual fix for Villager if parsing failed
         if (unit.name === 'Villager') {
-            console.log(`🏘️ [VILLAGER DEBUG] Parse result:`, result);
-            
-            // Manual fix for Villager if parsing failed
             if (!result.success || result.effects.length === 0) {
-                console.log(`🏘️ [VILLAGER DEBUG] Parsing failed, applying manual fix`);
                 const targetSlot = this.getOtherSlotInColumn(context.slotIndex);
                 if (targetSlot !== null) {
                     const buffData = {
@@ -1185,33 +1157,11 @@ class AbilitySystem {
                         playerId: unit.owner || context.playerId,
                         buff: { attack: 1, health: 1 }
                     };
-                    console.log(`🏘️ [VILLAGER DEBUG] Manual buff application:`, buffData);
                     this.eventBus.emit('slot:buff', buffData);
                 }
             }
         }
         
-        // Log the specific Unleash effect
-        if (result.success && result.effects.length > 0) {
-            const effect = result.effects[0];
-            let effectDescription = '';
-            
-            if (effect.type === 'buff') {
-                if (effect.target === 'other-slot-in-column') {
-                    effectDescription = `buffs the other slot in its column +${effect.attack}/+${effect.health}`;
-                } else if (effect.target === 'random-back-row-slot') {
-                    effectDescription = `buffs a random back row slot +${effect.attack}/+${effect.health}`;
-                } else if (effect.target === 'random-slot') {
-                    effectDescription = `buffs a random slot +${effect.attack}/+${effect.health}`;
-                }
-            } else if (effect.type === 'damage') {
-                // Don't log generic damage description - specific targeting info is logged in executeDamageEffect
-                effectDescription = '';
-            }
-
-            if (effectDescription) {
-            }
-        }
     }
 
     /**
@@ -1219,7 +1169,13 @@ class AbilitySystem {
      * @param {Object} data - Last Gasp trigger data
      */
     handleLastGasp(data) {
-        const { unit, context } = data;
+        const { unit } = data;
+        // Handle both formats: with context object or with direct owner/slotIndex
+        const context = data.context || { 
+            playerId: data.owner || data.playerId, 
+            slotIndex: data.slotIndex 
+        };
+        
         const abilityText = unit.ability;
 
         console.log(`💀 Last Gasp triggered for ${unit.name}: ${abilityText}`);
@@ -1674,7 +1630,7 @@ class AbilitySystem {
                     
                     // Validate the created unit
                     if (!UnitFactory.validateUnit(unit)) {
-                        console.error('❌ Failed to create valid summoned unit:', skeletonCard);
+                        console.error('❌ Failed to create valid summoned unit:', unit);
                         continue;
                     }
                     
@@ -1691,14 +1647,11 @@ class AbilitySystem {
             }
         }
         
-        // Enhanced game log
         this.eventBus.emit('ability:activated', {
             ability: 'lastGasp',
             unit,
             player: playerId
         });
-        const actionText = type === 'add-to-hand' ? 'adds to hand' : 'summons';
-        const amountText = amount > 1 ? `${amount} ${cardName}s` : `a ${cardName}`;
     }
 
     /**
@@ -2079,6 +2032,62 @@ class AbilitySystem {
                 });
             }
         }
+    }
+    
+    /**
+     * Handle unit death triggers (for Wraith and Death Knight abilities)
+     */
+    handleUnitDeath(data) {
+        // Safety check for data
+        if (!data || !data.unit) {
+            console.error('❌ handleUnitDeath called without unit data');
+            return;
+        }
+        
+        const { unit, owner, slotIndex } = data;
+        const state = this.gameState.getState();
+        
+        console.log(`💀 Checking death triggers for ${unit.name} (${unit.tags?.join(', ')}) - color: ${unit.color}`);
+        
+        // Check all units on the battlefield for death-triggered abilities
+        Object.keys(state.players).forEach(playerId => {
+            state.players[playerId].battlefield.forEach((observingUnit, observingSlot) => {
+                if (!observingUnit || !observingUnit.ability) return;
+                
+                const abilityLower = observingUnit.ability.toLowerCase();
+                
+                // Wraith: "When a Purple unit dies, gain +1/+1"
+                if (abilityLower.includes('when a purple unit dies')) {
+                    // Check if the dying unit has the Purple color
+                    if (unit.color === 'purple') {
+                        console.log(`👻 ${observingUnit.name} triggered by Purple unit death`);
+                        
+                        this.eventBus.emit('ability:activated', {
+                            type: 'purple-unit-death',
+                            unit: observingUnit,
+                            effect: 'Gained +1/+1 from Purple unit death'
+                        });
+                        
+                        // Apply permanent buff to Wraith
+                        this.applyUnitBuff(observingUnit, 1, 1, playerId, observingSlot);
+                    }
+                }
+                
+                // Death Knight: "When any unit dies, gain +2/+2"
+                if (abilityLower.includes('when any unit dies')) {
+                    console.log(`⚔️ ${observingUnit.name} triggered by unit death`);
+                    
+                    this.eventBus.emit('ability:activated', {
+                        type: 'any-unit-death',
+                        unit: observingUnit,
+                        effect: 'Gained +2/+2 from unit death'
+                    });
+                    
+                    // Apply permanent buff to Death Knight
+                    this.applyUnitBuff(observingUnit, 2, 2, playerId, observingSlot);
+                }
+            });
+        });
     }
     
     /**

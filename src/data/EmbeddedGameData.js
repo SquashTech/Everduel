@@ -300,15 +300,15 @@ export const CARD_DATABASE = {
       "name": "General",
       "attack": 2,
       "health": 4,
-      "ability": "Unleash: Give your Humans +1/+2",
+      "ability": "Unleash: Give your other Humans +1/+2",
       "tags": ["Human"],
       "color": "red"
     },
     {
       "id": "blacksmith",
       "name": "Blacksmith",
-      "attack": 2,
-      "health": 3,
+      "attack": 3,
+      "health": 2,
       "ability": "Unleash: Give a slot with another Human or Dwarf +2/+2",
       "tags": ["Dwarf"],
       "color": "red"
@@ -381,7 +381,7 @@ export const CARD_DATABASE = {
       "name": "Marksman",
       "attack": 2,
       "health": 2,
-      "ability": "Ranged, Unleash: Deal 2 damage to a back row enemy",
+      "ability": "Ranged. Unleash: Deal 2 damage to the back row enemy here",
       "tags": ["Elf"],
       "color": "green"
     },
@@ -426,7 +426,7 @@ export const CARD_DATABASE = {
       "name": "Ice Mage",
       "attack": 1,
       "health": 3,
-      "ability": "Unleash: Give adjacent slots +1/+1",
+      "ability": "Unleash: Give the other slots in this row +1/+1",
       "tags": ["Human"],
       "color": "blue"
     },
@@ -444,7 +444,7 @@ export const CARD_DATABASE = {
       "name": "Fire Spirit",
       "attack": 3,
       "health": 3,
-      "ability": "Manacharge: Gain +2/+2",
+      "ability": "Manacharge: Gain +3/+2",
       "tags": ["Mystic"],
       "color": "blue"
     },
@@ -461,8 +461,8 @@ export const CARD_DATABASE = {
       "id": "wraith",
       "name": "Wraith",
       "attack": 4,
-      "health": 3,
-      "ability": "Sneaky, Flying",
+      "health": 2,
+      "ability": "Sneaky. When a Purple unit dies, gain +1/+1",
       "tags": ["Mystic"],
       "color": "purple"
     },
@@ -498,7 +498,7 @@ export const CARD_DATABASE = {
       "name": "Swamp Ooze",
       "attack": 7,
       "health": 7,
-      "ability": "When your opponent summons a unit, this takes 1 damage",
+      "ability": "Last Gasp: Deal 5 damage to your player",
       "tags": ["Mystic"],
       "color": "purple"
     }
