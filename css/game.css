@@ -78,7 +78,12 @@ body {
 .btn-deck:hover {
     background: rgba(100, 150, 255, 0.4);
     border-color: rgba(100, 150, 255, 0.6);
-    transform: scale(1.05);
+}
+
+.btn.btn-deck.btn-deck-inline:hover {
+    background: rgba(100, 150, 255, 0.4);
+    border-color: rgba(100, 150, 255, 0.8);
+    transform: none !important;
 }
 
 .btn-deck:disabled {
@@ -88,17 +93,24 @@ body {
 
 /* Inline deck button for info boxes */
 .btn-deck-inline {
+    position: absolute;
+    top: 17px;
+    right: 8px;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 2px 8px;
-    font-size: 11px;
+    gap: 5px;
+    padding: 5px 10px;
+    font-size: 14px;
     min-width: auto;
     width: auto;
     flex-shrink: 0;
-    max-width: 70px;
+    max-width: 100px;
     white-space: nowrap;
-    margin-right: 8px;
+    border: 2px solid rgba(100, 150, 255, 0.6);
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(100, 150, 255, 0.4);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    font-weight: bold;
 }
 
 
@@ -112,7 +124,7 @@ body {
     border-radius: 8px;
     font-size: 12px;
     z-index: 500;
-    overflow: visible; /* Allow Dragon Soul display to float */
+    overflow: visible; /* Allow Dragon Flame display to float */
     box-sizing: border-box;
 }
 
@@ -183,13 +195,17 @@ body {
     color: #4ecdc4;
     text-align: center;
     line-height: 1.2;
+    transform: translateY(15px);
 }
 
 .health {
-    font-size: 20px;
+    font-size: 38px;
     font-weight: bold;
     color: #ff6b6b;
     margin: 5px 0;
+    background: none;
+    border: none;
+    padding: 0;
 }
 
 .gold {
@@ -224,11 +240,20 @@ body {
 }
 
 .player-stats-compact .health {
-    font-size: 15px;
+    font-size: 28px;
     font-weight: bold;
-    color: #ff6b6b;
-    margin: 0;
+    color: #2563eb;
+    margin: -25px 0 0 0;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: transparent;
+    border: 2px solid #2563eb;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.4);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .player-stats-compact .gold {
@@ -245,8 +270,8 @@ body {
     white-space: nowrap;
 }
 
-/* === DRAGON SOUL DISPLAY === */
-.dragon-soul-display {
+/* === DRAGON FLAME DISPLAY === */
+.dragon-flame-display {
     position: absolute;
     top: 2px;
     right: 10px;
@@ -265,19 +290,110 @@ body {
     z-index: 10;
 }
 
-.dragon-soul-icon {
+.dragon-flame-icon {
     font-size: 12px;
     filter: drop-shadow(0 0 2px rgba(255, 107, 53, 0.5));
 }
 
-.dragon-soul-count {
+/* Dragon Flame display when positioned in battlefield */
+.battlefield-dragon-flame {
+    position: absolute;
+    top: 0;
+    right: -40px;
+    z-index: 150;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    background: transparent;
+    border: 2px solid #ff6b35;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+    font-weight: bold;
+}
+
+.battlefield-dragon-flame .dragon-flame-icon {
+    font-size: 18px;
+    filter: drop-shadow(0 0 4px rgba(255, 107, 53, 0.8));
+}
+
+.battlefield-dragon-flame .dragon-flame-count {
+    font-size: 20px;
+    color: #ff6b35;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    min-width: 25px;
+    text-align: center;
+}
+
+/* === SOULS DISPLAY (positioned in battlefield) === */
+.battlefield-souls {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: -40px;
+    z-index: 150;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    background: transparent;
+    border: 2px solid #9b59b6;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(155, 89, 182, 0.4);
+    font-weight: bold;
+}
+
+.battlefield-souls .souls-icon {
+    font-size: 18px;
+    filter: drop-shadow(0 0 4px rgba(155, 89, 182, 0.8));
+}
+
+.battlefield-souls .souls-count {
+    font-size: 20px;
+    color: #9b59b6;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    min-width: 25px;
+    text-align: center;
+}
+
+/* Gold display when positioned in battlefield */
+.battlefield-gold {
+    position: absolute;
+    bottom: 0;
+    right: -40px;
+    z-index: 150;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    background: transparent;
+    border: 2px solid #ffd700;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+    font-weight: bold;
+}
+
+.battlefield-gold .gold-icon {
+    font-size: 18px;
+    filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.8));
+}
+
+.battlefield-gold .gold-count {
+    font-size: 20px;
+    color: #ffd700;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    min-width: 25px;
+    text-align: center;
+}
+
+.dragon-flame-count {
     min-width: 12px;
     text-align: center;
     font-size: 11px;
 }
 
-/* Dragon Soul gain animation */
-@keyframes dragonSoulGain {
+/* Dragon Flame gain animation */
+@keyframes dragonFlameGain {
     0% { 
         transform: scale(1); 
     }
@@ -291,8 +407,31 @@ body {
     }
 }
 
-.dragon-soul-display.gaining {
-    animation: dragonSoulGain 0.6s ease-out;
+.dragon-flame-display.gaining {
+    animation: dragonFlameGain 0.6s ease-out;
+    transform-origin: center center;
+    will-change: transform;
+}
+
+/* Souls gain animation */
+@keyframes soulsGain {
+    0% { 
+        transform: translateY(-50%) scale(1); 
+    }
+    50% { 
+        transform: translateY(-50%) scale(1.3); 
+        filter: brightness(1.5);
+        box-shadow: 0 0 20px #9333ea;
+    }
+    100% { 
+        transform: translateY(-50%) scale(1); 
+    }
+}
+
+.souls-display.gaining {
+    animation: soulsGain 0.6s ease-out;
+    transform-origin: center center;
+    will-change: transform;
 }
 
 /* Floating resource indicators */
@@ -305,11 +444,18 @@ body {
     animation: floatUp 1.5s ease-out forwards;
 }
 
-.dragon-soul-indicator {
+.dragon-flame-indicator {
     color: #ff6b35;
     text-shadow: 
         2px 2px 4px rgba(0, 0, 0, 0.8),
         0 0 10px rgba(255, 107, 53, 0.5);
+}
+
+.souls-indicator {
+    color: #9333ea;
+    text-shadow: 
+        2px 2px 4px rgba(0, 0, 0, 0.8),
+        0 0 10px rgba(147, 51, 234, 0.5);
 }
 
 @keyframes floatUp {
@@ -331,16 +477,17 @@ body {
     row-gap: 12px; /* Smaller vertical gap */
     margin: 8px 0; /* Reduced vertical margins */
     padding-right: 40px; /* Extra space for buff indicators */
+    position: relative; /* For positioning Dragon Flame display */
 }
 
-/* AI Player Area - Soft blue theme (first player-area) */
+/* AI Player Area - Soft red theme (first player-area) */
 .player-area:first-child {
-    background: rgba(59, 130, 246, 0.08);
+    background: rgba(220, 38, 38, 0.25) !important;
 }
 
-/* Player Area - Soft green theme (second player-area) */
-.player-area:nth-child(2) {
-    background: rgba(34, 197, 94, 0.08);
+/* Player Area - Soft green theme (third child because of info box) */
+.player-area:nth-child(3) {
+    background: rgba(34, 197, 94, 0.25) !important;
 }
 
 .battlefield-row {
