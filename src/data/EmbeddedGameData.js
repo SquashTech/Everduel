@@ -46,7 +46,7 @@ export const CARD_DATABASE = {
       "name": "Fire Whelp",
       "attack": 2,
       "health": 1,
-      "ability": "Unleash: Gain 1 Dragon Soul",
+      "ability": "Unleash: Gain 1 Dragon Flame",
       "tags": ["Dragon"],
       "color": "red"
     },
@@ -318,7 +318,7 @@ export const CARD_DATABASE = {
       "name": "Young Dragon",
       "attack": 3,
       "health": 3,
-      "ability": "Flying, Unleash: Gain 1 Dragon Soul",
+      "ability": "Flying, Unleash: Gain 1 Dragon Flame",
       "tags": ["Dragon"],
       "color": "red"
     },
@@ -336,7 +336,7 @@ export const CARD_DATABASE = {
       "name": "Wolf",
       "attack": 3,
       "health": 3,
-      "ability": "Sneaky. After this attacks, give this slot +1/+1",
+      "ability": "Sneaky. After this attacks the other player, give this slot +1/+1",
       "tags": ["Beast"],
       "color": "yellow"
     },
@@ -390,7 +390,7 @@ export const CARD_DATABASE = {
       "name": "Tracker",
       "attack": 3,
       "health": 1,
-      "ability": "Unleash: Beasts and Elves have +3 Attack this turn",
+      "ability": "Unleash: Give your other Elves and Beasts +3 Attack",
       "tags": ["Elf"],
       "color": "green"
     },
@@ -461,8 +461,8 @@ export const CARD_DATABASE = {
       "id": "wraith",
       "name": "Wraith",
       "attack": 4,
-      "health": 2,
-      "ability": "Sneaky. When a Purple unit dies, gain +1/+1",
+      "health": 3,
+      "ability": "Sneaky. When you gain a Soul, gain +1/+1",
       "tags": ["Mystic"],
       "color": "purple"
     },
@@ -526,7 +526,7 @@ export const CARD_DATABASE = {
       "id": "captain",
       "name": "Captain",
       "attack": 3,
-      "health": 3,
+      "health": 4,
       "ability": "Unleash: Gain +1/+1 for each other unit you have in play",
       "tags": ["Human"],
       "color": "red"
@@ -544,8 +544,8 @@ export const CARD_DATABASE = {
       "id": "flame_drake",
       "name": "Flame Drake",
       "attack": 5,
-      "health": 3,
-      "ability": "Flying, Unleash: Gain 2 Dragon Soul",
+      "health": 4,
+      "ability": "Flying, Unleash: Gain 2 Dragon Flame",
       "tags": ["Dragon"],
       "color": "red"
     },
@@ -563,16 +563,16 @@ export const CARD_DATABASE = {
       "name": "Giant Toad",
       "attack": 3,
       "health": 8,
-      "ability": "At the start of your turn, give your Beasts +2/+2",
+      "ability": "At the start of your turn, give your other Beasts +2/+2",
       "tags": ["Beast"],
       "color": "yellow"
     },
     {
       "id": "elder_stag",
       "name": "Elder Stag",
-      "attack": 4,
+      "attack": 5,
       "health": 4,
-      "ability": "Rush, Unleash: Gain +2/+2 for each of your full Rows",
+      "ability": "Rush, Trample",
       "tags": ["Beast"],
       "color": "yellow"
     },
@@ -608,7 +608,7 @@ export const CARD_DATABASE = {
       "name": "Elven Minstrel",
       "attack": 4,
       "health": 4,
-      "ability": "When you summon an Elf, give its slot +2/+2",
+      "ability": "Kindred: Give a random slot +2/+2",
       "tags": ["Elf"],
       "color": "green"
     },
@@ -654,7 +654,7 @@ export const CARD_DATABASE = {
       "attack": 2,
       "health": 6,
       "ability": "Unleash: Deal 3 damage to the opponent's back row",
-      "tags": ["Mystic"],
+      "tags": ["Human"],
       "color": "blue"
     },
     {
@@ -696,9 +696,9 @@ export const CARD_DATABASE = {
     {
       "id": "bone_drake",
       "name": "Bone Drake",
-      "attack": 3,
+      "attack": 4,
       "health": 5,
-      "ability": "Last Gasp: Summon a Skeleton, then give your Undead and Dragons +2/+2",
+      "ability": "Last Gasp: Gain 1 Dragon Flame and summon a Skeleton here",
       "tags": ["Dragon", "Undead"],
       "color": "purple"
     },
@@ -706,7 +706,7 @@ export const CARD_DATABASE = {
       "id": "blood_imp",
       "name": "Blood Imp",
       "attack": 4,
-      "health": 2,
+      "health": 3,
       "ability": "Flying, Last Gasp: Deal 3 damage to the opponent",
       "tags": ["Mystic"],
       "color": "purple"
@@ -716,7 +716,7 @@ export const CARD_DATABASE = {
       "name": "Bone Colossus",
       "attack": 1,
       "health": 10,
-      "ability": "Unleash: Gain +1 Attack for each friendly Undead that died this game",
+      "ability": "Unleash: Gain +1 Attack for each of your Souls",
       "tags": ["Undead"],
       "color": "purple"
     },
@@ -763,7 +763,7 @@ export const CARD_DATABASE = {
       "name": "Dragon",
       "attack": 4,
       "health": 4,
-      "ability": "Flying. Unleash: Gain +3/+3 for each Dragon Soul",
+      "ability": "Flying. Unleash: Gain +3/+3 for each Dragon Flame",
       "tags": ["Dragon"],
       "color": "red"
     },
@@ -889,7 +889,7 @@ export const CARD_DATABASE = {
       "name": "Lich",
       "attack": 3,
       "health": 3,
-      "ability": "Your other Undead have Trample and Rush",
+      "ability": "Kindred: Deal 3 damage to a random enemy. Heal your player 3",
       "tags": ["Undead"],
       "color": "purple"
     },
@@ -898,8 +898,8 @@ export const CARD_DATABASE = {
       "name": "Death Knight",
       "attack": 2,
       "health": 2,
-      "ability": "When any unit dies, gain +2/+2",
-      "tags": ["Human"],
+      "ability": "Unleash: Gain +2/+2 for each of your Souls",
+      "tags": ["Undead"],
       "color": "purple"
     },
     {
@@ -907,12 +907,24 @@ export const CARD_DATABASE = {
       "name": "Phantom",
       "attack": 7,
       "health": 5,
-      "ability": "Unleash: Draw from your opponent's deck",
+      "ability": "Unleash: Consume up to 3 souls. Draw that many cards",
       "tags": ["Mystic"],
       "color": "purple"
     }
   ],
-  "5": []
+  "5": [],
+  "tokens": [
+    {
+      "id": "spider",
+      "name": "Spider",
+      "attack": 5,
+      "health": 1,
+      "ability": "",
+      "tags": ["Beast"],
+      "color": "purple",
+      "isToken": true
+    }
+  ]
 };
 
 export const GAME_CONFIG = {

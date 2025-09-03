@@ -48,6 +48,7 @@ class AbilitySystem {
         this.eventBus.on('combat:attack-completed', (data) => this.handleAfterAttack(data));
         this.eventBus.on('card:played', (data) => this.handleOpponentSummoned(data));
         this.eventBus.on('unit:dies', (data) => this.handleUnitDeath(data));
+        this.eventBus.on('souls:gained', (data) => this.handleSoulsGained(data));
     }
 
     /**
@@ -90,8 +91,8 @@ class AbilitySystem {
             }
         }
 
-        // Parse summon effects
-        if (lowerText.includes('summon') || lowerText.includes('add')) {
+        // Parse summon effects (including Spider Queen's "Fill" ability)
+        if (lowerText.includes('summon') || lowerText.includes('add') || lowerText.includes('fill')) {
             const summonEffect = this.parseSummonEffect(abilityText, context);
             if (summonEffect) {
                 result.effects.push(summonEffect);
@@ -101,11 +102,22 @@ class AbilitySystem {
         }
 
         // Parse draw effects
-        if (lowerText.includes('draw from your deck')) {
+        if (lowerText.includes('draw from your deck') || lowerText.includes('draw ')) {
             const drawEffect = this.parseDrawEffect(abilityText, context);
             if (drawEffect) {
                 result.effects.push(drawEffect);
                 this.executeDrawEffect(drawEffect, context);
+                result.success = true;
+            }
+        }
+
+        // Parse Soul consumption effects
+        if (lowerText.includes('consume') && lowerText.includes('soul') || 
+            lowerText.includes('for each of your souls')) {
+            const soulEffect = this.parseSoulEffect(abilityText, context);
+            if (soulEffect) {
+                result.effects.push(soulEffect);
+                this.executeSoulEffect(soulEffect, context);
                 result.success = true;
             }
         }
@@ -120,12 +132,12 @@ class AbilitySystem {
             }
         }
 
-        // Parse Dragon Soul effects
-        if (lowerText.includes('gain') && lowerText.includes('dragon soul')) {
-            const dragonSoulEffect = this.parseDragonSoulEffect(abilityText, context);
-            if (dragonSoulEffect) {
-                result.effects.push(dragonSoulEffect);
-                this.executeDragonSoulEffect(dragonSoulEffect, context);
+        // Parse Dragon Flame effects
+        if (lowerText.includes('gain') && lowerText.includes('dragon flame')) {
+            const dragonFlameEffect = this.parseDragonFlameEffect(abilityText, context);
+            if (dragonFlameEffect) {
+                result.effects.push(dragonFlameEffect);
+                this.executeDragonFlameEffect(dragonFlameEffect, context);
                 result.success = true;
             }
         }
@@ -317,6 +329,7 @@ class AbilitySystem {
         targets.forEach((target, index) => {
             if (target.type === 'player') {
                 // Damage player
+                console.log(`💥 [DAMAGE DEBUG] Damaging player ${target.playerId} for ${effect.amount} from ${unit.name}`);
                 this.eventBus.emit('combat:damage', {
                     target: { type: 'player', playerId: target.playerId },
                     amount: effect.amount,
@@ -370,6 +383,36 @@ class AbilitySystem {
             };
         }
         
+        // Multiple tags permanent with "your other"
+        console.log(`🔍 [TRACKER DEBUG] Checking text for multi-tag pattern: "${text}"`);
+        const multiTagOtherPermMatch = text.match(/give your other ([a-z]+)s? and ([a-z]+)s? \+(\d+) Attack/i);
+        if (multiTagOtherPermMatch) {
+            // Convert plural forms to singular for tag matching
+            let tag1 = multiTagOtherPermMatch[1];
+            let tag2 = multiTagOtherPermMatch[2];
+            
+            // Remove trailing 's' if present to get singular form
+            if (tag1.toLowerCase() === 'elves') tag1 = 'Elf';
+            else if (tag1.endsWith('s')) tag1 = tag1.slice(0, -1);
+            
+            if (tag2.toLowerCase() === 'beasts') tag2 = 'Beast';
+            else if (tag2.endsWith('s')) tag2 = tag2.slice(0, -1);
+            
+            console.log(`✅ [TRACKER DEBUG] Matched! Original: ${multiTagOtherPermMatch[1]}, ${multiTagOtherPermMatch[2]} -> Tags: ${tag1}, ${tag2}, Attack: +${multiTagOtherPermMatch[3]}`);
+            return {
+                type: 'buff',
+                attack: parseInt(multiTagOtherPermMatch[3]),
+                health: 0,
+                target: 'multi-tag-based',
+                tags: [tag1, tag2],
+                targetSlot: null,
+                temporary: false,
+                excludeSelf: true
+            };
+        } else {
+            console.log(`❌ [TRACKER DEBUG] No match for multi-tag pattern`);
+        }
+
         // Multiple tags permanent
         const multiTagPermMatch = text.match(/give ([a-z]+)s? and ([a-z]+)s? \+(\d+) attack/i);
         if (multiTagPermMatch) {
@@ -482,6 +525,34 @@ class AbilitySystem {
                 target: 'self',
                 targetSlot: null,
                 temporary: true
+            };
+        }
+
+        // Pattern: "gain +1/+1 for each other unit you have in play" (Captain ability)
+        const perUnitBuffMatch = text.match(/gain \+(\d+)\/\+(\d+) for each other unit/i);
+        if (perUnitBuffMatch) {
+            // Count other units on the battlefield
+            const battlefield = this.stateSelectors.getPlayerBattlefield(context.unit.owner);
+            let otherUnitsCount = 0;
+            
+            battlefield.forEach((unit, slotIndex) => {
+                if (unit && slotIndex !== context.slotIndex) {
+                    otherUnitsCount++;
+                }
+            });
+            
+            const attackPerUnit = parseInt(perUnitBuffMatch[1]);
+            const healthPerUnit = parseInt(perUnitBuffMatch[2]);
+            
+            console.log(`👨‍✈️ [CAPTAIN] Found ${otherUnitsCount} other units, gaining +${attackPerUnit * otherUnitsCount}/+${healthPerUnit * otherUnitsCount}`);
+            
+            return {
+                type: 'buff',
+                attack: attackPerUnit * otherUnitsCount,
+                health: healthPerUnit * otherUnitsCount,
+                target: 'self',
+                targetSlot: null,
+                temporary: false
             };
         }
 
@@ -632,14 +703,22 @@ class AbilitySystem {
             
         } else if (effect.target === 'multi-tag-based') {
             // Buff units with multiple specific tags (for Tracker ability)
-            const state = this.gameState.getState();
+            console.log(`🎯 [TRACKER EXECUTE] Executing multi-tag buff. Tags: ${effect.tags}, Owner: ${context.unit.owner}`);
+            const battlefield = this.stateSelectors.getPlayerBattlefield(context.unit.owner);
             const targetTags = effect.tags.map(t => t.toLowerCase());
+            console.log(`🎯 [TRACKER EXECUTE] Looking for units with tags: ${targetTags.join(' or ')}`);
             
-            // Buff all units with any of the specified tags on both battlefields
-            Object.keys(state.players).forEach(playerId => {
-                state.players[playerId].battlefield.forEach((unit, slotIndex) => {
-                    if (unit && unit.tags && 
-                        unit.tags.some(tag => targetTags.includes(tag.toLowerCase()))) {
+            // Find all units with any of the specified tags on owner's battlefield
+            battlefield.forEach((unit, slotIndex) => {
+                if (unit && unit.tags && 
+                    unit.tags.some(tag => targetTags.includes(tag.toLowerCase()))) {
+                    
+                    console.log(`✅ [TRACKER EXECUTE] Found eligible unit: ${unit.name} (${unit.tags.join(', ')}) at slot ${slotIndex}`);
+                    // Exclude self if specified (for "your other" units)
+                    if (effect.excludeSelf && slotIndex === context.slotIndex) {
+                        console.log(`⏩ [TRACKER EXECUTE] Skipping self at slot ${slotIndex}`);
+                        return;
+                    }
                         
                         // Apply attack buff (temporary or permanent)
                         const updates = {};
@@ -658,12 +737,11 @@ class AbilitySystem {
                             }
                         }
                         
-                        // Use centralized update method
-                        const duration = effect.temporary ? ' this turn' : '';
-                        const reason = `gained +${effect.attack} Attack${duration}`;
-                        this.updateUnitStats(playerId, slotIndex, updates, reason);
-                    }
-                });
+                    // Use centralized update method
+                    const duration = effect.temporary ? ' this turn' : '';
+                    const reason = `gained +${effect.attack} Attack${duration}`;
+                    this.updateUnitStats(context.unit.owner, slotIndex, updates, reason);
+                }
             });
             
         } else if (effect.target === 'slot-with-tag') {
@@ -697,25 +775,16 @@ class AbilitySystem {
         } else if (effect.target === 'front-slots') {
             // Buff all front row slots (for Paladin)
             const frontSlots = [0, 1, 2]; // Front row slots
-            const state = this.gameState.getState();
-            const battlefield = state.players[context.unit.owner].battlefield;
-            let unitsBuffed = 0;
             
             frontSlots.forEach(slotIndex => {
-                const unit = battlefield[slotIndex];
-                if (unit) {
-                    // Use centralized update method
-                    const updates = {
-                        attack: unit.attack + effect.attack,
-                        health: unit.health + effect.health,
-                        currentAttack: (unit.currentAttack || unit.attack) + effect.attack,
-                        currentHealth: (unit.currentHealth || unit.health) + effect.health,
-                        maxHealth: (unit.maxHealth || unit.health) + effect.health
-                    };
-                    const reason = `gained +${effect.attack}/+${effect.health} from ${context.unit.name}'s front row buff`;
-                    this.updateUnitStats(context.unit.owner, slotIndex, updates, reason);
-                    unitsBuffed++;
-                }
+                this.eventBus.emit('slot:buff', {
+                    slotIndex: slotIndex,
+                    playerId: context.unit.owner,
+                    buff: {
+                        attack: effect.attack,
+                        health: effect.health
+                    }
+                });
             });
         } else if (effect.target === 'other-slots-in-row') {
             // Buff other slots in the same row (for Ice Mage)
@@ -1145,6 +1214,29 @@ class AbilitySystem {
             unit.owner = context.playerId;
         }
         
+        // Special handling for Bone Colossus
+        if (unit.name === 'Bone Colossus') {
+            const state = this.gameState.getState();
+            const playerId = unit.owner || context.playerId;
+            const souls = state.souls[playerId] || 0;
+            
+            console.log(`☠️ Bone Colossus Unleash: Gaining +${souls} Attack from ${souls} Souls`);
+            
+            if (souls > 0) {
+                // Apply the attack buff
+                this.applyBuffToUnit(playerId, context.slotIndex, souls, 0);
+                
+                this.eventBus.emit('ability:activated', {
+                    type: 'bone-colossus-unleash',
+                    unit,
+                    effect: `Gained +${souls} Attack from Souls`
+                });
+            } else {
+                console.log(`☠️ No Souls collected yet for ${playerId}, Bone Colossus gains no attack buff`);
+            }
+            return;
+        }
+        
         const result = this.parseAndExecuteAbility(effectText, { unit, ...context });
         
         // Manual fix for Villager if parsing failed
@@ -1190,6 +1282,8 @@ class AbilitySystem {
             if (unit) {
                 unit.banished = true;
             }
+            // Still trigger Necromancer buff even for banish effects
+            this.triggerNecromancerBuff(context.playerId);
             // The Banish effect means the unit is removed from the game entirely
             // It should not be added to the deck when destroyed
             return;
@@ -1205,10 +1299,57 @@ class AbilitySystem {
                 console.log(`🔗 Executing Last Gasp part ${index + 1}: ${part.trim()}`);
                 this.parseAndExecuteAbility(part.trim(), { unit, ...context });
             });
+        } else if (effectText.includes(' and ')) {
+            // Handle "and" compound effects (e.g., "Gain 1 Dragon Flame and summon a Skeleton here")
+            const parts = effectText.split(' and ');
+            console.log(`🔗 Compound Last Gasp effect (and) with ${parts.length} parts`);
+            
+            // Execute each part in sequence
+            parts.forEach((part, index) => {
+                console.log(`🔗 Executing Last Gasp part ${index + 1}: ${part.trim()}`);
+                this.parseAndExecuteAbility(part.trim(), { unit, ...context });
+            });
         } else {
             // Single effect
             this.parseAndExecuteAbility(effectText, { unit, ...context });
         }
+        
+        // Check for Necromancer on the battlefield and buff it
+        this.triggerNecromancerBuff(context.playerId);
+    }
+    
+    /**
+     * Trigger Necromancer's ability when a friendly Last Gasp activates
+     * @param {string} playerId - The player whose Last Gasp triggered
+     */
+    triggerNecromancerBuff(playerId) {
+        const battlefield = this.stateSelectors.getPlayerBattlefield(playerId);
+        
+        battlefield.forEach((unit, slotIndex) => {
+            if (unit && unit.name === 'Necromancer') {
+                console.log(`💀 Necromancer detected! Buffing due to friendly Last Gasp`);
+                
+                // Apply +3/+3 buff to the Necromancer
+                const updates = {
+                    attack: unit.attack + 3,
+                    currentAttack: (unit.currentAttack || unit.attack) + 3,
+                    health: unit.health + 3,
+                    currentHealth: (unit.currentHealth || unit.health) + 3,
+                    maxHealth: (unit.maxHealth || unit.health) + 3
+                };
+                
+                const reason = 'gained +3/+3 (friendly Last Gasp triggered)';
+                this.updateUnitStats(playerId, slotIndex, updates, reason);
+                
+                // Visual feedback
+                this.eventBus.emit('ability:activated', {
+                    ability: 'necromancer-trigger',
+                    unit,
+                    player: playerId,
+                    effect: 'Necromancer gains +3/+3 from friendly Last Gasp'
+                });
+            }
+        });
     }
 
     /**
@@ -1227,7 +1368,8 @@ class AbilitySystem {
         }
 
         // Remove "Manacharge:" prefix and parse the effect
-        const effectText = abilityText.replace(/^.*?manacharge:\s*/i, '');
+        // Handle both "Manacharge:" and "Kindred and Manacharge:" formats
+        const effectText = abilityText.replace(/^.*?(?:kindred\s+and\s+)?manacharge:\s*/i, '');
         
         // Handle special Manacharge effects
         if (effectText.toLowerCase() === 'double this unit\'s attack') {
@@ -1392,6 +1534,17 @@ class AbilitySystem {
             };
         }
         
+        // Pattern: "draw X" (simple draw like "Draw 1")
+        const simpleDrawMatch = text.match(/draw (\d+)/i);
+        if (simpleDrawMatch) {
+            const amount = parseInt(simpleDrawMatch[1]);
+            return {
+                type: 'draw',
+                amount: amount,
+                target: 'self'
+            };
+        }
+        
         return null;
     }
 
@@ -1476,6 +1629,111 @@ class AbilitySystem {
     }
 
     /**
+     * Parse Soul consumption effects
+     * @param {string} text - Ability text
+     * @param {Object} context - Context
+     * @returns {Object} Soul effect object
+     */
+    parseSoulEffect(text, context) {
+        const lowerText = text.toLowerCase();
+        
+        // Pattern: "Consume up to 3 souls. Draw that many cards"
+        if (lowerText.includes('consume up to') && lowerText.includes('souls')) {
+            const consumeMatch = text.match(/consume up to (\d+) souls?\. draw that many/i);
+            if (consumeMatch) {
+                return {
+                    type: 'soul-consume',
+                    maxConsume: parseInt(consumeMatch[1]),
+                    effect: 'draw-equal'
+                };
+            }
+        }
+        
+        // Pattern: "Gain +2/+2 for each of your Souls"
+        if (lowerText.includes('for each of your souls')) {
+            const soulBuffMatch = text.match(/gain \+(\d+)\/\+(\d+) for each of your souls/i);
+            if (soulBuffMatch) {
+                return {
+                    type: 'soul-buff',
+                    attackPerSoul: parseInt(soulBuffMatch[1]),
+                    healthPerSoul: parseInt(soulBuffMatch[2])
+                };
+            }
+            
+            // Pattern: "Gain +X Attack for each of your Souls" (attack only)
+            const attackOnlyMatch = text.match(/gain \+(\d+) attack for each of your souls/i);
+            if (attackOnlyMatch) {
+                return {
+                    type: 'soul-buff',
+                    attackPerSoul: parseInt(attackOnlyMatch[1]),
+                    healthPerSoul: 0
+                };
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Execute Soul consumption effects
+     * @param {Object} effect - Soul effect object
+     * @param {Object} context - Context
+     */
+    executeSoulEffect(effect, context) {
+        const { unit } = context;
+        const playerId = unit.owner || context.playerId;
+        const state = this.gameState.getState();
+        const currentSouls = state.souls[playerId] || 0;
+        
+        if (effect.type === 'soul-consume') {
+            // Consume up to maxConsume souls, but only as many as we have
+            const soulsToConsume = Math.min(currentSouls, effect.maxConsume);
+            
+            if (soulsToConsume > 0) {
+                // Update souls count
+                this.gameEngine.dispatch({
+                    type: 'UPDATE_SOULS',
+                    payload: { playerId, count: currentSouls - soulsToConsume }
+                });
+                
+                console.log(`👻 ${unit.name} consumed ${soulsToConsume} souls`);
+                
+                // Execute the effect based on souls consumed
+                if (effect.effect === 'draw-equal') {
+                    const state = this.gameState.getState();
+                    const currentHandSize = state.players[playerId].hand.length;
+                    const maxDraws = Math.min(soulsToConsume, 3 - currentHandSize); // Don't exceed hand limit
+                    
+                    console.log(`👻 Attempting to draw ${soulsToConsume} cards, hand size: ${currentHandSize}, max possible: ${maxDraws}`);
+                    
+                    for (let i = 0; i < maxDraws; i++) {
+                        this.eventBus.emit('card:draw', { 
+                            playerId, 
+                            source: 'ability', 
+                            free: true 
+                        });
+                    }
+                    
+                    if (maxDraws < soulsToConsume) {
+                        console.log(`⚠️ Could only draw ${maxDraws} cards instead of ${soulsToConsume} due to hand limit`);
+                    }
+                }
+            }
+            
+        } else if (effect.type === 'soul-buff') {
+            // Buff based on current soul count
+            const attackBonus = currentSouls * effect.attackPerSoul;
+            const healthBonus = currentSouls * effect.healthPerSoul;
+            
+            if (attackBonus > 0 || healthBonus > 0) {
+                console.log(`👻 ${unit.name} gains +${attackBonus}/+${healthBonus} from ${currentSouls} souls`);
+                
+                this.applyBuffToUnit(playerId, context.slotIndex, attackBonus, healthBonus);
+            }
+        }
+    }
+
+    /**
      * Get the standard Skeleton card definition
      * All Skeletons should have "Last Gasp: Banish this" to prevent deck pollution
      * @returns {Object} Skeleton card definition
@@ -1507,6 +1765,63 @@ class AbilitySystem {
             color: 'blue'
         };
     }
+    
+    /**
+     * Get Spider token card definition
+     * @returns {Object} Spider card
+     */
+    getSpiderCard() {
+        return {
+            id: 'spider',
+            name: 'Spider',
+            attack: 5,
+            health: 1,
+            ability: '',
+            tags: ['Beast'],
+            color: 'purple',
+            isToken: true
+        };
+    }
+    
+    /**
+     * Fill front row with 5/1 Spiders for Spider Queen
+     * @param {string} playerId - Player ID
+     * @param {Object} context - Context including the unit
+     */
+    fillFrontRowWithSpiders(playerId, context) {
+        const state = this.gameState.getState();
+        const battlefield = state.players[playerId].battlefield;
+        const spiderCard = this.getSpiderCard();
+        let spidersPlaced = 0;
+        
+        // Fill front row slots (0, 1, 2) with Spiders
+        for (let slot = 0; slot <= 2; slot++) {
+            if (!battlefield[slot]) {
+                const spider = UnitFactory.createSummonedUnit(spiderCard, playerId, slot, {
+                    canAttack: false,
+                    summonedThisTurn: true
+                });
+                
+                if (UnitFactory.validateUnit(spider)) {
+                    this.gameEngine.dispatch({
+                        type: 'PLACE_UNIT',
+                        payload: { playerId, unit: spider, slotIndex: slot }
+                    });
+                    spidersPlaced++;
+                }
+            }
+        }
+        
+        console.log(`🕷️ Filled ${spidersPlaced} front row slots with Spiders`);
+        
+        // Enhanced game log
+        this.eventBus.emit('ability:activated', {
+            ability: 'unleash',
+            unit: context.unit || { name: 'Spider Queen' },
+            player: playerId,
+            effect: `Filled front row with ${spidersPlaced} Spiders`
+        });
+    }
 
     /**
      * Parse summon effects like "Add a Skeleton to your hand" or "Summon a Skeleton"
@@ -1516,6 +1831,16 @@ class AbilitySystem {
      */
     parseSummonEffect(text, context) {
         const lowerText = text.toLowerCase();
+        
+        // Special case: "Fill your front row with 5/1 Spiders"
+        if (lowerText.includes('fill your front row with') && lowerText.includes('spider')) {
+            return {
+                type: 'summon',
+                cardName: 'Spider',
+                amount: 3, // Front row has 3 slots
+                fillFrontRow: true
+            };
+        }
         
         // Parse "Add X to your hand" effects
         if (lowerText.includes('add') && lowerText.includes('to your hand')) {
@@ -1555,6 +1880,7 @@ class AbilitySystem {
         if (lowerText.includes('summon')) {
             let cardName = '';
             let amount = 1;
+            let location = 'any'; // Default to any empty slot
             
             // Extract card name
             if (lowerText.includes('skeleton')) {
@@ -1568,11 +1894,17 @@ class AbilitySystem {
                 amount = 3;
             }
             
+            // Check for "here" specification (same slot)
+            if (lowerText.includes('here')) {
+                location = 'same-slot';
+            }
+            
             if (cardName) {
                 return {
                     type: 'summon',
                     cardName,
                     amount,
+                    location,
                     target: 'battlefield'
                 };
             }
@@ -1587,10 +1919,15 @@ class AbilitySystem {
      * @param {Object} context - Context
      */
     executeSummonEffect(effect, context) {
-        const { playerId } = context;
-        const { type, cardName, amount } = effect;
+        const { playerId, slotIndex } = context;
+        const { type, cardName, amount, location, fillFrontRow } = effect;
         
         console.log(`🧙‍♂️ Executing summon effect: ${type} ${amount}x ${cardName} for ${playerId}`);
+        
+        // Special handling for Spider Queen's "Fill front row" effect
+        if (fillFrontRow && cardName === 'Spider') {
+            return this.fillFrontRowWithSpiders(playerId, context);
+        }
         
         // Get the appropriate card definition
         let cardDefinition;
@@ -1598,6 +1935,8 @@ class AbilitySystem {
             cardDefinition = this.getSkeletonCard();
         } else if (cardName === 'Mana Surge') {
             cardDefinition = this.getManaSurgeCard();
+        } else if (cardName === 'Spider') {
+            cardDefinition = this.getSpiderCard();
         } else {
             console.error(`❌ Unknown card to summon: ${cardName}`);
             return;
@@ -1616,17 +1955,30 @@ class AbilitySystem {
                 
                 console.log(`🃏 Added ${cardName} to ${playerId}'s hand`);
             } else if (type === 'summon') {
-                // Find empty slot to summon to
+                // Determine which slot to summon to
                 const state = this.gameState.getState();
                 const battlefield = state.players[playerId].battlefield;
-                const emptySlot = battlefield.findIndex(slot => slot === null);
+                let targetSlot;
                 
-                if (emptySlot !== -1) {
+                if (location === 'same-slot' && slotIndex !== undefined) {
+                    // Summon in the same slot as the dying unit (for "here" effects)
+                    targetSlot = slotIndex;
+                    console.log(`🎯 Summoning ${cardName} in same slot (${targetSlot}) as dying unit`);
+                    console.log(`📍 Current slot ${targetSlot} contents:`, battlefield[targetSlot]);
+                } else {
+                    // Find empty slot to summon to
+                    targetSlot = battlefield.findIndex(slot => slot === null);
+                    console.log(`🔍 Looking for empty slot, found: ${targetSlot}`);
+                }
+                
+                if (targetSlot !== -1 && targetSlot < battlefield.length) {
                     // Create unit from card using shared factory
-                    const unit = UnitFactory.createSummonedUnit(cardDefinition, playerId, emptySlot, {
+                    const unit = UnitFactory.createSummonedUnit(cardDefinition, playerId, targetSlot, {
                         canAttack: false,
                         summonedThisTurn: true
                     });
+                    
+                    console.log(`🏗️ Created unit:`, unit);
                     
                     // Validate the created unit
                     if (!UnitFactory.validateUnit(unit)) {
@@ -1635,12 +1987,18 @@ class AbilitySystem {
                     }
                     
                     // Place on battlefield
+                    console.log(`📦 Dispatching PLACE_UNIT with:`, { playerId, unit, slotIndex: targetSlot });
                     this.gameEngine.dispatch({
                         type: 'PLACE_UNIT',
-                        payload: { playerId, unit, slotIndex: emptySlot }
+                        payload: { playerId, unit, slotIndex: targetSlot }
                     });
                     
-                    console.log(`⚔️ Summoned ${cardName} to ${playerId}'s slot ${emptySlot}`);
+                    // Check if unit was actually placed
+                    const newState = this.gameState.getState();
+                    const placedUnit = newState.players[playerId].battlefield[targetSlot];
+                    console.log(`✅ After PLACE_UNIT, slot ${targetSlot} contains:`, placedUnit);
+                    
+                    console.log(`⚔️ Summoned ${cardName} to ${playerId}'s slot ${targetSlot}`);
                 } else {
                     console.log(`❌ No empty slots to summon ${cardName} for ${playerId}`);
                 }
@@ -1649,45 +2007,45 @@ class AbilitySystem {
         
         this.eventBus.emit('ability:activated', {
             ability: 'lastGasp',
-            unit,
+            unit: context.unit || { name: cardName },
             player: playerId
         });
     }
 
     /**
-     * Parse Dragon Soul effect from ability text
+     * Parse Dragon Flame effect from ability text
      * @param {string} text - Ability text
      * @param {Object} context - Context
-     * @returns {Object} Dragon Soul effect object
+     * @returns {Object} Dragon Flame effect object
      */
-    parseDragonSoulEffect(text, context) {
-        // Pattern: "gain X dragon soul"
-        const dragonSoulMatch = text.match(/gain (\d+) dragon souls?/i);
-        if (!dragonSoulMatch) return null;
+    parseDragonFlameEffect(text, context) {
+        // Pattern: "gain X dragon flame"
+        const dragonFlameMatch = text.match(/gain (\d+) dragon flames?/i);
+        if (!dragonFlameMatch) return null;
 
-        const amount = parseInt(dragonSoulMatch[1]);
+        const amount = parseInt(dragonFlameMatch[1]);
         
         return {
-            type: 'dragon-soul',
+            type: 'dragon-flame',
             amount,
             target: 'self'
         };
     }
 
     /**
-     * Execute a Dragon Soul effect
-     * @param {Object} effect - Dragon Soul effect object
+     * Execute a Dragon Flame effect
+     * @param {Object} effect - Dragon Flame effect object
      * @param {Object} context - Context
      */
-    executeDragonSoulEffect(effect, context) {
+    executeDragonFlameEffect(effect, context) {
         const { unit } = context;
         const playerId = unit.owner;
         
-        console.log(`🐉 ${unit.name} gains ${effect.amount} Dragon Soul(s)`);
+        console.log(`🔥 ${unit.name} gains ${effect.amount} Dragon Flame(s)`);
         
-        // Add Dragon Soul to player's resources
+        // Add Dragon Flame to player's resources
         this.gameEngine.dispatch({
-            type: 'ADD_DRAGON_SOUL',
+            type: 'ADD_DRAGON_FLAME',
             payload: {
                 playerId,
                 amount: effect.amount
@@ -1695,7 +2053,7 @@ class AbilitySystem {
         });
         
         this.eventBus.emit('ability:activated', {
-            ability: 'dragonSoul',
+            ability: 'dragonFlame',
             unit,
             player: playerId,
             amount: effect.amount
@@ -1947,6 +2305,18 @@ class AbilitySystem {
             
             // Parse the effect from the ability text
             const abilityText = attacker.ability.toLowerCase();
+            
+            // Check if the ability specifies attacking "the other player"
+            if (abilityText.includes('after this attacks the other player')) {
+                // Only trigger if target is a player (not another unit)
+                const isPlayerTarget = target && (target.playerId === 'player' || target.playerId === 'ai') && !target.name;
+                
+                if (!isPlayerTarget) {
+                    console.log(`🐺 ${attacker.name} attacked a unit, not triggering slot buff (only triggers on player attacks)`);
+                    return;
+                }
+            }
+            
             if (abilityText.includes('give this slot +1/+1')) {
                 console.log(`🐺 ${attacker.name} triggered slot buff after attacking`);
                 
@@ -2056,37 +2426,43 @@ class AbilitySystem {
                 
                 const abilityLower = observingUnit.ability.toLowerCase();
                 
-                // Wraith: "When a Purple unit dies, gain +1/+1"
-                if (abilityLower.includes('when a purple unit dies')) {
-                    // Check if the dying unit has the Purple color
-                    if (unit.color === 'purple') {
-                        console.log(`👻 ${observingUnit.name} triggered by Purple unit death`);
-                        
-                        this.eventBus.emit('ability:activated', {
-                            type: 'purple-unit-death',
-                            unit: observingUnit,
-                            effect: 'Gained +1/+1 from Purple unit death'
-                        });
-                        
-                        // Apply permanent buff to Wraith
-                        this.applyUnitBuff(observingUnit, 1, 1, playerId, observingSlot);
-                    }
-                }
+                // Note: Wraith now uses "When you gain a Soul" - handled in handleSoulsGained
                 
-                // Death Knight: "When any unit dies, gain +2/+2"
-                if (abilityLower.includes('when any unit dies')) {
-                    console.log(`⚔️ ${observingUnit.name} triggered by unit death`);
-                    
-                    this.eventBus.emit('ability:activated', {
-                        type: 'any-unit-death',
-                        unit: observingUnit,
-                        effect: 'Gained +2/+2 from unit death'
-                    });
-                    
-                    // Apply permanent buff to Death Knight
-                    this.applyUnitBuff(observingUnit, 2, 2, playerId, observingSlot);
-                }
+                // Note: Death Knight now uses Soul-based abilities - handled in Unleash parsing
             });
+        });
+    }
+
+    /**
+     * Handle "When you gain a Soul" triggers (for Wraith abilities)
+     */
+    handleSoulsGained(data) {
+        const { playerId, amount, newTotal, source } = data;
+        const state = this.gameState.getState();
+        
+        console.log(`👻 Player ${playerId} gained ${amount} souls (total: ${newTotal})`);
+        
+        // Check all units on the battlefield for soul-gain triggered abilities
+        state.players[playerId].battlefield.forEach((observingUnit, observingSlot) => {
+            if (!observingUnit || !observingUnit.ability) return;
+            
+            const abilityLower = observingUnit.ability.toLowerCase();
+            
+            // Wraith: "When you gain a Soul, gain +1/+1"
+            if (abilityLower.includes('when you gain a soul')) {
+                console.log(`👻 ${observingUnit.name} triggered by gaining a soul`);
+                
+                this.eventBus.emit('ability:activated', {
+                    type: 'soul-gained',
+                    unit: observingUnit,
+                    effect: 'Gained +1/+1 from gaining a soul'
+                });
+                
+                // Apply permanent buff to Wraith (for each soul gained)
+                for (let i = 0; i < amount; i++) {
+                    this.applyUnitBuff(observingUnit, 1, 1, playerId, observingSlot);
+                }
+            }
         });
     }
     

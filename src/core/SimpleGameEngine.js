@@ -406,15 +406,44 @@ class SimpleGameEngine {
             console.log(`🚫 ${unit.name} is marked as banished (from Unleash or other effect)`);
         }
         
-        // Check for Last Gasp ability
+        // Check if Last Gasp will banish the unit
         if (unit.ability && unit.ability.toLowerCase().includes('last gasp')) {
-            console.log(`🔮 Triggering Last Gasp for ${unit.name}: ${unit.ability}`);
-            
             const lastGaspText = unit.ability.toLowerCase();
             if (lastGaspText.includes('banish this') || lastGaspText.includes('banish')) {
                 isBanished = true;
                 console.log(`🚫 ${unit.name} will be banished`);
             }
+        }
+        
+        // Remove unit from battlefield FIRST
+        this.dispatch({
+            type: 'REMOVE_UNIT',
+            payload: { playerId: owner, slotIndex }
+        });
+        
+        // Check if unit is Undead and award Soul to owner
+        if (unit.tags && unit.tags.includes('Undead')) {
+            const state = this.gameState.getState();
+            const currentSouls = state.souls[owner] || 0;
+            console.log(`👻 Undead ${unit.name} died, ${owner} gains 1 Soul (${currentSouls} -> ${currentSouls + 1})`);
+            
+            this.dispatch({
+                type: 'UPDATE_SOULS',
+                payload: { playerId: owner, count: currentSouls + 1 }
+            });
+
+            // Trigger "when you gain a Soul" abilities
+            this.eventBus.emit('souls:gained', {
+                playerId: owner,
+                amount: 1,
+                newTotal: currentSouls + 1,
+                source: unit
+            });
+        }
+
+        // THEN trigger Last Gasp ability (after slot is cleared)
+        if (unit.ability && unit.ability.toLowerCase().includes('last gasp')) {
+            console.log(`🔮 Triggering Last Gasp for ${unit.name}: ${unit.ability}`);
             
             this.eventBus.emit('ability:last-gasp', {
                 unit,
@@ -425,12 +454,6 @@ class SimpleGameEngine {
                 }
             });
         }
-        
-        // Remove unit from battlefield
-        this.dispatch({
-            type: 'REMOVE_UNIT',
-            payload: { playerId: owner, slotIndex }
-        });
 
         // Add to deck unless banished
         if (!isBanished) {
@@ -454,6 +477,8 @@ class SimpleGameEngine {
             const state = this.getState();
             const currentHealth = state.players[target.playerId].health;
             const newHealth = currentHealth - amount;
+            
+            console.log(`💀 Player damage: ${target.playerId} takes ${amount} damage (${currentHealth} -> ${newHealth})`);
             
             this.dispatch({
                 type: 'SET_PLAYER_HEALTH',

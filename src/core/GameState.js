@@ -47,7 +47,8 @@ class GameState {
             currentDraftTier: null,
             draggedCard: null,
             globalEffects: {},
-            dragonSouls: { player: 0, ai: 0 }
+            dragonFlames: { player: 0, ai: 0 },
+            souls: { player: 0, ai: 0 }
         };
     }
 
@@ -152,16 +153,19 @@ class GameState {
             }
         }));
 
-        this.addReducer('ADD_CARD_TO_HAND', (state, { playerId, card }) => ({
-            ...state,
-            players: {
-                ...state.players,
-                [playerId]: {
-                    ...state.players[playerId],
-                    hand: [...state.players[playerId].hand, { ...card, handId: Date.now() }]
+        this.addReducer('ADD_CARD_TO_HAND', (state, { player, playerId, card }) => {
+            const targetPlayer = player || playerId || 'player';
+            return {
+                ...state,
+                players: {
+                    ...state.players,
+                    [targetPlayer]: {
+                        ...state.players[targetPlayer],
+                        hand: [...state.players[targetPlayer].hand, { ...card, handId: Date.now() }]
+                    }
                 }
-            }
-        }));
+            };
+        });
 
         this.addReducer('REMOVE_CARD_FROM_HAND', (state, { playerId, cardIndex }) => ({
             ...state,
@@ -173,6 +177,20 @@ class GameState {
                 }
             }
         }));
+
+        this.addReducer('CLEAR_HAND', (state, { player, playerId }) => {
+            const targetPlayer = player || playerId || 'player';
+            return {
+                ...state,
+                players: {
+                    ...state.players,
+                    [targetPlayer]: {
+                        ...state.players[targetPlayer],
+                        hand: []
+                    }
+                }
+            };
+        });
 
         this.addReducer('PLACE_UNIT', (state, { playerId, unit, slotIndex }) => {
             const battlefield = [...state.players[playerId].battlefield];
@@ -282,11 +300,19 @@ class GameState {
             };
         });
 
-        this.addReducer('ADD_DRAGON_SOUL', (state, { playerId, amount }) => ({
+        this.addReducer('ADD_DRAGON_FLAME', (state, { playerId, amount }) => ({
             ...state,
-            dragonSouls: {
-                ...state.dragonSouls,
-                [playerId]: state.dragonSouls[playerId] + amount
+            dragonFlames: {
+                ...state.dragonFlames,
+                [playerId]: state.dragonFlames[playerId] + amount
+            }
+        }));
+
+        this.addReducer('UPDATE_SOULS', (state, { playerId, count }) => ({
+            ...state,
+            souls: {
+                ...state.souls,
+                [playerId]: count
             }
         }));
 

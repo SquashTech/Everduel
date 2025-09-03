@@ -1,7 +1,7 @@
 /**
- * Dragon Soul Component for displaying and managing Dragon Soul resources
+ * Souls Component for displaying and managing Soul resources
  */
-class DragonSoulComponent {
+class SoulsComponent {
     constructor() {
         this.gameState = null;
         this.eventBus = null;
@@ -14,29 +14,27 @@ class DragonSoulComponent {
      * Initialize the component
      */
     initialize() {
-        this.playerDisplay = document.getElementById('playerDragonSoul');
-        this.aiDisplay = document.getElementById('aiDragonSoul');
+        this.playerDisplay = document.getElementById('playerBattlefieldSouls');
+        this.aiDisplay = document.getElementById('aiBattlefieldSouls');
         
         if (!this.playerDisplay || !this.aiDisplay) {
-            console.error('Dragon Soul display elements not found');
+            console.error('Souls display elements not found');
             return;
         }
         
         this.setupEventListeners();
         this.updateDisplay();
         
-        console.log('🐉 DragonSoulComponent initialized');
+        console.log('👻 SoulsComponent initialized');
     }
 
     /**
      * Setup event listeners
      */
     setupEventListeners() {
-        // Listen for Dragon Soul gains
-        this.eventBus.on('ability:activated', (data) => {
-            if (data.ability === 'dragonSoul') {
-                this.handleDragonSoulGain(data);
-            }
+        // Listen for Soul gains
+        this.eventBus.on('souls:gained', (data) => {
+            this.handleSoulGain(data);
         });
         
         // Listen for state changes
@@ -51,13 +49,13 @@ class DragonSoulComponent {
     }
 
     /**
-     * Handle Dragon Soul gain event
+     * Handle Soul gain event
      */
-    handleDragonSoulGain(data) {
-        const { player: playerId, amount = 1 } = data;
+    handleSoulGain(data) {
+        const { playerId, amount = 1 } = data;
         
         // Trigger gain animation
-        this.animateGain(playerId);
+        this.animateGain(playerId, amount);
         
         // Update display after a brief delay for animation
         setTimeout(() => {
@@ -66,9 +64,9 @@ class DragonSoulComponent {
     }
 
     /**
-     * Animate Dragon Soul gain
+     * Animate Soul gain
      */
-    animateGain(playerId) {
+    animateGain(playerId, amount = 1) {
         const display = playerId === 'player' ? this.playerDisplay : this.aiDisplay;
         
         if (!display) return;
@@ -89,8 +87,9 @@ class DragonSoulComponent {
         
         this.animationTimeouts.set(playerId, timeout);
         
-        // Create floating +1 indicator
-        this.createFloatingIndicator(display, '+1 🐉');
+        // Create floating +X indicator
+        const indicator = amount === 1 ? '+1 👻' : `+${amount} 👻`;
+        this.createFloatingIndicator(display, indicator);
     }
 
     /**
@@ -98,7 +97,7 @@ class DragonSoulComponent {
      */
     createFloatingIndicator(parentElement, text) {
         const indicator = document.createElement('div');
-        indicator.className = 'floating-indicator dragon-soul-indicator';
+        indicator.className = 'floating-indicator souls-indicator';
         indicator.textContent = text;
         
         // Position relative to parent
@@ -115,24 +114,24 @@ class DragonSoulComponent {
     }
 
     /**
-     * Update the display with current Dragon Soul counts
+     * Update the display with current Soul counts
      */
     updateDisplay() {
         const state = this.gameState.getState();
         
-        // Update player Dragon Soul count
+        // Update player Soul count
         if (this.playerDisplay) {
-            const playerCount = this.playerDisplay.querySelector('.dragon-soul-count');
+            const playerCount = this.playerDisplay.querySelector('.souls-count');
             if (playerCount) {
-                playerCount.textContent = state.dragonSouls.player.toString();
+                playerCount.textContent = state.souls.player.toString();
             }
         }
         
-        // Update AI Dragon Soul count
+        // Update AI Soul count
         if (this.aiDisplay) {
-            const aiCount = this.aiDisplay.querySelector('.dragon-soul-count');
+            const aiCount = this.aiDisplay.querySelector('.souls-count');
             if (aiCount) {
-                aiCount.textContent = state.dragonSouls.ai.toString();
+                aiCount.textContent = state.souls.ai.toString();
             }
         }
     }
@@ -158,4 +157,4 @@ class DragonSoulComponent {
     }
 }
 
-export default DragonSoulComponent;
+export default SoulsComponent;

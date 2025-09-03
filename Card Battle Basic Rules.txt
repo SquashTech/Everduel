@@ -13,7 +13,7 @@ Attacks happen deterministically in the column that the unit is in. By default, 
 Next they check the Back Row. Finally, they deal damage equal to their attack directly to the opposing player.
 
 Ranged units ignore the Front Row when deterministically attacking.
-Flying units always attack the opposing player unless there is an enemy Flying unit in the column, in which case they target that unit.
+Flying units always attack the opposing player unless there is an enemy Flying unit in the column, in which case they target the frontmost Flying unit.
 
 When units battle, each one deals their attack value to the health value of the opposing unit.
 
@@ -32,4 +32,5 @@ Manacharge: When you use a Blue Unleash ability, do this.
 Last Gasp: When the unit is destroyed.
 Banish: Remove from the game (does not enter deck)
 
-The AI should have a simple gameplan where it tries to spend all of its gold and play units onto the field. The AI will generally attack any time it controls a unit that can legally attack. 
+The AI should have a simple gameplan where it tries to spend all of its gold and play units onto the field. 
+The AI will generally attack any time it controls a unit that can legally attack. 

@@ -66,7 +66,7 @@ class EnhancedGameState {
             currentDraftTier: null,
             draggedCard: null,
             globalEffects: {},
-            dragonSouls: { player: 0, ai: 0 }
+            dragonFlames: { player: 0, ai: 0 }
         };
     }
 

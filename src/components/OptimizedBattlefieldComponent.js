@@ -3,6 +3,7 @@
  * Eliminates redundant stats recalculations and excessive logging
  */
 import OptimizedUpdater from '../utils/OptimizedUpdater.js';
+import StatCalculator from '../utils/StatCalculator.js';
 
 export default class OptimizedBattlefieldComponent {
     constructor() {
@@ -12,14 +13,31 @@ export default class OptimizedBattlefieldComponent {
         this.uiManager = null;
         this.optimizedUpdater = null;
         
-        // Reduce debug logging frequency
+        // Core battlefield functionality
+        this.draggedCard = null;
+        this.selectedAttacker = null;
+        this.validTargets = [];
+        this.lastClickTime = 0;
+        this.lastClickSlot = null;
+        this.clickDebounceMs = 250;
+        this.isProcessingPlacement = false;
+        this.justDropped = false;
+        this.placingCardAt = null;
+        this.globalClickBlocked = false;
+        this.statCalculator = new StatCalculator();
+        
+        // Optimization features
         this.logThrottleMap = new Map();
         this.logThrottleInterval = 1000; // 1 second between same messages
     }
 
     initialize() {
+        this.statCalculator.initialize(this.gameState);
         this.optimizedUpdater = new OptimizedUpdater(this.eventBus);
         this.setupOptimizedEventHandlers();
+        this.setupDragAndDrop();
+        this.setupClickHandlers();
+        this.initializeSlotBuffs();
         console.log('⚡ OptimizedBattlefieldComponent initialized');
     }
 
@@ -43,15 +61,15 @@ export default class OptimizedBattlefieldComponent {
             }
         });
 
-        this.eventBus.on('unit:dies', (data) => {
-            setTimeout(() => {
-                this.updateAttackableUnits();
-                // Only recalculate if dead unit had aura effects
-                if (this.unitHasAuraEffect(data.unit)) {
-                    this.optimizedUpdater.requestStatsRecalculation('unit:dies-aura');
-                }
-            }, 300);
+        this.eventBus.on('unit:dies', (data) => this.handleUnitDeath(data));
+        
+        this.eventBus.on('combat:attack-completed', (data) => {
+            this.updateAfterAttack(data);
+            setTimeout(() => this.updateAttackableUnits(), 600);
         });
+        
+        this.eventBus.on('slot:buff-updated', (data) => this.updateSlotBuff(data));
+        this.eventBus.on('unit:stats-updated', (data) => this.handleUnitStatsUpdate(data));
 
         // Handle batched updates
         this.eventBus.on('batch:stats-recalculation', () => {
@@ -218,5 +236,249 @@ export default class OptimizedBattlefieldComponent {
     disableDebugMode() {
         this.optimizedUpdater.setDebugMode(false);
         this.logThrottleInterval = 1000; // Re-enable throttling
+    }
+
+    /**
+     * Main update method called by UIManager
+     */
+    update(state) {
+        if (!state) return;
+        this.renderBattlefield(state);
+        this.updateAttackableUnits();
+    }
+
+    /**
+     * Render the battlefield display
+     */
+    renderBattlefield(state) {
+        ['player', 'ai'].forEach(playerId => {
+            const battlefield = state.players[playerId].battlefield;
+            battlefield.forEach((unit, slotIndex) => {
+                this.renderUnit(unit, playerId, slotIndex);
+            });
+        });
+    }
+
+    /**
+     * Render a single unit in a slot
+     */
+    renderUnit(unit, playerId, slotIndex) {
+        const slotElement = document.querySelector(`[data-player="${playerId}"][data-slot="${slotIndex}"]`);
+        if (!slotElement) return;
+
+        if (!unit) {
+            slotElement.innerHTML = '';
+            slotElement.classList.remove('occupied', 'attackable');
+            return;
+        }
+
+        slotElement.classList.add('occupied');
+        slotElement.innerHTML = `
+            <div class="unit-card">
+                <div class="unit-name">${unit.name}</div>
+                <div class="unit-stats">
+                    <span class="unit-attack">${unit.effectiveAttack || unit.currentAttack || unit.attack}</span>
+                    /
+                    <span class="unit-health">${unit.effectiveHealth || unit.currentHealth || unit.health}</span>
+                </div>
+                ${unit.ability ? `<div class="unit-ability">${unit.ability}</div>` : ''}
+            </div>
+        `;
+    }
+
+    /**
+     * Setup drag and drop functionality
+     */
+    setupDragAndDrop() {
+        const playerSlots = document.querySelectorAll('[data-player="player"][data-slot]');
+        playerSlots.forEach((slot, index) => {
+            slot.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                slot.classList.add('drag-over');
+            });
+
+            slot.addEventListener('dragleave', () => {
+                slot.classList.remove('drag-over');
+            });
+
+            slot.addEventListener('drop', (e) => {
+                e.preventDefault();
+                slot.classList.remove('drag-over');
+                this.handleCardDrop(e, index);
+            });
+        });
+    }
+
+    /**
+     * Setup click handlers for unit selection and attacks
+     */
+    setupClickHandlers() {
+        const allSlots = document.querySelectorAll('[data-player][data-slot]');
+        allSlots.forEach((slot, index) => {
+            const playerId = slot.getAttribute('data-player');
+            const slotIndex = parseInt(slot.getAttribute('data-slot'));
+            
+            slot.addEventListener('click', (e) => {
+                this.handleSlotClick(e, playerId, slotIndex);
+            });
+        });
+    }
+
+    /**
+     * Handle card drop on battlefield slot
+     */
+    handleCardDrop(e, slotIndex) {
+        const cardData = e.dataTransfer.getData('application/json');
+        if (!cardData) return;
+
+        const card = JSON.parse(cardData);
+        this.eventBus.emit('card:play-requested', {
+            card: card,
+            slotIndex: slotIndex,
+            playerId: 'player'
+        });
+    }
+
+    /**
+     * Handle slot click for unit selection and attacks
+     */
+    handleSlotClick(e, playerId, slotIndex) {
+        if (this.globalClickBlocked || this.isProcessingPlacement) return;
+
+        const state = this.gameState.getState();
+        const unit = state.players[playerId]?.battlefield[slotIndex];
+
+        // If player unit and can attack, select as attacker
+        if (playerId === 'player' && unit && !unit.hasAttacked && !unit.justPlaced) {
+            this.selectAttacker(unit, slotIndex);
+        }
+        // If enemy unit and we have attacker selected, attack
+        else if (playerId === 'ai' && this.selectedAttacker) {
+            this.executeAttack(this.selectedAttacker, unit, slotIndex);
+        }
+    }
+
+    /**
+     * Select unit as attacker
+     */
+    selectAttacker(unit, slotIndex) {
+        this.selectedAttacker = { unit, slotIndex };
+        this.highlightValidTargets();
+        console.log(`⚔️ Selected ${unit.name} as attacker`);
+    }
+
+    /**
+     * Execute attack between units
+     */
+    executeAttack(attacker, target, targetSlotIndex) {
+        this.eventBus.emit('combat:attack-requested', {
+            attackerId: 'player',
+            attackerSlotIndex: attacker.slotIndex,
+            targetId: 'ai',
+            targetSlotIndex: targetSlotIndex
+        });
+        
+        this.clearSelection();
+    }
+
+    /**
+     * Clear attacker selection
+     */
+    clearSelection() {
+        this.selectedAttacker = null;
+        this.validTargets = [];
+        document.querySelectorAll('.selected, .valid-target').forEach(el => {
+            el.classList.remove('selected', 'valid-target');
+        });
+    }
+
+    /**
+     * Highlight valid attack targets
+     */
+    highlightValidTargets() {
+        const aiSlots = document.querySelectorAll('[data-player="ai"][data-slot]');
+        aiSlots.forEach(slot => slot.classList.add('valid-target'));
+    }
+
+    /**
+     * Initialize slot buffs display
+     */
+    initializeSlotBuffs() {
+        // Initialize empty slot buffs for both players
+        ['player', 'ai'].forEach(playerId => {
+            for (let i = 0; i < 6; i++) {
+                this.updateSlotBuffDisplay(playerId, i, { attack: 0, health: 0 });
+            }
+        });
+    }
+
+    /**
+     * Handle unit death
+     */
+    handleUnitDeath(data) {
+        setTimeout(() => {
+            this.updateAttackableUnits();
+            if (this.unitHasAuraEffect(data.unit)) {
+                this.optimizedUpdater.requestStatsRecalculation('unit:dies-aura');
+            }
+        }, 300);
+    }
+
+    /**
+     * Update after attack completion
+     */
+    updateAfterAttack(data) {
+        this.clearSelection();
+        // Force update display after attack
+        const state = this.gameState.getState();
+        this.renderBattlefield(state);
+    }
+
+    /**
+     * Update slot buff display
+     */
+    updateSlotBuff(data) {
+        this.updateSlotBuffDisplay(data.playerId, data.slotIndex, data.buff);
+    }
+
+    /**
+     * Update slot buff display
+     */
+    updateSlotBuffDisplay(playerId, slotIndex, buff) {
+        const slotElement = document.querySelector(`[data-player="${playerId}"][data-slot="${slotIndex}"]`);
+        if (!slotElement) return;
+
+        // Add buff indicator if buffs exist
+        if (buff.attack > 0 || buff.health > 0) {
+            let buffElement = slotElement.querySelector('.slot-buff');
+            if (!buffElement) {
+                buffElement = document.createElement('div');
+                buffElement.className = 'slot-buff';
+                slotElement.appendChild(buffElement);
+            }
+            buffElement.textContent = `+${buff.attack}/+${buff.health}`;
+        }
+    }
+
+    /**
+     * Handle unit stats update
+     */
+    handleUnitStatsUpdate(data) {
+        this.optimizedUpdater.requestStatsRecalculation('unit:stats-updated');
+    }
+
+    /**
+     * Show attack animation
+     */
+    showAttackAnimation(attacker, target) {
+        console.log(`⚔️ ${attacker.name} attacks ${target.name}`);
+        // Simplified animation - could be enhanced
+        const attackerElement = document.querySelector(`[data-player="player"][data-slot="${attacker.slotIndex}"]`);
+        if (attackerElement) {
+            attackerElement.classList.add('attacking');
+            setTimeout(() => {
+                attackerElement.classList.remove('attacking');
+            }, 500);
+        }
     }
 }

@@ -151,18 +151,27 @@ class SimpleAISystem {
     }
 
     /**
-     * Find empty battlefield slot
+     * Find empty battlefield slot - randomized placement
      */
     findEmptySlot() {
         const state = this.gameState.getState();
         const battlefield = state.players[this.playerId].battlefield || [];
         
-        for (let i = 0; i < 7; i++) {
+        // Find all empty slots
+        const emptySlots = [];
+        for (let i = 0; i < 6; i++) {
             if (!battlefield[i]) {
-                return i;
+                emptySlots.push(i);
             }
         }
-        return -1;
+        
+        // Return random empty slot or -1 if battlefield is full
+        if (emptySlots.length === 0) {
+            return -1;
+        }
+        
+        const randomIndex = Math.floor(Math.random() * emptySlots.length);
+        return emptySlots[randomIndex];
     }
 
     /**

@@ -7,7 +7,8 @@ import CombatSystem from './systems/CombatSystem.js';
 import CardSystem from './systems/CardSystem.js';
 import AbilitySystem from './systems/AbilitySystem.js';
 import SimpleAISystem from './systems/SimpleAISystem.js';
-import UIManager from './components/UIManager.js';
+import OptimizedUIManager from './components/OptimizedUIManager.js';
+import DebugCardGenerator from './debug/DebugCardGenerator.js';
 
 /**
  * Simple Main Application Class
@@ -24,7 +25,7 @@ class SimpleCardGameApp {
      */
     async initialize() {
         try {
-            console.log('🚀 Simple Card Game Application starting...');
+            console.log('🚀 Everduel Application starting...');
             
             // Create simple game engine
             this.gameEngine = new SimpleGameEngine();
@@ -45,7 +46,7 @@ class SimpleCardGameApp {
             this.hideLoadingIndicator();
             
             this.isInitialized = true;
-            console.log('✅ Simple Card Game initialized successfully');
+            console.log('✅ Everduel initialized successfully');
             
         } catch (error) {
             console.error('Failed to initialize application:', error);
@@ -75,7 +76,10 @@ class SimpleCardGameApp {
         this.systems.cards = new CardSystem();
         this.systems.abilities = new AbilitySystem();
         this.systems.ai = new SimpleAISystem(); // Use new simple AI
-        this.systems.ui = new UIManager();
+        this.systems.ui = new OptimizedUIManager(); // Fixed OptimizedUIManager - now has components!
+        
+        // Create debug system (only for testing)
+        this.debugCardGenerator = new DebugCardGenerator();
         
         // Register systems with game engine
         this.gameEngine.registerSystem('CombatSystem', this.systems.combat);
@@ -86,6 +90,9 @@ class SimpleCardGameApp {
         
         // Initialize UI Manager
         await this.systems.ui.initialize();
+        
+        // Initialize debug card generator
+        this.debugCardGenerator.initialize(this.gameEngine);
         
         console.log(`✅ Registered ${Object.keys(this.systems).length} systems`);
     }
@@ -132,6 +139,7 @@ class SimpleCardGameApp {
             return this.gameEngine.getState();
         };
 
+
         console.log('🔧 Window functions registered for simple UI compatibility');
     }
 
@@ -143,7 +151,7 @@ class SimpleCardGameApp {
             this.gameEngine.destroy();
         }
         this.isInitialized = false;
-        console.log('🗑️ Simple Card Game destroyed');
+        console.log('🗑️ Everduel destroyed');
     }
 }
 
@@ -154,7 +162,7 @@ let cardGameApp = null;
 
 async function initializeSimpleCardGame() {
     try {
-        console.log('🎮 Starting Simple Card Game...');
+        console.log('🎮 Starting Everduel...');
         
         // Force hide loading after 5 seconds as fallback
         setTimeout(() => {
@@ -171,7 +179,7 @@ async function initializeSimpleCardGame() {
         // Make app available globally for debugging
         window.cardGameApp = cardGameApp;
         
-        console.log('🎮 Simple Card Game ready to play!');
+        console.log('🎮 Everduel ready to play!');
         
     } catch (error) {
         console.error('Failed to start simple card game:', error);

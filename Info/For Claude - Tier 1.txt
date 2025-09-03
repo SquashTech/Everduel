@@ -3,7 +3,7 @@ Squire,3,3,No Ability,Human,Red,
 Soldier,2,4,No Ability,Human,Red,
 Fighter,1,1,"At the end of your turn, if this is in the front row, gain +1/+1.",Dwarf,Red,
 Villager,1,1,Unleash: Give the other slot in this column +1/+1.,Human,Red,Unleash: When this unit is summoned.
-Fire Whelp,2,1,Unleash: Gain 1 Dragon Soul.,Dragon,Red,Dragon Soul: Will buff or activate abilities from future Dragons.
+Fire Whelp,2,1,Unleash: Gain 1 Dragon Flame.,Dragon,Red,Dragon Flame: Will buff or activate abilities from future Dragons.
 Worker,1,1,"At the start of your turn, give this slot +1/+1.",Dwarf,Red,
 Hawk,2,2,Flying,Beast,Yellow,Flying: Front row units can't attack this.
 Bear Cub,3,2,Trample.,Beast,Yellow,Trample: Excess damage dealt when attacking a unit is dealt to the unit or player behind it.
@@ -28,4 +28,4 @@ Spider,5,1,No Ability,Beast,Purple,
 Zombie,2,2,Last Gasp: Banish this.,Undead,Purple,Last Gasp: When the unit is destroyed.
 Gravedigger,1,2,Unleash: Add a Skeleton to your hand. ,Human,Purple,
 Reanimated,3,1,Last Gasp: Add a Skeleton to your hand.,Undead,Purple,"Skeleton: A 1/1 Undead with ""Last Gasp: Banish this."" that many Purple cards will generate."
-Cultist,2,1,Unleash: Give an Undead +2/+2.,Human,Purple,
+Cultist,2,1,Unleash: Give a random Undead +2/+2.,Human,Purple,

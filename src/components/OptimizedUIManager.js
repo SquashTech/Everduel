@@ -3,13 +3,20 @@
  * Eliminates redundant UI updates and excessive logging
  */
 import OptimizedUpdater from '../utils/OptimizedUpdater.js';
+import BattlefieldComponent from './BattlefieldComponent.js';
+import HandComponent from './HandComponent.js';
+import ControlsComponent from './ControlsComponent.js';
+import GameInfoComponent from './GameInfoComponent.js';
+import DraftOverlayComponent from './DraftOverlayComponent.js';
+import DragonFlameComponent from './DragonFlameComponent.js';
+import SoulsComponent from './SoulsComponent.js';
 
 export default class OptimizedUIManager {
     constructor() {
         this.gameEngine = null;
         this.eventBus = null;
         this.gameState = null;
-        this.components = [];
+        this.components = new Map();
         this.isInitialized = false;
         
         this.optimizedUpdater = null;
@@ -18,11 +25,43 @@ export default class OptimizedUIManager {
         this.duplicateUpdatesPrevented = 0;
     }
 
-    initialize() {
-        this.optimizedUpdater = new OptimizedUpdater(this.eventBus);
+    async initialize() {
         this.setupOptimizedEventHandlers();
+        this.initializeComponents();
+        this.optimizedUpdater = new OptimizedUpdater(this.eventBus);
         this.isInitialized = true;
         console.log('⚡ OptimizedUIManager initialized');
+    }
+
+    /**
+     * Initialize all UI components
+     */
+    initializeComponents() {
+        // Use working battlefield component with optimized UI manager
+        this.components.set('battlefield', new BattlefieldComponent());
+        this.components.set('hand', new HandComponent());
+        this.components.set('controls', new ControlsComponent());
+        this.components.set('gameInfo', new GameInfoComponent());
+        this.components.set('draftOverlay', new DraftOverlayComponent());
+        this.components.set('dragonFlame', new DragonFlameComponent());
+        this.components.set('souls', new SoulsComponent());
+        
+        // Inject dependencies into each component
+        this.components.forEach((component, name) => {
+            // Special handling for components which use setDependencies
+            if (name === 'dragonFlame' || name === 'souls') {
+                component.setDependencies(this.gameState, this.eventBus);
+            } else {
+                component.gameEngine = this.gameEngine;
+                component.eventBus = this.eventBus;
+                component.gameState = this.gameState;
+                component.uiManager = this;
+            }
+            
+            if (component.initialize) {
+                component.initialize();
+            }
+        });
     }
 
     /**
@@ -46,6 +85,10 @@ export default class OptimizedUIManager {
         // Immediate updates for critical events (no batching)
         this.eventBus.on('draft:options-ready', (data) => this.handleDraftOptionsReady(data));
         this.eventBus.on('draft:completed', () => this.handleDraftCompleted());
+        this.eventBus.on('combat:attack-completed', (data) => this.handleAttackCompleted(data));
+        this.eventBus.on('combat:attack-invalid', (data) => this.handleInvalidAttack(data));
+        this.eventBus.on('card:played', (data) => this.handleCardPlayed(data));
+        this.eventBus.on('turn:started', (data) => this.handleTurnStarted(data));
     }
 
     /**
@@ -64,7 +107,7 @@ export default class OptimizedUIManager {
             this.components.forEach(component => {
                 if (component.update) {
                     try {
-                        component.update();
+                        component.update(state);
                     } catch (error) {
                         console.error(`❌ Error updating component ${component.constructor.name}:`, error);
                     }
@@ -126,13 +169,13 @@ export default class OptimizedUIManager {
     /**
      * Add component with validation
      */
-    addComponent(component) {
+    addComponent(name, component) {
         if (!component) {
             console.warn('⚠️ Attempted to add null component to UIManager');
             return;
         }
         
-        this.components.push(component);
+        this.components.set(name, component);
         console.log(`✅ Added component: ${component.constructor.name}`);
     }
 
@@ -153,19 +196,104 @@ export default class OptimizedUIManager {
     }
 
     /**
-     * Handle draft options ready (immediate update)
+     * Get a specific component
+     * @param {string} name - Component name
+     * @returns {Object|null} Component or null if not found
      */
-    handleDraftOptionsReady(data) {
-        console.log('🃏 Draft options ready - immediate UI update');
-        this.forceUpdate();
+    getComponent(name) {
+        return this.components.get(name) || null;
     }
 
     /**
-     * Handle draft completed (immediate update)
+     * Handle draft options becoming available
+     * @param {Object} data - Draft options data
+     */
+    handleDraftOptionsReady(data) {
+        // Only show draft modal for human player, not AI
+        if (data.playerId !== 'player') {
+            return;
+        }
+        
+        const draftOverlay = this.getComponent('draftOverlay');
+        if (draftOverlay) {
+            draftOverlay.showDraftOptions(data.options, data.tier);
+        }
+        console.log('🃏 Draft options ready - immediate UI update');
+    }
+
+    /**
+     * Handle draft completion
      */
     handleDraftCompleted() {
+        const draftOverlay = this.getComponent('draftOverlay');
+        if (draftOverlay) {
+            draftOverlay.hideDraftOptions();
+        }
         console.log('✅ Draft completed - immediate UI update');
-        this.forceUpdate();
+    }
+
+    /**
+     * Handle attack completion with visual effects
+     * @param {Object} data - Attack data
+     */
+    handleAttackCompleted(data) {
+        const battlefield = this.getComponent('battlefield');
+        if (battlefield) {
+            battlefield.showAttackAnimation(data.attacker, data.target);
+        }
+    }
+
+    /**
+     * Handle invalid attack attempts
+     * @param {Object} data - Invalid attack data
+     */
+    handleInvalidAttack(data) {
+        console.log('🚫 Invalid attack:', data.reason, data.message);
+        this.showNotification(data.message, 'warning');
+    }
+
+    /**
+     * Handle card played event
+     * @param {Object} data - Card played data
+     */
+    handleCardPlayed(data) {
+        console.log('🃏 Card played:', data);
+        this.optimizedUpdater.requestUIUpdate('card:played');
+    }
+
+    /**
+     * Handle turn started event
+     * @param {Object} data - Turn data
+     */
+    handleTurnStarted(data) {
+        console.log('🔄 Turn started:', data.playerId);
+        this.optimizedUpdater.requestUIUpdate('turn:started');
+    }
+
+    /**
+     * Show attack arrow animation
+     * @param {HTMLElement} attackerElement - Attacker element
+     * @param {HTMLElement} targetElement - Target element
+     */
+    showAttackArrow(attackerElement, targetElement) {
+        // Simple implementation - delegate to battlefield component
+        const battlefield = this.getComponent('battlefield');
+        if (battlefield && battlefield.showAttackAnimation) {
+            battlefield.showAttackAnimation(
+                { element: attackerElement },
+                { element: targetElement }
+            );
+        }
+    }
+
+    /**
+     * Show notification to user
+     * @param {string} message - Notification message
+     * @param {string} type - Notification type (info, warning, error)
+     */
+    showNotification(message, type = 'info') {
+        // Create and show notification (simplified)
+        console.log(`📢 [${type.toUpperCase()}] ${message}`);
     }
 
     /**
@@ -176,7 +304,7 @@ export default class OptimizedUIManager {
             totalUpdates: this.updateCount,
             duplicatesPrevented: this.duplicateUpdatesPrevented,
             preventionRatio: this.duplicateUpdatesPrevented / (this.updateCount + this.duplicateUpdatesPrevented),
-            componentsManaged: this.components.length,
+            componentsManaged: this.components.size,
             optimizedUpdater: this.optimizedUpdater.getStats()
         };
     }
