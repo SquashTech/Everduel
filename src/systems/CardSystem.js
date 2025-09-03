@@ -35,7 +35,11 @@ class CardSystem {
             this.draftPools[tier] = [];
             if (cardDatabase[tier]) {
                 cardDatabase[tier].forEach(card => {
-                    this.draftPools[tier].push({...card, poolId: `${card.id}_${Date.now()}_${Math.random()}`});
+                    this.draftPools[tier].push({
+                        ...card, 
+                        poolId: `${card.id}_${Date.now()}_${Math.random()}`,
+                        tier: tier // Add tier information to each card
+                    });
                 });
                 console.log(`Tier ${tier}: ${this.draftPools[tier].length} cards loaded`);
             }
@@ -48,6 +52,7 @@ class CardSystem {
     setupEventHandlers() {
         this.eventBus.on('draft:start', (data) => this.handleDraftStart(data));
         this.eventBus.on('draft:select', (data) => this.handleDraftSelection(data));
+        this.eventBus.on('draft:reroll', (data) => this.handleDraftReroll(data));
         this.eventBus.on('card:play', (data) => this.handleCardPlay(data));
         this.eventBus.on('card:draw', (data) => this.handleCardDraw(data));
     }
@@ -84,6 +89,21 @@ class CardSystem {
             return;
         }
 
+        // Deduct gold immediately when starting draft
+        const state = this.gameState.getState();
+        const cost = tier * 2;
+        const currentGold = state.players[playerId].gold;
+        
+        console.log(`💰 Deducting ${cost} gold from ${playerId} (current: ${currentGold})`);
+        
+        this.gameEngine.dispatch({
+            type: 'SET_PLAYER_GOLD',
+            payload: {
+                playerId,
+                gold: currentGold - cost
+            }
+        });
+
         // Create draft options
         const draftOptions = availableCards.slice(0, 3);
         console.log('✨ Created draft options:', draftOptions);
@@ -116,17 +136,8 @@ class CardSystem {
             return;
         }
 
-        // Check if player can afford
-        if (!this.canAffordDraft(tier, playerId)) {
-            this.eventBus.emit('draft:failed', { 
-                reason: 'insufficient_gold', 
-                tier, 
-                playerId 
-            });
-            return;
-        }
-
-        // Check hand limit
+        // Note: Gold has already been deducted when the draft started
+        // Just check hand limit
         if (state.players[playerId].hand.length >= 3) {
             this.eventBus.emit('draft:failed', { 
                 reason: 'hand_full', 
@@ -135,18 +146,6 @@ class CardSystem {
             });
             return;
         }
-
-        // Deduct cost
-        const cost = tier * 2;
-        const currentGold = state.players[playerId].gold;
-        
-        this.gameEngine.dispatch({
-            type: 'SET_PLAYER_GOLD',
-            payload: {
-                playerId,
-                gold: currentGold - cost
-            }
-        });
 
         // Add card to hand
         this.gameEngine.dispatch({
@@ -194,6 +193,69 @@ class CardSystem {
                 result.result();
             }
         }
+    }
+
+    /**
+     * Handle draft reroll
+     * @param {Object} data - Reroll data
+     */
+    handleDraftReroll(data) {
+        const { tier, playerId } = data;
+        console.log('🎲 CardSystem: Reroll requested for tier', tier, 'by', playerId);
+        
+        const state = this.gameState.getState();
+        
+        // Check if player can afford reroll
+        if (state.players[playerId].gold < 1) {
+            this.eventBus.emit('draft:failed', { 
+                reason: 'insufficient_gold_reroll', 
+                tier, 
+                playerId 
+            });
+            return;
+        }
+
+        // Deduct 1 gold for reroll
+        const currentGold = state.players[playerId].gold;
+        
+        console.log(`💰 Deducting 1 gold for reroll from ${playerId} (current: ${currentGold})`);
+        
+        this.gameEngine.dispatch({
+            type: 'SET_PLAYER_GOLD',
+            payload: {
+                playerId,
+                gold: currentGold - 1
+            }
+        });
+
+        // Get new draft options
+        const availableCards = this.getAvailableCards(tier);
+        
+        if (availableCards.length === 0) {
+            console.log('❌ Reroll failed: no cards available');
+            this.eventBus.emit('draft:failed', { 
+                reason: 'no_cards_available', 
+                tier, 
+                playerId 
+            });
+            return;
+        }
+
+        // Create new draft options
+        const newDraftOptions = availableCards.slice(0, 3);
+        console.log('✨ Created new draft options after reroll:', newDraftOptions);
+        
+        this.gameEngine.dispatch({
+            type: 'SET_DRAFT_OPTIONS',
+            payload: { options: newDraftOptions, tier }
+        });
+
+        // Emit reroll complete event
+        this.eventBus.emit('draft:reroll-complete', {
+            options: newDraftOptions,
+            tier,
+            playerId
+        });
     }
 
     /**

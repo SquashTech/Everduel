@@ -3,6 +3,7 @@
  * Handles the 3x2 grid battlefield visualization
  */
 import StatCalculator from '../utils/StatCalculator.js';
+import UnitFactory from '../utils/UnitFactory.js';
 
 class BattlefieldComponent {
     constructor() {
@@ -343,8 +344,12 @@ class BattlefieldComponent {
         const shouldHaveGlow = hasExistingGlow || this.canUnitAttack(unit, owner);
         const canAttackClass = shouldHaveGlow ? ' can-attack' : '';
         
+        const tierDisplay = UnitFactory.getCardTierDisplay(unit);
+        const tierIndicatorHTML = tierDisplay ? `<div class="tier-indicator">${tierDisplay}</div>` : '';
+        
         return `
             <div class="game-card game-card--battlefield unit ${unit.color}${canAttackClass}" data-unit-id="${unit.id}" data-slot="${unit.slotIndex}">
+                ${tierIndicatorHTML}
                 <div class="card-header">
                     <div class="card-name">${unit.name}</div>
                 </div>

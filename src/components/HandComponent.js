@@ -3,6 +3,7 @@
  * Handles card display, selection, and drag/drop functionality
  */
 import DOMSanitizer from '../utils/DOMSanitizer.js';
+import UnitFactory from '../utils/UnitFactory.js';
 
 class HandComponent {
     constructor() {
@@ -88,6 +89,13 @@ class HandComponent {
         cardElement.setAttribute('data-card-index', index);
         cardElement.setAttribute('data-hand-id', card.handId);
         cardElement.setAttribute('draggable', 'true');
+        
+        // Add tier indicator if available
+        const tierDisplay = UnitFactory.getCardTierDisplay(card);
+        if (tierDisplay) {
+            const tierIndicator = DOMSanitizer.createElement('div', tierDisplay, 'tier-indicator');
+            cardElement.appendChild(tierIndicator);
+        }
         
         // Create and append header
         const header = DOMSanitizer.createElement('div', '', 'card-header');

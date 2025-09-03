@@ -32,6 +32,7 @@ class UnitFactory {
             ability: card.ability || '',
             tags: Array.isArray(card.tags) ? [...card.tags] : [],
             color: card.color,
+            tier: card.tier, // Preserve tier information from card
             
             // Current state properties
             currentAttack: card.attack,
@@ -135,6 +136,46 @@ class UnitFactory {
             tags: [...(unit.tags || [])], // Deep clone arrays
             ...modifications
         };
+    }
+
+    /**
+     * Get the tier number of a card based on its tier property
+     * @param {Object} card - Card object
+     * @returns {number|null} Tier number (1-5) or null if not found
+     */
+    static getCardTier(card) {
+        // Check if card has a tier property
+        if (card.tier && typeof card.tier === 'number') {
+            return card.tier;
+        }
+
+        return null;
+    }
+
+    /**
+     * Convert a tier number to Roman numeral
+     * @param {number} tier - Tier number (1-5)
+     * @returns {string} Roman numeral or empty string
+     */
+    static getTierRomanNumeral(tier) {
+        const romanNumerals = {
+            1: 'I',
+            2: 'II', 
+            3: 'III',
+            4: 'IV',
+            5: 'V'
+        };
+        return romanNumerals[tier] || '';
+    }
+
+    /**
+     * Get tier display for a card (Roman numeral)
+     * @param {Object} card - Card object
+     * @returns {string} Roman numeral or empty string
+     */
+    static getCardTierDisplay(card) {
+        const tier = this.getCardTier(card);
+        return tier ? this.getTierRomanNumeral(tier) : '';
     }
 }
 

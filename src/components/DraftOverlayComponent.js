@@ -2,6 +2,8 @@
  * Draft Overlay Component for card selection
  * Manages the modal interface for selecting cards from draft pools
  */
+import UnitFactory from '../utils/UnitFactory.js';
+
 class DraftOverlayComponent {
     constructor() {
         this.gameEngine = null;
@@ -31,8 +33,14 @@ class DraftOverlayComponent {
                 this.showDraftOptions(data.options, data.tier);
             }
         });
-        this.eventBus.on('draft:completed', () => this.hideDraftOptions());
+        this.eventBus.on('draft:completed', () => this.hideDraftOptions(true)); // Card was selected
         this.eventBus.on('draft:failed', (data) => this.handleDraftFailed(data));
+        this.eventBus.on('draft:reroll-complete', (data) => {
+            // Update the draft options with new cards after reroll
+            if (data.playerId === 'player') {
+                this.showDraftOptions(data.options, data.tier);
+            }
+        });
     }
 
     /**
@@ -88,9 +96,9 @@ class DraftOverlayComponent {
             return;
         }
 
-        // Update header
+        // Update header - gold already paid when draft started
         const cost = tier * 2;
-        draftInfo.textContent = `Choose a Tier ${tier} Card (${cost} Gold)`;
+        draftInfo.textContent = `Choose a Tier ${tier} Card (${cost} Gold Paid)`;
 
         // Create card options HTML
         draftCards.innerHTML = options.map(card => this.createDraftCardHTML(card)).join('');
@@ -98,6 +106,9 @@ class DraftOverlayComponent {
 
         // Add click handlers to cards
         this.setupCardClickHandlers();
+
+        // Setup reroll button
+        this.setupRerollButton();
 
         // Show overlay
         overlay.classList.add('active');
@@ -107,11 +118,18 @@ class DraftOverlayComponent {
 
     /**
      * Hide the draft options overlay
+     * @param {boolean} cardSelected - Whether a card was actually selected (default false)
      */
-    hideDraftOptions() {
+    hideDraftOptions(cardSelected = false) {
         const overlay = document.getElementById('draftOverlay');
         if (overlay) {
             overlay.classList.remove('active');
+        }
+        
+        // If closing without selecting a card, notify that gold was spent
+        if (!cardSelected && this.currentTier !== null) {
+            const cost = this.currentTier * 2;
+            this.uiManager.showNotification(`Draft cancelled - ${cost} gold was spent`, 'warning');
         }
         
         this.currentOptions = [];
@@ -133,8 +151,12 @@ class DraftOverlayComponent {
      * @returns {string} HTML string
      */
     createDraftCardHTML(card) {
+        const tierDisplay = UnitFactory.getCardTierDisplay(card);
+        const tierIndicatorHTML = tierDisplay ? `<div class="tier-indicator">${tierDisplay}</div>` : '';
+        
         return `
             <div class="game-card game-card--draft draft-card ${card.color}" data-card-id="${card.id}" data-pool-id="${card.poolId}">
+                ${tierIndicatorHTML}
                 <div class="card-header">
                     <div class="card-name">${card.name}</div>
                 </div>
@@ -186,6 +208,70 @@ class DraftOverlayComponent {
     }
 
     /**
+     * Setup reroll button functionality
+     */
+    setupRerollButton() {
+        const rerollBtn = document.getElementById('rerollBtn');
+        if (!rerollBtn) return;
+
+        // Clear any existing event listeners
+        const newRerollBtn = rerollBtn.cloneNode(true);
+        rerollBtn.parentNode.replaceChild(newRerollBtn, rerollBtn);
+        
+        const rerollButton = document.getElementById('rerollBtn');
+        
+        // Add click handler
+        rerollButton.addEventListener('click', () => {
+            this.handleReroll();
+        });
+
+        // Update button state based on current gold
+        this.updateRerollButtonState();
+    }
+
+    /**
+     * Update reroll button state based on player gold
+     */
+    updateRerollButtonState() {
+        const rerollBtn = document.getElementById('rerollBtn');
+        if (!rerollBtn) return;
+
+        const state = this.gameState.getState();
+        const playerGold = state.players.player.gold;
+        const canReroll = playerGold >= 1;
+
+        rerollBtn.disabled = !canReroll;
+        rerollBtn.style.opacity = canReroll ? '1' : '0.5';
+        
+        if (!canReroll) {
+            rerollBtn.textContent = '🎲 Reroll (Need 1 Gold)';
+        } else {
+            rerollBtn.textContent = '🎲 Reroll (1 Gold)';
+        }
+    }
+
+    /**
+     * Handle reroll button click
+     */
+    handleReroll() {
+        const state = this.gameState.getState();
+        const playerGold = state.players.player.gold;
+        
+        if (playerGold < 1) {
+            this.uiManager.showNotification('Not enough gold to reroll', 'error');
+            return;
+        }
+
+        console.log('🎲 Reroll requested for tier', this.currentTier);
+        
+        // Emit reroll event
+        this.eventBus.emit('draft:reroll', {
+            tier: this.currentTier,
+            playerId: 'player'
+        });
+    }
+
+    /**
      * Select a card from the draft options
      * @param {Object} card - Selected card
      */
@@ -198,8 +284,8 @@ class DraftOverlayComponent {
             playerId: 'player'
         });
 
-        // Hide overlay
-        this.hideDraftOptions();
+        // Hide overlay (pass true to indicate a card was selected)
+        this.hideDraftOptions(true);
 
         // Show selection feedback
         this.uiManager.showNotification(`Drafted ${card.name}!`, 'success');
@@ -227,7 +313,7 @@ class DraftOverlayComponent {
         }
 
         this.uiManager.showNotification(message, 'error');
-        this.hideDraftOptions();
+        this.hideDraftOptions(true); // Don't show "gold spent" message on failure
     }
 
     /**
