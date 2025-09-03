@@ -188,7 +188,7 @@
             <div class="control-section">
                 <h4>Other Actions</h4>
                 <button class="btn btn-secondary" id="spellDraftBtn">📖 Spellbook</button>
-                <button class="btn btn-secondary" id="drawDeckBtn">Draw from Deck (3 💰)</button>
+                <button class="btn btn-deck-draw" id="drawDeckBtn">Draw from Deck (3 💰)</button>
             </div>
         </div>
     </div>
@@ -196,13 +196,13 @@
     <!-- Draft Modal -->
     <div id="draftOverlay" class="modal-overlay">
         <div class="modal-content">
-            <button class="modal-close">×</button>
             <div class="modal-header">
                 <div id="draftInfo">Choose a Card</div>
             </div>
             <div id="draftCards" class="draft-options"></div>
             <div class="draft-controls">
                 <button id="rerollBtn" class="reroll-btn">🎲 Reroll (1 Gold)</button>
+                <div id="draftGoldDisplay" class="draft-gold-display">💰 0</div>
             </div>
         </div>
     </div>

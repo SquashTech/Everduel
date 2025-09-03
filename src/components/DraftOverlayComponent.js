@@ -47,28 +47,7 @@ class DraftOverlayComponent {
      * Setup click handlers for the overlay
      */
     setupClickHandlers() {
-        // Close button functionality
-        const closeButton = document.querySelector('#draftOverlay .modal-close');
-        if (closeButton) {
-            closeButton.addEventListener('click', () => this.hideDraftOptions());
-        }
-
-        // Click outside to close
-        const overlay = document.getElementById('draftOverlay');
-        if (overlay) {
-            overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) {
-                    this.hideDraftOptions();
-                }
-            });
-        }
-
-        // ESC key to close
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isVisible()) {
-                this.hideDraftOptions();
-            }
-        });
+        // No close functionality - draft window cannot be closed once opened
     }
 
     /**
@@ -110,6 +89,9 @@ class DraftOverlayComponent {
         // Setup reroll button
         this.setupRerollButton();
 
+        // Update gold display
+        this.updateGoldDisplay();
+
         // Show overlay
         overlay.classList.add('active');
         console.log('Draft overlay should now be visible with class "active"');
@@ -121,15 +103,15 @@ class DraftOverlayComponent {
      * @param {boolean} cardSelected - Whether a card was actually selected (default false)
      */
     hideDraftOptions(cardSelected = false) {
+        // Only allow hiding the draft overlay if a card was actually selected
+        // This prevents the window from being closed without making a selection
+        if (!cardSelected) {
+            return;
+        }
+        
         const overlay = document.getElementById('draftOverlay');
         if (overlay) {
             overlay.classList.remove('active');
-        }
-        
-        // If closing without selecting a card, notify that gold was spent
-        if (!cardSelected && this.currentTier !== null) {
-            const cost = this.currentTier * 2;
-            this.uiManager.showNotification(`Draft cancelled - ${cost} gold was spent`, 'warning');
         }
         
         this.currentOptions = [];
@@ -248,6 +230,18 @@ class DraftOverlayComponent {
         } else {
             rerollBtn.textContent = '🎲 Reroll (1 Gold)';
         }
+    }
+
+    /**
+     * Update the gold display in the draft window
+     */
+    updateGoldDisplay() {
+        const goldDisplay = document.getElementById('draftGoldDisplay');
+        if (!goldDisplay) return;
+
+        const state = this.gameState.getState();
+        const playerGold = state.players.player.gold;
+        goldDisplay.textContent = `💰 ${playerGold}`;
     }
 
     /**

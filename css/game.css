@@ -1504,12 +1504,17 @@ body {
 }
 
 .btn-primary {
-    background: #4ecdc4;
+    background: #2a9d96;
     color: white;
 }
 
 .btn-secondary {
     background: #666;
+    color: white;
+}
+
+.btn-deck-draw {
+    background: #8b5a3c;
     color: white;
 }
 
@@ -1529,15 +1534,15 @@ body {
     transform: translateY(-1px) !important;
 }
 
-/* Draw from Deck button - teal like draft buttons */
+/* Draw from Deck button - brown color to differentiate from draft buttons */
 #drawDeckBtn:not(:disabled) {
-    background: #4ecdc4;
+    background: #8b5a3c;
     color: white;
 }
 
 #drawDeckBtn:not(:disabled):hover {
-    background: #3db8b0;
-    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+    background: #a06b47;
+    box-shadow: 0 4px 12px rgba(139, 90, 60, 0.3);
 }
 
 .btn:disabled {
@@ -1779,9 +1784,29 @@ body {
 .draft-controls {
     display: flex;
     justify-content: center;
+    align-items: center;
     margin-top: 15px;
     padding-top: 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+}
+
+.draft-gold-display {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    color: #ffd700;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    border: 2px solid #ffd700;
+    box-shadow: 0 3px 10px rgba(255, 215, 0, 0.4);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .reroll-btn {
