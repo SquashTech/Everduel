@@ -46,7 +46,7 @@ class GameInfoComponent {
      */
     updatePlayerStats(player, playerId) {
         this.updateElementText(`${playerId}Health`, player.health);
-        this.updateElementText(`${playerId}Gold`, player.gold);
+        this.updateElementText(`${playerId}GoldCurrent`, player.gold);
         this.updateElementText(`${playerId}MaxGold`, player.maxGold);
         // Hand count no longer displayed in UI
         this.updateElementText(`${playerId}DeckCount`, player.deck.length);
@@ -179,7 +179,7 @@ class GameInfoComponent {
      */
     updateGold(data) {
         const { playerId, gold, previousGold } = data;
-        const goldElement = document.getElementById(`${playerId}Gold`);
+        const goldElement = document.getElementById(`${playerId}GoldCurrent`);
         
         if (goldElement) {
             goldElement.textContent = gold;

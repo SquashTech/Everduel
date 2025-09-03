@@ -69,7 +69,8 @@
         
         <!-- AI Player Info - Separate Box -->
         <div class="player-info-box ai-info">
-            <h3>AI Player</h3>
+            <h3>Opponent</h3>
+            <button class="btn btn-deck btn-deck-hand" id="aiDeckBtn" title="View AI Deck">Deck: <span id="aiDeckCount">0</span></button>
             <div class="player-stats-compact">
                 <div class="health">🛡️ <span id="aiHealth">20</span></div>
                 <div class="gold">💰 <span id="aiGoldCurrent">2</span></div>
@@ -137,7 +138,7 @@
         
         <!-- Player Info - Separate Box -->
         <div class="player-info-box player-info">
-            <h3>Your Turn</h3>
+            <h3>Player</h3>
             <div class="player-stats-compact">
                 <div class="health">🛡️ <span id="playerHealth">20</span></div>
                 <div class="gold">💰 <span id="playerGoldCurrent">2</span></div>
@@ -150,8 +151,7 @@
             <div class="hand-header">
                 <span>Your Hand</span>
                 <div class="hand-controls">
-                    <button class="btn btn-deck btn-deck-hand" id="playerDeckBtn" title="View Your Deck">Deck: <span id="playerDeckCount">0</span></button>
-                    <button class="btn btn-deck btn-deck-hand" id="aiDeckBtn" title="View AI Deck">AI Deck: <span id="aiDeckCount">0</span></button>
+                    <button class="btn btn-deck btn-deck-hand" id="playerDeckBtn" title="View Your Deck">Your Deck: <span id="playerDeckCount">0</span></button>
                 </div>
             </div>
             <div class="hand-cards-container" id="handCardsContainer">
