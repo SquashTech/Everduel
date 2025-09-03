@@ -625,7 +625,7 @@ class CardSystem {
             
             unit.currentAttack = originalAttack + slotBuff.attack;
             unit.currentHealth = originalHealth + slotBuff.health;
-            unit.health += slotBuff.health; // Also increase max health
+            unit.maxHealth = (unit.maxHealth || unit.health) + slotBuff.health; // Only increase max health, not base health
             
             console.log(`💪 Applied existing slot buffs to ${unit.name}: ${originalAttack}/${originalHealth} + ${slotBuff.attack}/${slotBuff.health} = ${unit.currentAttack}/${unit.currentHealth}`);
             

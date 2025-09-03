@@ -760,11 +760,9 @@ class AbilitySystem {
                             // Temporary buff - only modify current stats
                             updates.currentAttack = (unit.currentAttack || unit.attack) + effect.attack;
                         } else {
-                            // Permanent buff - modify base and current stats
-                            updates.attack = unit.attack + effect.attack;
+                            // Permanent buff - only modify current stats, not base stats
                             updates.currentAttack = (unit.currentAttack || unit.attack) + effect.attack;
                             if (effect.health > 0) {
-                                updates.health = unit.health + effect.health;
                                 updates.currentHealth = (unit.currentHealth || unit.health) + effect.health;
                                 updates.maxHealth = (unit.maxHealth || unit.health) + effect.health;
                             }
@@ -943,20 +941,16 @@ class AbilitySystem {
                 this.updateUnitStats(playerId, slotIndex, updates, reason);
                 
             } else {
-                // Permanent buffs modify base stats
+                // Permanent buffs only modify current stats, not base stats
                 const oldCurrentAttack = unit.currentAttack || unit.attack;
                 const oldCurrentHealth = unit.currentHealth || unit.health;
                 
-                const newAttack = unit.attack + effect.attack;
-                const newHealth = unit.health + effect.health;
                 const newCurrentAttack = oldCurrentAttack + effect.attack;
                 const newCurrentHealth = oldCurrentHealth + effect.health;
                 const newMaxHealth = (unit.maxHealth || unit.health) + effect.health;
                 
                 // Use centralized update method for permanent buffs
-                const updates = { 
-                    attack: newAttack,
-                    health: newHealth,
+                const updates = {
                     currentAttack: newCurrentAttack,
                     currentHealth: newCurrentHealth,
                     maxHealth: newMaxHealth
@@ -992,8 +986,6 @@ class AbilitySystem {
      */
     applyUnitBuff(unit, attackBuff, healthBuff, playerId, slotIndex) {
         const updates = {
-            attack: unit.attack + attackBuff,
-            health: unit.health + healthBuff,
             currentAttack: (unit.currentAttack || unit.attack) + attackBuff,
             currentHealth: (unit.currentHealth || unit.health) + healthBuff
         };
@@ -1085,8 +1077,6 @@ class AbilitySystem {
 
         // Calculate new stats using consistent pattern
         const updates = {
-            attack: unit.attack + attackBuff,
-            health: unit.health + healthBuff,
             currentAttack: (unit.currentAttack || unit.attack) + attackBuff,
             currentHealth: (unit.currentHealth || unit.health) + healthBuff,
             maxHealth: (unit.maxHealth || unit.health) + healthBuff
@@ -1364,9 +1354,7 @@ class AbilitySystem {
                 
                 // Apply +3/+3 buff to the Necromancer
                 const updates = {
-                    attack: unit.attack + 3,
                     currentAttack: (unit.currentAttack || unit.attack) + 3,
-                    health: unit.health + 3,
                     currentHealth: (unit.currentHealth || unit.health) + 3,
                     maxHealth: (unit.maxHealth || unit.health) + 3
                 };
@@ -2270,7 +2258,6 @@ class AbilitySystem {
                 
                 // Use centralized update method
                 const updates = {
-                    attack: unit.attack + 4,
                     currentAttack: (unit.currentAttack || unit.attack) + 4
                 };
                 const reason = 'gained +4 Attack from surviving damage';
@@ -2285,9 +2272,9 @@ class AbilitySystem {
                 
                 // Use centralized update method
                 const updates = {
-                    attack: unit.attack + 1,
-                    health: unit.health + 1,
-                    currentHealth: (unit.currentHealth || unit.health) + 1
+                    currentAttack: (unit.currentAttack || unit.attack) + 1,
+                    currentHealth: (unit.currentHealth || unit.health) + 1,
+                    maxHealth: (unit.maxHealth || unit.health) + 1
                 };
                 const reason = 'gained +1/+1 from surviving damage';
                 this.updateUnitStats(owner, slotIndex, updates, reason);
