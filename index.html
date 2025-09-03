@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Battler - Clean Architecture</title>
+    <title>Everduel</title>
     
     <!-- Single CSS File -->
     <link rel="stylesheet" href="css/game.css">
@@ -11,7 +11,7 @@
 <body>
     <!-- Loading Indicator -->
     <div id="loadingIndicator" class="app-loading">
-        <div>🎮 Loading Card Game...</div>
+        <div>🎮 Loading Everduel...</div>
     </div>
 
     <div class="game-container">
@@ -19,6 +19,20 @@
         <div class="player-area">
             <div class="battlefield-container">
                 <div class="battlefield" id="aiBattlefield">
+                    <!-- Dragon Flame Display for AI -->
+                    <div class="dragon-flame-display battlefield-dragon-flame" id="aiDragonFlame">
+                        <span class="dragon-flame-icon">🔥</span>
+                        <span class="dragon-flame-count">0</span>
+                    </div>
+                    <!-- Souls Display for AI -->
+                    <div class="souls-display battlefield-souls" id="aiBattlefieldSouls">
+                        <span class="souls-icon">👻</span>
+                        <span class="souls-count" id="aiSouls">0</span>
+                    </div>
+                    <!-- Turn Indicator for AI -->
+                    <div class="turn-indicator battlefield-turn" id="aiBattlefieldTurn">
+                        <span class="turn-icon">⚔️</span>
+                    </div>
                     <!-- AI Back Row (slots 3,4,5) displayed at top -->
                     <div class="battlefield-row">
                         <div class="slot-container">
@@ -55,15 +69,10 @@
         
         <!-- AI Player Info - Separate Box -->
         <div class="player-info-box ai-info">
-            <div class="dragon-soul-display" id="aiDragonSoul">
-                <span class="dragon-soul-icon">🐉</span>
-                <span class="dragon-soul-count">0</span>
-            </div>
             <h3>AI Player</h3>
             <div class="player-stats-compact">
-                <div class="health">❤️ <span id="aiHealth">20</span></div>
-                <div class="gold">💰 <span id="aiGold">2/2</span></div>
-                <button class="btn btn-deck btn-deck-inline" id="aiDeckBtn" title="View AI Deck">Deck: <span id="aiDeckCount">0</span></button>
+                <div class="health">🛡️ <span id="aiHealth">20</span></div>
+                <div class="gold">💰 <span id="aiGoldCurrent">2</span></div>
             </div>
         </div>
 
@@ -71,6 +80,20 @@
         <div class="player-area">
             <div class="battlefield-container">
                 <div class="battlefield" id="playerBattlefield">
+                    <!-- Dragon Flame Display for Player -->
+                    <div class="dragon-flame-display battlefield-dragon-flame" id="playerDragonFlame">
+                        <span class="dragon-flame-icon">🔥</span>
+                        <span class="dragon-flame-count">0</span>
+                    </div>
+                    <!-- Souls Display for Player -->
+                    <div class="souls-display battlefield-souls" id="playerBattlefieldSouls">
+                        <span class="souls-icon">👻</span>
+                        <span class="souls-count" id="playerSouls">0</span>
+                    </div>
+                    <!-- Turn Indicator for Player -->
+                    <div class="turn-indicator battlefield-turn" id="playerBattlefieldTurn">
+                        <span class="turn-icon">⚔️</span>
+                    </div>
                     <div class="battlefield-row">
                         <div class="slot-container">
                             <div class="slot front-row" data-player="player" data-slot="0"></div>
@@ -107,29 +130,30 @@
         <div class="game-log-display">
             <div class="game-log-header">📜 Game Log</div>
             <div class="game-log-content" id="gameLogDisplay">
-                <div class="game-log-entry">🎮 Welcome to Card Battler!</div>
+                <div class="game-log-entry">🎮 Welcome to Everduel!</div>
                 <div class="game-log-entry">🔄 Game started - Your turn</div>
             </div>
         </div>
         
         <!-- Player Info - Separate Box -->
         <div class="player-info-box player-info">
-            <div class="dragon-soul-display" id="playerDragonSoul">
-                <span class="dragon-soul-icon">🐉</span>
-                <span class="dragon-soul-count">0</span>
-            </div>
             <h3>Your Turn</h3>
             <div class="player-stats-compact">
-                <div class="health">❤️ <span id="playerHealth">20</span></div>
-                <div class="gold">💰 <span id="playerGold">2/2</span></div>
-                <button class="btn btn-deck btn-deck-inline" id="playerDeckBtn" title="View Your Deck">Deck: <span id="playerDeckCount">0</span></button>
+                <div class="health">🛡️ <span id="playerHealth">20</span></div>
+                <div class="gold">💰 <span id="playerGoldCurrent">2</span></div>
             </div>
             <button class="btn btn-primary" id="endTurnBtn">End Turn</button>
         </div>
 
         <!-- Hand Cards - Extended Bottom Right -->
         <div class="hand-cards-horizontal" id="playerHand">
-            <div class="hand-header">Your Hand</div>
+            <div class="hand-header">
+                <span>Your Hand</span>
+                <div class="hand-controls">
+                    <button class="btn btn-deck btn-deck-hand" id="playerDeckBtn" title="View Your Deck">Deck: <span id="playerDeckCount">0</span></button>
+                    <button class="btn btn-deck btn-deck-hand" id="aiDeckBtn" title="View AI Deck">AI Deck: <span id="aiDeckCount">0</span></button>
+                </div>
+            </div>
             <div class="hand-cards-container" id="handCardsContainer">
                 <!-- Cards will be dynamically added here -->
             </div>
@@ -163,7 +187,7 @@
             
             <div class="control-section">
                 <h4>Other Actions</h4>
-                <button class="btn btn-secondary" id="spellDraftBtn">Draft Spell (1 💰)</button>
+                <button class="btn btn-secondary" id="spellDraftBtn">📖 Spellbook</button>
                 <button class="btn btn-secondary" id="drawDeckBtn">Draw from Deck (3 💰)</button>
             </div>
         </div>
@@ -201,46 +225,66 @@
     <div id="howToPlayModal" class="modal-overlay">
         <div class="modal-content how-to-play-content">
             <button class="modal-close">×</button>
-            <h2>How to Play - Card Battler</h2>
+            <h2>How to Play - Everduel</h2>
             
             <h3>🎯 Objective</h3>
-            <p>Reduce your opponent's health to 0 by strategically drafting cards, placing units, and attacking.</p>
+            <p>Reduce your opponent's health from 20 to 0 by strategically drafting cards, placing units, and attacking.</p>
             
-            <h3>💰 Gold & Drafting</h3>
-            <p>• Each turn you gain gold (2→4→6→8→10)</p>
-            <p>• Spend gold to draft cards from different tiers</p>
-            <p>• Higher tiers cost more gold but have stronger cards</p>
+            <h3>💰 Gold System</h3>
+            <p>• Both players start with 2 max gold, increasing by 1 each turn</p>
+            <p>• You start each turn with your maximum gold amount</p>
+            <p>• Gold progression: Turn 1 (2 gold) → Turn 2 (3 gold) → Turn 3 (4 gold)...</p>
+            
+            <h3>🃏 Card Costs & Drafting</h3>
+            <p>• <strong>Tier 1:</strong> 2 💰 - Basic units</p>
+            <p>• <strong>Tier 2:</strong> 4 💰 - Improved stats and abilities</p>
+            <p>• <strong>Tier 3:</strong> 6 💰 - Strong units with powerful effects</p>
+            <p>• <strong>Tier 4:</strong> 8 💰 - Elite units with game-changing abilities</p>
+            <p>• <strong>Tier 5:</strong> 10 💰 - Legendary units with devastating power</p>
+            <p>• <strong>Draw from Deck:</strong> 3 💰 - Retrieve units that have died</p>
             
             <h3>🎴 Hand & Battlefield</h3>
-            <p>• Keep up to 3 cards in your hand</p>
-            <p>• Place units from hand onto your battlefield (3x2 grid)</p>
-            <p>• Units have Attack/Health stats and special abilities</p>
+            <p>• Keep up to <strong>3 cards</strong> in your hand</p>
+            <p>• Place units from hand onto your battlefield (3x2 grid: Front Row & Back Row)</p>
+            <p>• Units cannot attack the turn they're played (unless they have Rush)</p>
+            <p>• When units die, they go to the bottom of your deck</p>
             
             <h3>⚔️ Combat System</h3>
-            <p><strong>Column-Based Combat:</strong> Units attack within their column (left/middle/right)</p>
+            <p><strong>Column-Based Attacking:</strong> Units attack enemies in their column deterministically</p>
             
-            <h4>🎯 Unit Targeting Rules:</h4>
-            <p><strong>Normal Units:</strong> Front Row → Back Row → Player (if column empty)</p>
-            <p><strong>Ranged Units:</strong> Ignore front row, attack Back Row → Player directly</p>
-            <p><strong>Flying Units:</strong> Always attack player, UNLESS there's an enemy Flying unit in the same column</p>
+            <h4>🎯 Normal Unit Targeting:</h4>
+            <p>1. Attack Front Row enemy (if present)</p>
+            <p>2. Attack Back Row enemy (if front empty)</p>
+            <p>3. Attack enemy player directly (if column empty)</p>
             
-            <h4>🛡️ Special Abilities:</h4>
-            <p><strong>Flying:</strong> Only other Flying units can attack Flying units</p>
-            <p><strong>Rush:</strong> Can attack the turn it's played</p>
+            <h4>🏹 Special Unit Types:</h4>
+            <p><strong>Ranged:</strong> Ignore Front Row, attack Back Row → Player directly</p>
+            <p><strong>Flying:</strong> Always attack player, UNLESS enemy Flying unit in same column (then target frontmost Flying)</p>
+            
+            <h4>⚡ Combat Mechanics:</h4>
+            <p>• Units deal attack damage to each other simultaneously</p>
+            <p>• When health reaches 0, unit is destroyed</p>
+            
+            <h3>🛡️ Keyword Abilities</h3>
+            <p><strong>Unleash:</strong> Trigger effect when unit is summoned</p>
+            <p><strong>Flying:</strong> Always attacks player unless enemy Flying in column</p>
+            <p><strong>Trample:</strong> Excess damage dealt to unit carries over to player</p>
             <p><strong>Sneaky:</strong> First attack targets enemy player directly</p>
-            <p><strong>Trample:</strong> Excess damage carries over to player</p>
-            <p><strong>Unleash:</strong> Triggers special effect when summoned</p>
-            <p><strong>Last Gasp:</strong> Triggers special effect when destroyed</p>
-            <p><strong>Kindred:</strong> Bonuses when played with same tag units</p>
-            <p><strong>Manacharge:</strong> Triggers when Blue Unleash abilities are used</p>
-            
-            <p>• When units die, they return to your deck</p>
-            <p>• Draw from deck costs 3 gold</p>
+            <p><strong>Rush:</strong> Can attack the turn it's played</p>
+            <p><strong>Ranged:</strong> Ignores Front Row when attacking</p>
+            <p><strong>Kindred:</strong> Triggers when summoning unit with same Tag</p>
+            <p><strong>Manacharge:</strong> Triggers when you use Blue Unleash abilities</p>
+            <p><strong>Last Gasp:</strong> Triggers when unit is destroyed</p>
+            <p><strong>Banish:</strong> Removed from game permanently (doesn't return to deck)</p>
             
             <h3>🎮 Controls</h3>
             <p>• Click cards in hand to select them</p>
-            <p>• Click battlefield slots to place selected units</p>
-            <p>• Use sidebar buttons to draft and manage cards</p>
+            <p>• Click empty battlefield slots to place selected units</p>
+            <p>• Use sidebar buttons to draft cards from different tiers</p>
+            <p>• Click "End Turn" when finished with your actions</p>
+            
+            <h3>🤖 AI Behavior</h3>
+            <p>The AI will spend all available gold each turn, prioritize playing units, and attack whenever possible.</p>
         </div>
     </div>
 
@@ -254,7 +298,7 @@
             </div>
         </div>
         <div class="log-entries" id="gameLogEntries">
-            <div class="log-entry">🎮 Welcome to Card Battler!</div>
+            <div class="log-entry">🎮 Welcome to Everduel!</div>
             <div class="log-entry">🔄 Game started - Your turn</div>
         </div>
     </div>
@@ -268,7 +312,7 @@
     <script>
         // Initialize game when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🎮 Clean Card Battler starting...');
+            console.log('🎮 Everduel starting...');
         });
     </script>
 </body>

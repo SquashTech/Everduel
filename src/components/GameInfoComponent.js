@@ -36,6 +36,7 @@ class GameInfoComponent {
         this.updatePlayerStats(state.players.ai, 'ai');
         this.updateTurnDisplay(state.currentPlayer);
         this.updateTurnCounter(state.turn);
+        this.updateSouls(state.souls);
     }
 
     /**
@@ -61,6 +62,10 @@ class GameInfoComponent {
         const playerStatus = document.getElementById('playerTurnStatus');
         const aiStatus = document.getElementById('aiTurnStatus');
         
+        // Battlefield turn indicators
+        const playerTurnIndicator = document.getElementById('playerBattlefieldTurn');
+        const aiTurnIndicator = document.getElementById('aiBattlefieldTurn');
+        
         if (currentPlayer === 'player') {
             // Player's turn
             if (playerInfo) {
@@ -76,6 +81,14 @@ class GameInfoComponent {
             if (aiStatus) {
                 aiStatus.textContent = 'Waiting...';
             }
+            
+            // Update battlefield turn indicators
+            if (playerTurnIndicator) {
+                playerTurnIndicator.classList.add('active');
+            }
+            if (aiTurnIndicator) {
+                aiTurnIndicator.classList.remove('active');
+            }
         } else {
             // AI's turn
             if (aiInfo) {
@@ -90,6 +103,14 @@ class GameInfoComponent {
             }
             if (playerStatus) {
                 playerStatus.textContent = 'Waiting...';
+            }
+            
+            // Update battlefield turn indicators
+            if (aiTurnIndicator) {
+                aiTurnIndicator.classList.add('active');
+            }
+            if (playerTurnIndicator) {
+                playerTurnIndicator.classList.remove('active');
             }
         }
     }
@@ -238,19 +259,36 @@ class GameInfoComponent {
     }
 
     /**
-     * Update dragon souls display (if applicable)
-     * @param {Object} dragonSouls - Dragon souls data
+     * Update dragon flames display (if applicable)
+     * @param {Object} dragonFlames - Dragon flames data
      */
-    updateDragonSouls(dragonSouls) {
-        const playerSoulsElement = document.getElementById('playerDragonSouls');
-        const aiSoulsElement = document.getElementById('aiDragonSouls');
+    updateDragonFlames(dragonFlames) {
+        const playerFlamesElement = document.getElementById('playerDragonFlames');
+        const aiFlamesElement = document.getElementById('aiDragonFlames');
+        
+        if (playerFlamesElement) {
+            playerFlamesElement.textContent = dragonFlames.player || 0;
+        }
+        
+        if (aiFlamesElement) {
+            aiFlamesElement.textContent = dragonFlames.ai || 0;
+        }
+    }
+
+    /**
+     * Update souls display
+     * @param {Object} souls - Souls data
+     */
+    updateSouls(souls) {
+        const playerSoulsElement = document.getElementById('playerSouls');
+        const aiSoulsElement = document.getElementById('aiSouls');
         
         if (playerSoulsElement) {
-            playerSoulsElement.textContent = dragonSouls.player || 0;
+            playerSoulsElement.textContent = souls.player || 0;
         }
         
         if (aiSoulsElement) {
-            aiSoulsElement.textContent = dragonSouls.ai || 0;
+            aiSoulsElement.textContent = souls.ai || 0;
         }
     }
 

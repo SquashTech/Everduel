@@ -91,27 +91,7 @@ body {
     cursor: not-allowed;
 }
 
-/* Inline deck button for info boxes */
-.btn-deck-inline {
-    position: absolute;
-    top: 17px;
-    right: 8px;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 10px;
-    font-size: 14px;
-    min-width: auto;
-    width: auto;
-    flex-shrink: 0;
-    max-width: 100px;
-    white-space: nowrap;
-    border: 2px solid rgba(100, 150, 255, 0.6);
-    border-radius: 8px;
-    box-shadow: 0 3px 10px rgba(100, 150, 255, 0.4);
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
-    font-weight: bold;
-}
+/* Inline deck button for info boxes - legacy styles, now moved to hand area */
 
 
 /* === STACKED RIGHT-SIDE LAYOUT === */
@@ -235,8 +215,7 @@ body {
 }
 
 .player-stats-compact .gold {
-    flex: 1;
-    text-align: center;
+    flex-shrink: 0;
 }
 
 .player-stats-compact .health {
@@ -254,13 +233,30 @@ body {
     border-radius: 8px;
     box-shadow: 0 3px 10px rgba(37, 99, 235, 0.4);
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    width: 100px !important;
+    justify-content: center;
 }
 
 .player-stats-compact .gold {
-    font-size: 12px;
-    color: #ffd93d;
-    margin: 0;
+    font-size: 28px;
+    font-weight: bold;
+    color: #ffd700;
+    margin: -25px 0 0 0;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: transparent;
+    border: 2px solid #ffd700;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(255, 215, 0, 0.4);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    flex-shrink: 0;
+    width: 100px !important;
+    justify-content: center;
+    padding-left: 7px;
+    padding-right: 13px;
 }
 
 .player-stats-compact .cards-info {
@@ -356,34 +352,35 @@ body {
     text-align: center;
 }
 
-/* Gold display when positioned in battlefield */
-.battlefield-gold {
+/* Turn indicator when positioned in battlefield */
+.battlefield-turn {
     position: absolute;
     bottom: 0;
     right: -40px;
     z-index: 150;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 4px 8px;
+    justify-content: center;
+    padding: 8px;
     background: transparent;
-    border: 2px solid #ffd700;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
-    font-weight: bold;
+    border: 2px solid #ff6b35;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+    width: 40px;
+    height: 40px;
+    transition: opacity 0.3s ease;
+    opacity: 0.3;
 }
 
-.battlefield-gold .gold-icon {
-    font-size: 18px;
-    filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.8));
+.battlefield-turn.active {
+    opacity: 1;
+    border-color: #00ff00;
+    box-shadow: 0 2px 8px rgba(0, 255, 0, 0.3);
 }
 
-.battlefield-gold .gold-count {
+.battlefield-turn .turn-icon {
     font-size: 20px;
-    color: #ffd700;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
-    min-width: 25px;
-    text-align: center;
+    color: #ffffff;
 }
 
 .dragon-flame-count {
@@ -1301,13 +1298,35 @@ body {
 }
 
 .hand-header {
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     color: #4ecdc4;
     font-size: 14px;
     font-weight: bold;
     margin-bottom: 10px;
     padding-bottom: 8px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hand-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-deck-hand {
+    padding: 3px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+    background: rgba(100, 150, 255, 0.2);
+    border: 1px solid rgba(100, 150, 255, 0.4);
+    color: white;
+    white-space: nowrap;
+}
+
+.btn-deck-hand:hover {
+    background: rgba(100, 150, 255, 0.4);
+    border-color: rgba(100, 150, 255, 0.6);
 }
 
 .hand-cards-container {
