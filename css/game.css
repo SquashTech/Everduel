@@ -1490,6 +1490,22 @@ body {
     color: white;
 }
 
+/* How to Play button - unique bright color to stand out */
+#howToPlayBtnSidebar {
+    background: #ff6b35 !important;
+    color: white !important;
+    border: 2px solid #ff4500 !important;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4) !important;
+    font-weight: bold !important;
+}
+
+#howToPlayBtnSidebar:hover {
+    background: #ff4500 !important;
+    border-color: #e63900 !important;
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.6) !important;
+    transform: translateY(-1px) !important;
+}
+
 /* Draw from Deck button - teal like draft buttons */
 #drawDeckBtn:not(:disabled) {
     background: #4ecdc4;

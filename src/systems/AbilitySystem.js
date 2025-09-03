@@ -187,6 +187,18 @@ class AbilitySystem {
                 targetSelection: 'column'
             };
         }
+
+        // Special pattern: "deal X damage in a random column"
+        const randomColumnDamageMatch = text.match(/deal (\d+) damage in a random column/i);
+        if (randomColumnDamageMatch) {
+            const damage = parseInt(randomColumnDamageMatch[1]);
+            return {
+                type: 'damage',
+                amount: damage,
+                targetType: 'enemy_random_column',
+                targetSelection: 'random_column'
+            };
+        }
         
         // Special pattern: "deal X damage to the back row enemy here" (for Marksman)
         const backRowHereMatch = text.match(/deal (\d+) damage to the back row enemy here/i);
@@ -293,6 +305,27 @@ class AbilitySystem {
             const castingColumn = unit.slotIndex % 3; // 0, 1, or 2
             const frontSlot = castingColumn;      // 0, 1, or 2
             const backSlot = castingColumn + 3;   // 3, 4, or 5
+            
+            // Check for units in priority order
+            const frontUnit = enemyBattlefield[frontSlot];
+            const backUnit = enemyBattlefield[backSlot];
+            
+            if (frontUnit) {
+                targets = [frontUnit];
+            } else if (backUnit) {
+                targets = [backUnit];
+            } else {
+                // No units in column, hit player
+                targets = [{ type: 'player', playerId: enemyId }];
+            }
+        } else if (effect.targetType === 'enemy_random_column') {
+            // Random column damage priority: Front → Back → Player
+            const enemyBattlefield = state.players[enemyId].battlefield;
+            const randomColumn = Math.floor(Math.random() * 3); // 0, 1, or 2
+            const frontSlot = randomColumn;      // 0, 1, or 2
+            const backSlot = randomColumn + 3;   // 3, 4, or 5
+            
+            console.log(`🎯 Storm Falcon targeting random column ${randomColumn}`);
             
             // Check for units in priority order
             const frontUnit = enemyBattlefield[frontSlot];
