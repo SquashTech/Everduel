@@ -49,6 +49,7 @@ class AbilitySystem {
         this.eventBus.on('card:played', (data) => this.handleOpponentSummoned(data));
         this.eventBus.on('unit:dies', (data) => this.handleUnitDeath(data));
         this.eventBus.on('souls:gained', (data) => this.handleSoulsGained(data));
+        this.eventBus.on('slot:buff', (data) => this.handleRoyalGuardSlotBuff(data));
     }
 
     /**
@@ -1638,6 +1639,48 @@ class AbilitySystem {
             return;
         }
         
+        // Handle Abomination: Return this to your hand
+        if (unit.name === 'Abomination' && effectText.toLowerCase().includes('return this to your hand')) {
+            const playerId = context.playerId || unit.owner || 'player';
+            const state = this.gameState.getState();
+            const playerHand = state.players[playerId].hand;
+            
+            // Check if hand is full (max 3 cards)
+            if (playerHand.length >= 3) {
+                console.log(`✋ ${unit.name} cannot return to hand - hand is full`);
+            } else {
+                // Create a fresh card version to add to hand
+                const cardToReturn = {
+                    id: unit.id,
+                    name: unit.name,
+                    attack: unit.originalAttack || unit.attack,
+                    health: unit.originalHealth || unit.health,
+                    ability: unit.ability,
+                    tags: unit.tags,
+                    color: unit.color,
+                    handId: Date.now()
+                };
+                
+                // Add to hand
+                this.gameEngine.dispatch({
+                    type: 'ADD_CARD_TO_HAND',
+                    payload: {
+                        playerId,
+                        card: cardToReturn
+                    }
+                });
+                
+                console.log(`🔄 ${unit.name} returned to ${playerId}'s hand`);
+                
+                // Mark as banished so it won't also go to deck
+                unit.banished = true;
+            }
+            
+            // Still trigger Necromancer buff
+            this.triggerNecromancerBuff(context.playerId);
+            return;
+        }
+        
         // Handle Banish effect specially
         if (effectText.toLowerCase().includes('banish this')) {
             console.log(`⚰️ ${unit.name} is banished - removed from game permanently`);
@@ -1888,6 +1931,91 @@ class AbilitySystem {
             player: context.owner || 'player'
         });
 
+        // Lich: Deal 3 damage to a random enemy. Heal your player 3
+        if (unit.name === 'Lich' && abilityText.toLowerCase().includes('deal 3 damage to a random enemy')) {
+            const state = this.gameState.getState();
+            const playerId = unit.owner || context.owner || 'player';
+            const enemyId = playerId === 'player' ? 'ai' : 'player';
+            const enemyBattlefield = state.players[enemyId].battlefield;
+            
+            // Find all enemy units (including the player as a potential target)
+            const enemyTargets = [];
+            
+            // Add enemy units
+            enemyBattlefield.forEach((enemyUnit, slotIndex) => {
+                if (enemyUnit) {
+                    enemyTargets.push({ 
+                        type: 'unit', 
+                        unit: enemyUnit, 
+                        slotIndex, 
+                        playerId: enemyId 
+                    });
+                }
+            });
+            
+            // Add enemy player as a potential target
+            enemyTargets.push({ 
+                type: 'player', 
+                playerId: enemyId 
+            });
+            
+            // Choose a random enemy target
+            if (enemyTargets.length > 0) {
+                const randomTarget = enemyTargets[Math.floor(Math.random() * enemyTargets.length)];
+                
+                // Deal 3 damage to the random target
+                if (randomTarget.type === 'player') {
+                    this.eventBus.emit('combat:damage', {
+                        target: { type: 'player', playerId: randomTarget.playerId },
+                        amount: 3,
+                        source: unit
+                    });
+                    console.log(`💀 Lich dealt 3 damage to ${randomTarget.playerId} player`);
+                } else {
+                    this.eventBus.emit('combat:damage', {
+                        target: { 
+                            type: 'unit', 
+                            unit: randomTarget.unit, 
+                            slotIndex: randomTarget.slotIndex, 
+                            playerId: randomTarget.playerId 
+                        },
+                        amount: 3,
+                        source: unit
+                    });
+                    console.log(`💀 Lich dealt 3 damage to ${randomTarget.unit.name}`);
+                }
+            }
+            
+            // Heal your player 3
+            const currentHealth = state.players[playerId].health;
+            const maxHealth = 20; // Standard max health
+            const newHealth = Math.min(currentHealth + 3, maxHealth);
+            
+            this.gameEngine.dispatch({
+                type: 'SET_PLAYER_HEALTH',
+                payload: { 
+                    playerId, 
+                    health: newHealth 
+                }
+            });
+            
+            console.log(`💚 Lich healed ${playerId} for 3 (${currentHealth} -> ${newHealth})`);
+            
+            this.eventBus.emit('player:healed', {
+                playerId,
+                amount: 3,
+                source: unit
+            });
+            
+            this.eventBus.emit('ability:activated', {
+                type: 'lich-kindred',
+                unit,
+                effect: `Dealt 3 damage and healed player for 3`
+            });
+            
+            return;
+        }
+        
         // Goblin Chief: Summon a random Goblin (Knife, Spear, or Muscle) in a random slot
         if (unit.name === 'Goblin Chief' && abilityText.toLowerCase().includes('summon a knife, spear, or muscle goblin')) {
             const state = this.gameState.getState();
@@ -2775,14 +2903,32 @@ class AbilitySystem {
                         console.log(`📚 ${unit.name} draws a card`);
                     }
                     
-                    // Giant Toad: "At the start of your turn, give your Beasts +2/+2"
-                    if (lowerAbility.includes('give your beasts +2/+2')) {
+                    // Giant Toad: "At the start of your turn, give your other Beasts +2/+2"
+                    if (lowerAbility.includes('give your other beasts +2/+2')) {
                         battlefield.forEach((targetUnit, targetSlot) => {
-                            if (targetUnit && targetUnit.tags && targetUnit.tags.includes('Beast')) {
+                            if (targetUnit && targetUnit.tags && targetUnit.tags.includes('Beast') && targetSlot !== slotIndex) {
                                 this.applyUnitBuff(targetUnit, 2, 2, player, targetSlot);
                             }
                         });
-                        console.log(`🐸 ${unit.name} buffed all Beasts +2/+2`);
+                        console.log(`🐸 ${unit.name} buffed other Beasts +2/+2`);
+                    }
+                    
+                    // Arrowmaster: "At the start of your turn, give all slots with an Elf +3/+0"
+                    if (lowerAbility.includes('give all slots with an elf +3/+0')) {
+                        battlefield.forEach((targetUnit, targetSlot) => {
+                            if (targetUnit && targetUnit.tags && targetUnit.tags.includes('Elf')) {
+                                // Buff the SLOT, not the unit
+                                this.eventBus.emit('slot:buff', {
+                                    slotIndex: targetSlot,
+                                    playerId: player,
+                                    buff: {
+                                        attack: 3,
+                                        health: 0
+                                    }
+                                });
+                            }
+                        });
+                        console.log(`🏹 ${unit.name} buffed all slots with Elves +3/+0`);
                     }
                     
                     // Dwarf Knight (Tier 3): "At the start of your turn, give this slot +2/+2"
@@ -3394,6 +3540,50 @@ class AbilitySystem {
             abilityType: 'dragon-flame-buff',
             description: `${unit.name} gains +${attackBuff}/+${healthBuff} from Dragon Flame`
         });
+    }
+
+    /**
+     * Handle Royal Guard slot buff enhancement
+     * When any slot gets buffed, Royal Guard adds an additional +2/+2 if present
+     */
+    handleRoyalGuardSlotBuff(data) {
+        const { slotIndex, playerId, buff, source } = data;
+        
+        // Prevent infinite loop - don't trigger on Royal Guard's own enhancement
+        if (source === 'royal_guard_enhancement') {
+            return;
+        }
+        
+        // Check if Royal Guard is in play for this player
+        const state = this.gameState.getState();
+        const playerBattlefield = state.players[playerId]?.battlefield || {};
+        
+        // Find Royal Guard on the battlefield
+        const royalGuardSlots = [];
+        for (let i = 0; i < 6; i++) {
+            const unit = playerBattlefield[i];
+            if (unit && (unit.name === 'Royal Guard' || unit.id === 'royal_guard')) {
+                royalGuardSlots.push(i);
+            }
+        }
+        
+        // If Royal Guard is present, add additional +2/+2 buff
+        if (royalGuardSlots.length > 0) {
+            console.log(`👑 Royal Guard detected! Adding additional +2/+2 to slot ${slotIndex} buff (original: +${buff.attack}/+${buff.health})`);
+            
+            // Emit additional slot buff for each Royal Guard
+            royalGuardSlots.forEach(() => {
+                this.eventBus.emit('slot:buff', {
+                    slotIndex: slotIndex,
+                    playerId: playerId,
+                    buff: {
+                        attack: 2,
+                        health: 2
+                    },
+                    source: 'royal_guard_enhancement'
+                });
+            });
+        }
     }
 }
 

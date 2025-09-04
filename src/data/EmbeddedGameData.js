@@ -562,7 +562,7 @@ export const CARD_DATABASE = {
       "id": "giant_toad",
       "name": "Giant Toad",
       "attack": 3,
-      "health": 8,
+      "health": 6,
       "ability": "At the start of your turn, give your other Beasts +2/+2",
       "tags": ["Beast"],
       "color": "yellow"
@@ -631,8 +631,8 @@ export const CARD_DATABASE = {
       "color": "green"
     },
     {
-      "id": "goblin_chief",
-      "name": "Goblin Chief",
+      "id": "goblin_warcaller",
+      "name": "Goblin Warcaller",
       "attack": 5,
       "health": 4,
       "ability": "Kindred: Draw from your deck",
@@ -815,9 +815,9 @@ export const CARD_DATABASE = {
     {
       "id": "arrowmaster",
       "name": "Arrowmaster",
-      "attack": 5,
-      "health": 5,
-      "ability": "Ranged. When you summon another Ranged unit, give it Rush",
+      "attack": 6,
+      "health": 4,
+      "ability": "Ranged. At the start of your turn, give all slots with an Elf +3/+0",
       "tags": ["Elf"],
       "color": "green"
     },
@@ -888,7 +888,7 @@ export const CARD_DATABASE = {
       "id": "lich",
       "name": "Lich",
       "attack": 3,
-      "health": 3,
+      "health": 6,
       "ability": "Kindred: Deal 3 damage to a random enemy. Heal your player 3",
       "tags": ["Undead"],
       "color": "purple"
