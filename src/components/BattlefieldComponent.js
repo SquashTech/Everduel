@@ -206,12 +206,12 @@ class BattlefieldComponent {
             buffText = `${attack > 0 ? '+' : ''}${attack}/${health > 0 ? '+' : ''}${health}`;
             buffClass = 'mixed-buff';
         } else if (hasAttackBuff) {
-            // Attack only
-            buffText = `${attack > 0 ? '+' : ''}${attack}`;
+            // Attack only - show as +X/+0
+            buffText = `${attack > 0 ? '+' : ''}${attack}/+0`;
             buffClass = 'attack-buff';
         } else if (hasHealthBuff) {
-            // Health only
-            buffText = `${health > 0 ? '+' : ''}${health}`;
+            // Health only - show as +0/+X
+            buffText = `+0/${health > 0 ? '+' : ''}${health}`;
             buffClass = 'health-buff';
         }
         
@@ -388,8 +388,8 @@ class BattlefieldComponent {
             return false;
         }
         
-        // Check if unit has already attacked
-        if (state.players[owner].hasAttacked.includes(unit.id)) {
+        // Check if unit has already attacked (slot-based tracking)
+        if (state.players[owner].hasAttacked.includes(unit.slotIndex)) {
             return false;
         }
         
@@ -399,7 +399,18 @@ class BattlefieldComponent {
         }
         
         // Check if unit can attack (rush or has been on field)
-        return unit.canAttack || this.hasAbility(unit, 'Rush');
+        const basicCanAttack = unit.canAttack || this.hasAbility(unit, 'Rush');
+        
+        // Special check for Goblin Machine
+        if (basicCanAttack && unit.name === 'Goblin Machine') {
+            const combatSystem = this.gameEngine.getSystem('CombatSystem');
+            if (combatSystem) {
+                const validation = combatSystem.validateAttack(unit, null);
+                return validation.valid;
+            }
+        }
+        
+        return basicCanAttack;
     }
 
     /**
@@ -416,8 +427,8 @@ class BattlefieldComponent {
             return false;
         }
         
-        // Check if unit has already attacked
-        if (state.players[owner].hasAttacked.includes(unit.id)) {
+        // Check if unit has already attacked (slot-based tracking)
+        if (state.players[owner].hasAttacked.includes(unit.slotIndex)) {
             return false;
         }
         
@@ -429,6 +440,15 @@ class BattlefieldComponent {
         // Check if unit has summoning sickness
         if (!unit.canAttack && !this.hasAbility(unit, 'Rush')) {
             return false;
+        }
+        
+        // Special check for Goblin Machine
+        if (unit.name === 'Goblin Machine') {
+            const combatSystem = this.gameEngine.getSystem('CombatSystem');
+            if (combatSystem) {
+                const validation = combatSystem.validateAttack(unit, null);
+                return validation.valid;
+            }
         }
         
         return true;
@@ -489,8 +509,17 @@ class BattlefieldComponent {
             const unitCard = slot?.querySelector('.game-card');
             
             if (unit && unitCard) {
-                const canAttack = !hasAttacked.includes(unit.id) && 
+                let canAttack = !hasAttacked.includes(slotIndex) && 
                                 (unit.canAttack || this.hasAbility(unit, 'Rush'));
+                
+                // Additional check for Goblin Machine - use CombatSystem validation
+                if (canAttack && unit.name === 'Goblin Machine') {
+                    const combatSystem = this.gameEngine.getSystem('CombatSystem');
+                    if (combatSystem) {
+                        const validation = combatSystem.validateAttack(unit, null); // null target for basic check
+                        canAttack = validation.valid;
+                    }
+                }
                 
                 if (canAttack) {
                     unitCard.classList.add('can-attack');

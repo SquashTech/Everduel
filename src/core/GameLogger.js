@@ -168,7 +168,7 @@ class GameLogger {
      */
     logUnitDeath(data) {
         const unitName = data.unit?.name || 'Unit';
-        const owner = data.owner === 'player' ? 'Your' : 'AI';
+        const owner = data.owner === 'player' ? 'Your' : 'Opponent';
         this.logMessage(`💀 ${owner} ${unitName} dies`, 'death');
     }
     
@@ -176,7 +176,7 @@ class GameLogger {
      * Player damage logging
      */
     logPlayerDamage(data) {
-        const player = data.target.playerId === 'player' ? 'You' : 'AI';
+        const player = data.target.playerId === 'player' ? 'You' : 'Opponent';
         this.logMessage(`💔 ${player} take ${data.amount} damage`, 'damage');
     }
     
@@ -184,7 +184,7 @@ class GameLogger {
      * Card played logging
      */
     logCardPlayed(data) {
-        const player = data.playerId === 'player' ? 'You' : 'AI';
+        const player = data.playerId === 'player' ? 'You' : 'Opponent';
         this.logMessage(`🃏 ${player} played ${data.card?.name || 'a card'} to slot ${data.slotIndex + 1}`, 'card');
     }
     
@@ -194,7 +194,7 @@ class GameLogger {
     logAbilityActivated(data) {
         const { ability, unit, player } = data;
         const unitName = unit?.name || 'Unit';
-        const playerName = player === 'player' ? 'Your' : 'AI';
+        const playerName = player === 'player' ? 'Your' : 'Opponent';
         
         let emoji = '✨';
         if (ability === 'unleash') emoji = '🔥';
@@ -210,7 +210,7 @@ class GameLogger {
      * Gold spending logging
      */
     logGoldSpent(data) {
-        const player = data.playerId === 'player' ? 'You' : 'AI';
+        const player = data.playerId === 'player' ? 'You' : 'Opponent';
         this.logMessage(`💰 ${player} spent ${data.amount} gold`, 'gold');
     }
     
@@ -218,7 +218,7 @@ class GameLogger {
      * Manacharge trigger logging
      */
     logManachargeTriggered(data) {
-        const player = data.playerId === 'player' ? 'Your' : 'AI';
+        const player = data.playerId === 'player' ? 'Your' : 'Opponent';
         this.logMessage(`⚡ ${player} Blue Unleash triggered Manacharge abilities!`, 'ability');
     }
     
@@ -226,7 +226,7 @@ class GameLogger {
      * Card drafted logging
      */
     logCardDrafted(data) {
-        const player = data.playerId === 'player' ? 'You' : 'AI';
+        const player = data.playerId === 'player' ? 'You' : 'Opponent';
         this.logMessage(`🎴 ${player} drafted ${data.selectedCard?.name || 'a card'}`, 'draft');
     }
     
@@ -234,7 +234,7 @@ class GameLogger {
      * Game end logging
      */
     logGameEnd(data) {
-        const winner = data.winner === 'player' ? 'You' : data.winner === 'ai' ? 'AI' : 'No one';
+        const winner = data.winner === 'player' ? 'You' : data.winner === 'ai' ? 'Opponent' : 'No one';
         this.logMessage(`🏆 Game Over - ${winner} wins!`, 'game-end');
     }
     

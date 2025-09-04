@@ -142,6 +142,37 @@ class AbilitySystem {
             }
         }
 
+        // Parse double buff effects (Dwarf King)
+        if (lowerText.includes('double the buff')) {
+            const doubleBuffEffect = this.parseDoubleBuffEffect(abilityText, context);
+            if (doubleBuffEffect) {
+                result.effects.push(doubleBuffEffect);
+                this.executeDoubleBuffEffect(doubleBuffEffect, context);
+                result.success = true;
+            }
+        }
+
+        // Parse Dragon Flame damage effects (Skyterror)
+        if (lowerText.includes('damage equal to your dragon flame') || 
+            lowerText.includes('damage equal to your 🔥')) {
+            const dragonFlameDamageEffect = this.parseDragonFlameDamageEffect(abilityText, context);
+            if (dragonFlameDamageEffect) {
+                result.effects.push(dragonFlameDamageEffect);
+                this.executeDragonFlameDamageEffect(dragonFlameDamageEffect, context);
+                result.success = true;
+            }
+        }
+
+        // Parse Dragon Flame buff effects (Tier 4 Dragon)
+        if (lowerText.includes('for each dragon flame')) {
+            const dragonFlameBuffEffect = this.parseDragonFlameBuffEffect(abilityText, context);
+            if (dragonFlameBuffEffect) {
+                result.effects.push(dragonFlameBuffEffect);
+                this.executeDragonFlameBuffEffect(dragonFlameBuffEffect, context);
+                result.success = true;
+            }
+        }
+
         return result;
     }
 
@@ -200,6 +231,18 @@ class AbilitySystem {
             };
         }
         
+        // Special pattern: "deal X damage in each column" (for Grand Magus)
+        const eachColumnDamageMatch = text.match(/deal (\d+) damage in each column/i);
+        if (eachColumnDamageMatch) {
+            const damage = parseInt(eachColumnDamageMatch[1]);
+            return {
+                type: 'damage',
+                amount: damage,
+                targetType: 'enemy_each_column',
+                targetSelection: 'each_column'
+            };
+        }
+        
         // Special pattern: "deal X damage to the back row enemy here" (for Marksman)
         const backRowHereMatch = text.match(/deal (\d+) damage to the back row enemy here/i);
         if (backRowHereMatch) {
@@ -222,25 +265,29 @@ class AbilitySystem {
         let targetType = 'unit';
         let targetSelection = 'random';
 
-        if (targetText.includes('all')) {
+        const lowerTargetText = targetText.toLowerCase();
+        
+        if (lowerTargetText.includes('all')) {
             targetSelection = 'all';
-        } else if (targetText.includes('random')) {
+        } else if (lowerTargetText.includes('random')) {
             targetSelection = 'random';
-        } else if (targetText.includes('target')) {
+        } else if (lowerTargetText.includes('target')) {
             targetSelection = 'targeted';
         }
 
-        if (targetText.includes('enemy')) {
-            if (targetText.includes('back row')) {
+        if (lowerTargetText.includes('enemy') || lowerTargetText.includes('enemies')) {
+            if (lowerTargetText.includes('back row')) {
                 targetType = 'enemy_back_row';
-            } else if (targetText.includes('front row')) {
+            } else if (lowerTargetText.includes('front row')) {
                 targetType = 'enemy_front_row';  
-            } else if (targetText.includes('unit')) {
+            } else if (lowerTargetText.includes('unit')) {
                 targetType = 'enemy_unit';
+            } else if (lowerTargetText.includes('all enemies')) {
+                targetType = 'all_enemies';
             } else {
                 targetType = 'enemy_player';
             }
-        } else if (targetText.includes('friendly') || targetText.includes('allied')) {
+        } else if (lowerTargetText.includes('friendly') || lowerTargetText.includes('allied')) {
             targetType = 'friendly_unit';
         }
 
@@ -339,6 +386,34 @@ class AbilitySystem {
                 // No units in column, hit player
                 targets = [{ type: 'player', playerId: enemyId }];
             }
+        } else if (effect.targetType === 'enemy_each_column') {
+            // Deal damage in each of the 3 columns (for Grand Magus)
+            const enemyBattlefield = state.players[enemyId].battlefield;
+            targets = [];
+            
+            console.log(`🧙 Grand Magus targeting all 3 columns`);
+            
+            // Process each column (0, 1, 2)
+            for (let column = 0; column < 3; column++) {
+                const frontSlot = column;          // 0, 1, or 2
+                const backSlot = column + 3;       // 3, 4, or 5
+                
+                // Check for units in priority order: Front → Back → Player
+                const frontUnit = enemyBattlefield[frontSlot];
+                const backUnit = enemyBattlefield[backSlot];
+                
+                if (frontUnit) {
+                    targets.push(frontUnit);
+                    console.log(`🧙 Column ${column}: targeting front unit ${frontUnit.name}`);
+                } else if (backUnit) {
+                    targets.push(backUnit);
+                    console.log(`🧙 Column ${column}: targeting back unit ${backUnit.name}`);
+                } else {
+                    // No units in column, hit player
+                    targets.push({ type: 'player', playerId: enemyId });
+                    console.log(`🧙 Column ${column}: no units, targeting player`);
+                }
+            }
         } else if (effect.targetType === 'own_player') {
             // Self-damage (for Swamp Ooze Last Gasp)
             targets = [{ type: 'player', playerId: owner }];
@@ -356,6 +431,18 @@ class AbilitySystem {
                 console.log(`🎯 No back row enemy in column ${castingColumn} for Marksman`);
                 targets = [];
             }
+        } else if (effect.targetType === 'all_enemies') {
+            // Deal damage to all enemy units AND the enemy player (like Mana Vortex)
+            const enemyBattlefield = state.players[enemyId].battlefield;
+            const validUnits = enemyBattlefield.filter(u => u !== null);
+            
+            // Add all enemy units to targets
+            targets = [...validUnits];
+            
+            // Add enemy player to targets
+            targets.push({ type: 'player', playerId: enemyId });
+            
+            console.log(`⚡ Targeting all enemies: ${validUnits.length} units + player ${enemyId}`);
         }
 
         // Apply damage
@@ -372,6 +459,7 @@ class AbilitySystem {
             } else {
                 // Damage unit
                 const slotIndex = state.players[enemyId].battlefield.findIndex(u => u === target);
+                console.log(`💥 [DAMAGE DEBUG] Damaging unit ${target.name} for ${effect.amount} from ${unit.name}`);
                 this.eventBus.emit('combat:damage', {
                     target: { type: 'unit', unit: target, slotIndex, playerId: enemyId },
                     amount: effect.amount,
@@ -590,7 +678,8 @@ class AbilitySystem {
         }
 
         // Pattern: "gain X/Y" (permanent stat buff, for Manacharge abilities)
-        const permBuffMatch = text.match(/gain \+?(\d+)\/\+?(\d+)(?!\s+this turn)/i);
+        // Exclude "for each" patterns which should be handled by specialized parsers
+        const permBuffMatch = text.match(/gain \+?(\d+)\/\+?(\d+)(?!\s+this turn)(?!\s+for\s+each)/i);
         if (permBuffMatch) {
             return {
                 type: 'buff',
@@ -612,6 +701,27 @@ class AbilitySystem {
                 target: 'self',
                 targetSlot: null,
                 temporary: true
+            };
+        }
+
+        // Pattern: "Give all your slots with a [keyword] unit +X/+Y" (Forest Keeper) - MUST BE BEFORE GENERAL PATTERN
+        const keywordSlotsMatch = text.match(/give all your slots with a ([a-z]+) unit \+(\d+)\/\+(\d+)/i);
+        if (keywordSlotsMatch) {
+            const keyword = keywordSlotsMatch[1].toLowerCase();
+            const attack = parseInt(keywordSlotsMatch[2]);
+            const health = parseInt(keywordSlotsMatch[3]);
+            
+            console.log(`🌲 [FOREST KEEPER] Matched pattern: keyword=${keyword}, buff=+${attack}/+${health}`);
+            
+            return {
+                type: 'buff',
+                attack: attack,
+                health: health,
+                target: 'slots-with-keyword',
+                keyword: keyword,
+                targetSlot: null,
+                temporary: false,
+                excludeSelf: false
             };
         }
 
@@ -638,6 +748,8 @@ class AbilitySystem {
                 targetSlot = context.slotIndex;
             } else if (targetDescription.includes('all of your units') || targetDescription.includes('all your units')) {
                 target = 'all-friendly-units';
+            } else if (targetDescription.includes('all of your slots') || targetDescription.includes('all your slots')) {
+                target = 'all-slots';
             }
 
             return {
@@ -864,6 +976,21 @@ class AbilitySystem {
                 });
             });
             
+        } else if (effect.target === 'all-slots') {
+            // Buff all 6 slots on the battlefield (for Fairy Queen)
+            const allSlots = [0, 1, 2, 3, 4, 5]; // All battlefield slots
+            
+            allSlots.forEach(slotIndex => {
+                this.eventBus.emit('slot:buff', {
+                    slotIndex: slotIndex,
+                    playerId: context.unit.owner,
+                    buff: {
+                        attack: effect.attack,
+                        health: effect.health
+                    }
+                });
+            });
+            
         } else if (effect.target === 'another-with-ability') {
             // Buff another unit with a specific ability (e.g., "another Flying unit")
             const battlefield = this.stateSelectors.getPlayerBattlefield(context.unit.owner);
@@ -918,6 +1045,40 @@ class AbilitySystem {
             
             unitsToBuffer.forEach(({ unit, slotIndex }) => {
                 this.applyBuffToUnit(context.unit.owner, slotIndex, effect.attack, effect.health);
+            });
+            
+        } else if (effect.target === 'slots-with-keyword') {
+            // Forest Keeper: Buff all slots that contain units with the specified keyword
+            const battlefield = this.stateSelectors.getPlayerBattlefield(context.unit.owner);
+            const keyword = effect.keyword.toLowerCase();
+            
+            console.log(`🌲 [FOREST KEEPER] Scanning battlefield for units with keyword: ${keyword}`);
+            
+            const unitsWithKeyword = battlefield
+                .map((unit, slotIndex) => ({ unit, slotIndex }))
+                .filter(item => item.unit && 
+                    (!effect.excludeSelf || item.slotIndex !== context.slotIndex) && // Include/exclude self based on flag
+                    item.unit.ability && 
+                    item.unit.ability.toLowerCase().includes(keyword));
+            
+            console.log(`🌲 [FOREST KEEPER] Found ${unitsWithKeyword.length} units with keyword "${keyword}"`);
+            
+            if (unitsWithKeyword.length === 0) {
+                console.log(`🌲 [FOREST KEEPER] No units found with keyword "${keyword}"`);
+                return;
+            }
+            
+            // Apply slot buffs to all slots with the keyword
+            unitsWithKeyword.forEach(({ unit, slotIndex }) => {
+                console.log(`🌲 [FOREST KEEPER] Applying slot buff to ${unit.name} at slot ${slotIndex} with +${effect.attack}/+${effect.health}`);
+                this.eventBus.emit('slot:buff', {
+                    playerId: context.unit.owner,
+                    slotIndex: slotIndex,
+                    buff: {
+                        attack: effect.attack,
+                        health: effect.health
+                    }
+                });
             });
             
         } else {
@@ -1535,6 +1696,20 @@ class AbilitySystem {
      * @returns {Object} Draw effect object
      */
     parseDrawEffect(text, context) {
+        // Pattern: "Draw up to X [tag] units from your deck" (for Tempest Lord)
+        const taggedDrawMatch = text.match(/draw up to (\d+) (\w+) units from your deck/i);
+        if (taggedDrawMatch) {
+            const amount = parseInt(taggedDrawMatch[1]);
+            const tag = taggedDrawMatch[2];
+            return {
+                type: 'draw',
+                amount: amount,
+                target: 'self',
+                filterTag: tag, // Filter by this tag
+                upTo: true // Draw "up to" amount, not exactly amount
+            };
+        }
+        
         // Pattern: "draw from your deck"
         const yourDeckMatch = text.match(/draw from your deck/i);
         if (yourDeckMatch) {
@@ -1584,19 +1759,100 @@ class AbilitySystem {
             const state = this.gameState.getState();
             targetPlayerId = Object.keys(state.players).find(id => id !== playerId);
             console.log(`📚 ${unit.name} draws ${effect.amount} card from opponent's deck`);
-        } else {
-            console.log(`📚 ${unit.name} draws ${effect.amount} card from deck`);
         }
         
+        // Handle tag-based filtering (like Tempest Lord)
+        if (effect.filterTag && effect.upTo) {
+            this.executeTagFilteredDraw(effect, context, targetPlayerId);
+            return;
+        }
+        
+        // Standard draw behavior
+        console.log(`📚 ${unit.name} draws ${effect.amount} card from deck`);
+        
         // Emit card draw event - ability-triggered draws are FREE
-        this.eventBus.emit('card:draw', {
-            playerId: targetPlayerId,
-            source: 'ability',
-            free: true,  // Important: ability-triggered draws don't cost gold
-            fromOpponent: effect.target === 'opponent'
-        });
+        for (let i = 0; i < effect.amount; i++) {
+            this.eventBus.emit('card:draw', {
+                playerId: targetPlayerId,
+                source: 'ability',
+                free: true,  // Important: ability-triggered draws don't cost gold
+                fromOpponent: effect.target === 'opponent'
+            });
+        }
+    }
 
+    /**
+     * Execute tag-filtered draw effect (for abilities like Tempest Lord)
+     * @param {Object} effect - Draw effect object
+     * @param {Object} context - Context
+     * @param {string} targetPlayerId - Target player ID
+     */
+    executeTagFilteredDraw(effect, context, targetPlayerId) {
+        const { unit } = context;
+        const state = this.gameState.getState();
+        const player = state.players[targetPlayerId];
+        
+        if (!player || !player.deck || player.deck.length === 0) {
+            console.log(`📚 ${unit.name} tried to draw ${effect.filterTag} units but deck is empty`);
+            return;
+        }
+        
+        console.log(`🔍 Searching deck for ${effect.filterTag} units. Deck has ${player.deck.length} cards:`);
+        player.deck.forEach((card, i) => {
+            console.log(`  [${i}] ${card.name} - Ability: "${card.ability || 'none'}" - Tags: ${card.tags ? card.tags.join(', ') : 'none'}`);
+        });
+        
+        // Find cards with the specified ability keyword in the deck
+        let cardsDrawn = 0;
+        let cardsFound = [];
+        
+        for (let i = 0; i < player.deck.length && cardsDrawn < effect.amount; i++) {
+            const card = player.deck[i];
+            
+            // Check if card has the required keyword in its ability text (case-insensitive)
+            const hasKeyword = card.ability && card.ability.toLowerCase().includes(effect.filterTag.toLowerCase());
+            
+            if (hasKeyword) {
+                // Check if player has hand space
+                if (player.hand.length + cardsDrawn < 3) {
+                    cardsFound.push({ card, index: i });
+                    cardsDrawn++;
+                    console.log(`📚 Found ${card.name} (has ${effect.filterTag}) at index ${i}`);
+                } else {
+                    console.log(`📚 Hand is full, cannot draw more cards`);
+                    break;
+                }
+            }
+        }
+        
+        // Actually move cards from deck to hand using game state actions
+        for (let i = cardsFound.length - 1; i >= 0; i--) {
+            const { card, index } = cardsFound[i];
+            
+            // Remove from deck
+            this.gameEngine.dispatch({
+                type: 'REMOVE_CARD_FROM_DECK',
+                payload: { playerId: targetPlayerId, cardIndex: index }
+            });
+            
+            // Add to hand
+            this.gameEngine.dispatch({
+                type: 'ADD_CARD_TO_HAND',
+                payload: { playerId: targetPlayerId, card: card }
+            });
+            
+            console.log(`✅ Moved ${card.name} from deck to hand`);
+        }
+        
+        console.log(`🌪️ ${unit.name} drew ${cardsDrawn} ${effect.filterTag} units from deck (up to ${effect.amount})`);
+        
         // Enhanced game log
+        this.eventBus.emit('ability:activated', {
+            ability: 'unleash',
+            unit,
+            player: targetPlayerId,
+            effect: `Drew ${cardsDrawn} ${effect.filterTag} units from deck`
+        });
     }
 
     /**
@@ -2134,18 +2390,18 @@ class AbilitySystem {
                 if (lowerAbility.includes('at the start of your turn')) {
                     console.log(`🌅 Triggering start-of-turn ability for ${unit.name}: ${unit.ability}`);
                     
-                    // Worker: "At the start of your turn, give this slot +1/+1"
-                    if (unit.name === 'Worker' || lowerAbility.includes('give this slot +1/+1')) {
+                    // Worker: "At the start of your turn, give this slot +1/+0"
+                    if (unit.name === 'Worker' || lowerAbility.includes('give this slot +1/+0')) {
                         console.log(`💪 [WORKER DEBUG] Triggering slot buff for ${unit.name} at slot ${slotIndex}`);
                         this.eventBus.emit('slot:buff', {
                             slotIndex: slotIndex,
                             playerId: player,
                             buff: {
                                 attack: 1,
-                                health: 1
+                                health: 0
                             }
                         });
-                        console.log(`💪 ${unit.name} buffed its slot +1/+1`);
+                        console.log(`💪 ${unit.name} buffed its slot +1/+0`);
                     }
                     
                     // Forager: "At the start of your turn, draw 1"
@@ -2179,6 +2435,23 @@ class AbilitySystem {
                             }
                         });
                         console.log(`⚔️ ${unit.name} buffed its slot +2/+2`);
+                    }
+                    
+                    // Treant: "At the start of your turn, fully heal this"
+                    if (unit.name === 'Treant' || lowerAbility.includes('fully heal this')) {
+                        const maxHealth = unit.maxHealth || unit.health;
+                        if (unit.currentHealth < maxHealth) {
+                            console.log(`🌳 ${unit.name} healing from ${unit.currentHealth}/${maxHealth} to full health`);
+                            
+                            const updates = {
+                                currentHealth: maxHealth
+                            };
+                            
+                            this.updateUnitStats(player, slotIndex, updates, `fully healed to ${maxHealth}`);
+                            console.log(`🌳 ${unit.name} is now fully healed: ${maxHealth}/${maxHealth}`);
+                        } else {
+                            console.log(`🌳 ${unit.name} is already at full health: ${unit.currentHealth}/${maxHealth}`);
+                        }
                     }
                 }
             }
@@ -2554,6 +2827,211 @@ class AbilitySystem {
                     }
                 });
             }
+        });
+    }
+
+    /**
+     * Parse double buff effect (Dwarf King)
+     * @param {string} text - Ability text
+     * @param {Object} context - Context
+     * @returns {Object} Double buff effect object
+     */
+    parseDoubleBuffEffect(text, context) {
+        // Pattern: "double the buff on all your slots"
+        if (text.toLowerCase().includes('double the buff on all your slots')) {
+            return {
+                type: 'double-buff',
+                targetType: 'all_own_slots',
+                target: 'all_own_slots'
+            };
+        }
+        return null;
+    }
+
+    /**
+     * Execute double buff effect (Dwarf King)
+     * @param {Object} effect - Effect object
+     * @param {Object} context - Context
+     */
+    executeDoubleBuffEffect(effect, context) {
+        const { unit, owner, playerId: contextPlayerId } = context;
+        const playerId = owner || unit.owner || contextPlayerId;
+        
+        console.log(`👑 ${unit.name} doubles all buff effects on your slots`);
+        
+        // Safety check for gameState and battlefield
+        const state = this.gameState.getState();
+        if (!state || !state.players || !state.players[playerId] || !state.players[playerId].battlefield) {
+            console.error(`Cannot find battlefield for player ${playerId}`);
+            return;
+        }
+        
+        // Get all player slot buffs
+        const slotBuffs = state.players[playerId].slotBuffs;
+        
+        // Double all existing slot buffs for all 6 slots
+        for (let slotIndex = 0; slotIndex < 6; slotIndex++) {
+            const currentBuff = slotBuffs[slotIndex];
+            if (currentBuff && (currentBuff.attack > 0 || currentBuff.health > 0)) {
+                const originalAttack = currentBuff.attack;
+                const originalHealth = currentBuff.health;
+                
+                console.log(`🔄 Slot ${slotIndex} buff doubled: +${originalAttack}/+${originalHealth} → +${originalAttack * 2}/+${originalHealth * 2}`);
+                
+                // Add the current buff amount to itself (doubling it)
+                this.eventBus.emit('slot:buff', {
+                    slotIndex,
+                    playerId,
+                    buff: {
+                        attack: originalAttack,  // Add the original amount again
+                        health: originalHealth   // Add the original amount again
+                    }
+                });
+            }
+        }
+        
+        this.eventBus.emit('ability:activated', {
+            unit,
+            abilityType: 'double-buff',
+            description: `${unit.name} doubles all buff effects`
+        });
+    }
+
+    /**
+     * Parse Dragon Flame damage effect (Skyterror)
+     * @param {string} text - Ability text
+     * @param {Object} context - Context
+     * @returns {Object} Dragon Flame damage effect object
+     */
+    parseDragonFlameDamageEffect(text, context) {
+        // Pattern: "deal damage equal to your dragon flame to all enemies" or "deal damage equal to your 🔥 to all enemies"
+        if (text.toLowerCase().includes('deal damage equal to your dragon flame to all enemies') ||
+            text.includes('Deal damage equal to your 🔥 to all enemies')) {
+            return {
+                type: 'dragon-flame-damage',
+                targetType: 'all_enemies',
+                target: 'all_enemies'
+            };
+        }
+        return null;
+    }
+
+    /**
+     * Execute Dragon Flame damage effect (Skyterror)
+     * @param {Object} effect - Effect object
+     * @param {Object} context - Context
+     */
+    executeDragonFlameDamageEffect(effect, context) {
+        const { unit, owner, playerId: contextPlayerId } = context;
+        const playerId = owner || unit.owner || contextPlayerId;
+        const opponentId = playerId === 'player' ? 'ai' : 'player';
+        
+        // Safety check for gameState and dragon flames
+        const state = this.gameState.getState();
+        if (!state || !state.dragonFlames) {
+            console.error(`Cannot find dragon flames in game state`);
+            return;
+        }
+        
+        // Get player's Dragon Flame amount
+        const dragonFlame = state.dragonFlames[playerId] || 0;
+        
+        console.log(`🔥⚔️ ${unit.name} deals ${dragonFlame} damage (equal to Dragon Flame) to all enemies`);
+        
+        if (dragonFlame === 0) {
+            console.log(`No Dragon Flame available, no damage dealt`);
+            return;
+        }
+        
+        // Deal damage to all enemy units
+        const enemyBattlefield = state.players[opponentId].battlefield;
+        enemyBattlefield.forEach((slot, slotIndex) => {
+            if (slot && this.combatSystem) {
+                console.log(`🎯 Dealing ${dragonFlame} damage to ${slot.name} in slot ${slotIndex}`);
+                
+                this.combatSystem.applyDamage(
+                    {
+                        type: 'unit',
+                        playerId: opponentId,
+                        slotIndex: slotIndex,
+                        unit: slot
+                    },
+                    dragonFlame,
+                    { name: unit.name, type: 'ability' }
+                );
+            }
+        });
+        
+        // Deal damage to enemy player
+        if (this.combatSystem) {
+            console.log(`🎯 Dealing ${dragonFlame} damage to enemy player`);
+            this.combatSystem.applyDamage(
+                {
+                    type: 'player',
+                    playerId: opponentId
+                },
+                dragonFlame,
+                { name: unit.name, type: 'ability' }
+            );
+        }
+        
+        this.eventBus.emit('ability:activated', {
+            unit,
+            abilityType: 'dragon-flame-damage',
+            description: `${unit.name} deals ${dragonFlame} damage to all enemies`
+        });
+    }
+
+    /**
+     * Parse Dragon Flame buff effect (Tier 4 Dragon)
+     * @param {string} text - Ability text
+     * @param {Object} context - Context
+     * @returns {Object} Dragon Flame buff effect object
+     */
+    parseDragonFlameBuffEffect(text, context) {
+        // Pattern: "gain +3/+3 for each dragon flame"
+        const dragonFlameBuffMatch = text.match(/gain \+(\d+)\/\+(\d+) for each dragon flame/i);
+        if (dragonFlameBuffMatch) {
+            return {
+                type: 'dragon-flame-buff',
+                attackPerFlame: parseInt(dragonFlameBuffMatch[1]),
+                healthPerFlame: parseInt(dragonFlameBuffMatch[2])
+            };
+        }
+        return null;
+    }
+
+    /**
+     * Execute Dragon Flame buff effect (Tier 4 Dragon)
+     * @param {Object} effect - Effect object
+     * @param {Object} context - Context
+     */
+    executeDragonFlameBuffEffect(effect, context) {
+        const { unit, owner, playerId: contextPlayerId } = context;
+        const playerId = owner || unit.owner || contextPlayerId;
+        
+        // Get player's Dragon Flame amount
+        const state = this.gameState.getState();
+        if (!state || !state.dragonFlames) {
+            console.error(`Cannot find dragon flames in game state`);
+            return;
+        }
+        
+        const dragonFlame = state.dragonFlames[playerId] || 0;
+        const attackBuff = dragonFlame * effect.attackPerFlame;
+        const healthBuff = dragonFlame * effect.healthPerFlame;
+        
+        console.log(`🐉 ${unit.name} gains +${attackBuff}/+${healthBuff} (${effect.attackPerFlame}/${effect.healthPerFlame} per 🔥, you have ${dragonFlame} 🔥)`);
+        
+        if (attackBuff > 0 || healthBuff > 0) {
+            // Apply the buff to the unit using the standard method
+            this.applyBuffToUnit(playerId, context.slotIndex, attackBuff, healthBuff);
+        }
+        
+        this.eventBus.emit('ability:activated', {
+            unit,
+            abilityType: 'dragon-flame-buff',
+            description: `${unit.name} gains +${attackBuff}/+${healthBuff} from Dragon Flame`
         });
     }
 }

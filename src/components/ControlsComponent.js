@@ -159,7 +159,7 @@ class ControlsComponent {
             });
         }
 
-        // AI Deck Button
+        // Opponent Deck Button
         const aiDeckBtn = document.getElementById('aiDeckBtn');
         if (aiDeckBtn) {
             aiDeckBtn.addEventListener('click', () => {
@@ -513,7 +513,7 @@ class ControlsComponent {
     showDeck(playerId = 'player') {
         const state = this.gameState.getState();
         const deck = playerId === 'player' ? state.players.player.deck : state.players.ai.deck;
-        const playerName = playerId === 'player' ? 'Your' : 'AI';
+        const playerName = playerId === 'player' ? 'Your' : 'Opponent';
         
         const deckModal = document.getElementById('deckModal');
         const deckContent = document.getElementById('deckContent');
@@ -526,7 +526,7 @@ class ControlsComponent {
             }
             
             if (deck.length === 0) {
-                deckContent.innerHTML = `<div class="empty-deck">${playerName === 'Your' ? 'Your' : 'AI'} deck is empty. Units that have been played will be added here when they die.</div>`;
+                deckContent.innerHTML = `<div class="empty-deck">${playerName === 'Your' ? 'Your' : 'Opponent'} deck is empty. Units that have been played will be added here when they die.</div>`;
             } else {
                 deckContent.innerHTML = deck.map(card => `
                     <div class="deck-card ${card.color}">

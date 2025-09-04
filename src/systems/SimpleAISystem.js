@@ -180,9 +180,9 @@ class SimpleAISystem {
     canUnitAttack(unit, aiData) {
         if (!unit) return false;
         
-        // Check if already attacked
+        // Check if already attacked (slot-based tracking)
         const hasAttacked = aiData.hasAttacked || [];
-        if (hasAttacked.includes(unit.id)) {
+        if (hasAttacked.includes(unit.slotIndex)) {
             return false;
         }
         

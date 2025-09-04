@@ -4,7 +4,7 @@ Soldier,2,4,No Ability,Human,Red,
 Fighter,1,1,"At the end of your turn, if this is in the front row, gain +1/+1.",Dwarf,Red,
 Villager,1,1,Unleash: Give the other slot in this column +1/+1.,Human,Red,Unleash: When this unit is summoned.
 Fire Whelp,2,1,Unleash: Gain 1 Dragon Flame.,Dragon,Red,Dragon Flame: Will buff or activate abilities from future Dragons.
-Worker,1,1,"At the start of your turn, give this slot +1/+1.",Dwarf,Red,
+Worker,1,1,"At the start of your turn, give this slot +1/+0.",Dwarf,Red,
 Hawk,2,2,Flying,Beast,Yellow,Flying: Front row units can't attack this.
 Bear Cub,3,2,Trample.,Beast,Yellow,Trample: Excess damage dealt when attacking a unit is dealt to the unit or player behind it.
 Wolf Pup,2,2,Sneaky.,Beast,Yellow,"Sneaky: The first time this attacks, it targets the enemy player."

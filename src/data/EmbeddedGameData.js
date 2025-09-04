@@ -55,7 +55,7 @@ export const CARD_DATABASE = {
       "name": "Worker",
       "attack": 1,
       "health": 1,
-      "ability": "At the start of your turn, give this slot +1/+1",
+      "ability": "At the start of your turn, give this slot +1/+0.",
       "tags": ["Dwarf"],
       "color": "red"
     },
@@ -271,7 +271,7 @@ export const CARD_DATABASE = {
       "name": "Cultist",
       "attack": 2,
       "health": 1,
-      "ability": "Unleash: Give an Undead +2/+2",
+      "ability": "Last Gasp: Give a random friendly Undead +2/+2",
       "tags": ["Human"],
       "color": "purple"
     }
@@ -912,7 +912,143 @@ export const CARD_DATABASE = {
       "color": "purple"
     }
   ],
-  "5": [],
+  "5": [
+    {
+      "id": "dwarf_king",
+      "name": "Dwarf King",
+      "attack": 10,
+      "health": 10,
+      "ability": "Unleash: Double the buff on all your slots.",
+      "tags": ["Dwarf"],
+      "color": "red"
+    },
+    {
+      "id": "skyterror",
+      "name": "Skyterror",
+      "attack": 9,
+      "health": 6,
+      "ability": "Flying. Unleash: Deal damage equal to your 🔥 to all enemies.",
+      "tags": ["Dragon"],
+      "color": "red"
+    },
+    {
+      "id": "hero",
+      "name": "Hero",
+      "attack": 15,
+      "health": 15,
+      "ability": "",
+      "tags": ["Human"],
+      "color": "red"
+    },
+    {
+      "id": "king_kong",
+      "name": "King Kong",
+      "attack": 20,
+      "health": 8,
+      "ability": "Trample",
+      "tags": ["Beast"],
+      "color": "yellow"
+    },
+    {
+      "id": "primal_alpha",
+      "name": "Primal Alpha",
+      "attack": 8,
+      "health": 4,
+      "ability": "Kindred: Give your Beasts +4/+4.",
+      "tags": ["Beast"],
+      "color": "yellow"
+    },
+    {
+      "id": "tempest_lord",
+      "name": "Tempest Lord",
+      "attack": 12,
+      "health": 4,
+      "ability": "Flying. Unleash: Draw up to 3 Flying units from your deck.",
+      "tags": ["Beast"],
+      "color": "yellow"
+    },
+    {
+      "id": "forest_keeper",
+      "name": "Forest Keeper",
+      "attack": 10,
+      "health": 7,
+      "ability": "Ranged. Unleash: Give all your slots with a Ranged unit +5/+0.",
+      "tags": ["Elf"],
+      "color": "green"
+    },
+    {
+      "id": "goblin_machine",
+      "name": "Goblin Machine",
+      "attack": 25,
+      "health": 25,
+      "ability": "Can only attack if you have a Goblin in each column.",
+      "tags": ["Goblin"],
+      "color": "green"
+    },
+    {
+      "id": "treant",
+      "name": "Treant",
+      "attack": 5,
+      "health": 15,
+      "ability": "At the start of your turn, fully heal this.",
+      "tags": ["Mystic"],
+      "color": "green"
+    },
+    {
+      "id": "fairy_queen",
+      "name": "Fairy Queen",
+      "attack": 4,
+      "health": 6,
+      "ability": "Unleash: Give all of your slots +0/+2.",
+      "tags": ["Mystic"],
+      "color": "blue"
+    },
+    {
+      "id": "grand_magus",
+      "name": "Grand Magus",
+      "attack": 5,
+      "health": 5,
+      "ability": "Ranged. Unleash: Deal 5 damage in each column.",
+      "tags": ["Human"],
+      "color": "blue"
+    },
+    {
+      "id": "mana_vortex",
+      "name": "Mana Vortex",
+      "attack": 8,
+      "health": 8,
+      "ability": "Manacharge: Deal 1 damage to all enemies.",
+      "tags": ["Mystic"],
+      "color": "blue"
+    },
+    {
+      "id": "soul_eater",
+      "name": "Soul Eater",
+      "attack": 1,
+      "health": 1,
+      "ability": "Unleash: Destroy the frontmost enemy here.",
+      "tags": ["Mystic"],
+      "color": "purple"
+    },
+    {
+      "id": "skeleton_king",
+      "name": "Skeleton King",
+      "attack": 7,
+      "health": 7,
+      "ability": "Unleash: Fill your battlefield with Skeletons.",
+      "tags": ["Undead"],
+      "color": "purple"
+    },
+    {
+      "id": "death",
+      "name": "Death",
+      "attack": 6,
+      "health": 6,
+      "ability": "Last Gasp: Deal 6 damage in this column for each of your Souls.",
+      "tags": ["Undead"],
+      "color": "purple"
+    }
+  ],
   "tokens": [
     {
       "id": "spider",

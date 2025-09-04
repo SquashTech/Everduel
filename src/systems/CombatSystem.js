@@ -286,6 +286,41 @@ class CombatSystem {
             };
         }
 
+        // Special check for Goblin Machine - needs a Goblin in each column
+        if (attacker.name === 'Goblin Machine') {
+            const battlefield = this.stateSelectors.getPlayerBattlefield(attacker.owner);
+            const columns = [0, 1, 2]; // The three columns
+            const missingColumns = [];
+            
+            for (const column of columns) {
+                // Check both front (column) and back (column + 3) slots for Goblins
+                const frontSlot = column;
+                const backSlot = column + 3;
+                const frontUnit = battlefield[frontSlot];
+                const backUnit = battlefield[backSlot];
+                
+                const hasGoblinInColumn = 
+                    (frontUnit && frontUnit.tags && frontUnit.tags.includes('Goblin')) ||
+                    (backUnit && backUnit.tags && backUnit.tags.includes('Goblin'));
+                
+                if (!hasGoblinInColumn) {
+                    missingColumns.push(column);
+                }
+            }
+            
+            if (missingColumns.length > 0) {
+                const columnNames = missingColumns.map(col => 
+                    col === 0 ? 'left' : col === 1 ? 'middle' : 'right'
+                ).join(', ');
+                
+                return {
+                    valid: false,
+                    reason: 'goblin_machine_requirement',
+                    userMessage: `Goblin Machine needs a Goblin in each column. Missing: ${columnNames}`
+                };
+            }
+        }
+
         return { valid: true };
     }
 
@@ -354,12 +389,14 @@ class CombatSystem {
     }
 
     /**
-     * Mark a unit as having attacked this turn
+     * Mark a unit as having attacked this turn (using slot-based tracking)
      * @param {Object} unit - Unit that attacked
      */
     markAsAttacked(unit) {
         const currentlyAttacked = this.stateSelectors.getHasAttacked(unit.owner);
-        const hasAttacked = [...currentlyAttacked, unit.id];
+        const hasAttacked = [...currentlyAttacked, unit.slotIndex];
+        
+        console.log(`⚔️ Marking slot ${unit.slotIndex} (${unit.name}) as having attacked`);
         
         this.gameEngine.dispatch({
             type: 'SET_PLAYER_HAS_ATTACKED',

@@ -1,0 +1,8 @@
+ Activating Manacharge on Mana Vortex (owner: player) at slot 0
+AbilitySystem.js:1591 ⚡ Manacharge triggered for Mana Vortex: Manacharge: Deal 1 damage to all enemies.
+AbilitySystem.js:1604 🔍 [MANA VORTEX] Effect text after prefix removal: "Deal 1 damage to all enemies."
+AbilitySystem.js:279 🔍 [MANA VORTEX] targetText: "all enemies"
+AbilitySystem.js:289 🔍 [MANA VORTEX] lowerTargetText: "all enemies"
+AbilitySystem.js:70 🔍 [MANA VORTEX] parseDamageEffect returned: Objectamount: 1targetSelection: "all"targetType: "unit"type: "damage"[[Prototype]]: Object
+AbilitySystem.js:78 🔍 [MANA VORTEX] About to call executeDamageEffect with: Objectamount: 1targetSelection: "all"targetType: "unit"type: "damage"[[Prototype]]: Object
+AbilitySystem.js:1628 🔍 [MANA VORTEX] parseAndExecuteAbility result: Objecteffects: Array(1)0: amount: 1targetSelection: "all"targetType: "unit"type: "damage"

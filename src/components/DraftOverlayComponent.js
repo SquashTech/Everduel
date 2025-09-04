@@ -295,19 +295,29 @@ class DraftOverlayComponent {
         switch (data.reason) {
             case 'insufficient_gold':
                 message = `Not enough gold to draft Tier ${data.tier}`;
+                // For insufficient gold, we can close since no gold was taken
+                this.hideDraftOptions(true);
                 break;
             case 'no_cards_available':
                 message = `No cards available in Tier ${data.tier}`;
+                // For no cards available, we can close since no gold was taken
+                this.hideDraftOptions(true);
                 break;
             case 'hand_full':
                 message = 'Your hand is full (3 cards maximum)';
+                // For hand full, DON'T close the overlay - gold was already spent!
+                // Player must select a card or reroll
+                break;
+            case 'insufficient_gold_reroll':
+                message = 'Not enough gold to reroll';
+                // Don't close - player must select from existing options
                 break;
             default:
                 message = 'Draft failed: ' + data.reason;
+                // Don't close by default to prevent losing paid gold
         }
 
         this.uiManager.showNotification(message, 'error');
-        this.hideDraftOptions(true); // Don't show "gold spent" message on failure
     }
 
     /**

@@ -64,25 +64,29 @@ body {
 
 /* === DECK BUTTON STYLING === */
 .btn-deck {
-    background: rgba(100, 150, 255, 0.2);
-    border: 1px solid rgba(100, 150, 255, 0.4);
-    color: white;
+    background: linear-gradient(135deg, #ffd700, #ffb347);
+    border: 2px solid #ff8c00;
+    color: #1a1a2e;
     padding: 4px 8px;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s;
     font-size: 12px;
     font-weight: bold;
+    box-shadow: 0 2px 6px rgba(255, 215, 0, 0.4);
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .btn-deck:hover {
-    background: rgba(100, 150, 255, 0.4);
-    border-color: rgba(100, 150, 255, 0.6);
+    background: linear-gradient(135deg, #ffed4e, #ffd700);
+    border-color: #ff6347;
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.6);
 }
 
 .btn.btn-deck.btn-deck-inline:hover {
-    background: rgba(100, 150, 255, 0.4);
-    border-color: rgba(100, 150, 255, 0.8);
+    background: linear-gradient(135deg, #ffed4e, #ffd700);
+    border-color: #ff6347;
     transform: none !important;
 }
 
@@ -130,11 +134,19 @@ body {
     padding: 4px 8px;
     width: 60px;
     min-width: 60px;
+    background: linear-gradient(135deg, #ffd700, #ffb347);
+    border: 2px solid #ff8c00;
+    color: #1a1a2e;
+    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(255, 215, 0, 0.4);
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .ai-info .btn-deck:hover {
-    transform: translateX(-50%) translateY(5px) scale(1.02);
-    background: rgba(100, 150, 255, 0.3);
+    transform: translateX(-50%) translateY(5px) scale(1.05);
+    background: linear-gradient(135deg, #ffed4e, #ffd700);
+    border-color: #ff6347;
+    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.6);
 }
 
 .player-info {
@@ -1361,26 +1373,32 @@ body {
     padding: 3px 8px;
     font-size: 11px;
     border-radius: 4px;
-    background: rgba(100, 150, 255, 0.2);
-    border: 1px solid rgba(100, 150, 255, 0.4);
-    color: white;
+    background: linear-gradient(135deg, #ffd700, #ffb347);
+    border: 2px solid #ff8c00;
+    color: #1a1a2e;
     white-space: nowrap;
+    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(255, 215, 0, 0.4);
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .btn-deck-hand:hover {
-    background: rgba(100, 150, 255, 0.4);
-    border-color: rgba(100, 150, 255, 0.6);
+    background: linear-gradient(135deg, #ffed4e, #ffd700);
+    border-color: #ff6347;
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.6);
 }
 
 .hand-cards-container {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    gap: 12px;
+    gap: 7px;
     justify-content: space-evenly;
     align-items: center;
     flex: 1;
     min-height: 120px; /* Ensure space for cards even when empty */
+    margin-left: -8px; /* Shift cards 8px to the left to prevent overflow */
 }
 
 /* Removed :empty hiding - hand area now always visible */
@@ -1518,20 +1536,21 @@ body {
     color: white;
 }
 
-/* How to Play button - unique bright color to stand out */
+/* How to Play button - matches deck button style */
 #howToPlayBtnSidebar {
-    background: #ff6b35 !important;
-    color: white !important;
-    border: 2px solid #ff4500 !important;
-    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4) !important;
+    background: linear-gradient(135deg, #ffd700, #ffb347) !important;
+    color: #1a1a2e !important;
+    border: 2px solid #ff8c00 !important;
+    box-shadow: 0 2px 6px rgba(255, 215, 0, 0.4) !important;
     font-weight: bold !important;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3) !important;
 }
 
 #howToPlayBtnSidebar:hover {
-    background: #ff4500 !important;
-    border-color: #e63900 !important;
-    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.6) !important;
-    transform: translateY(-1px) !important;
+    background: linear-gradient(135deg, #ffed4e, #ffd700) !important;
+    border-color: #ff6347 !important;
+    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.6) !important;
+    transform: translateY(-2px) !important;
 }
 
 /* Draw from Deck button - brown color to differentiate from draft buttons */
@@ -1797,7 +1816,7 @@ body {
     bottom: 0;
     background: transparent;
     color: #ffd700;
-    padding: 10px 12px;
+    padding: 8px 12px;
     border-radius: 8px;
     font-size: 13px;
     font-weight: bold;
@@ -1806,6 +1825,7 @@ body {
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
 }
 

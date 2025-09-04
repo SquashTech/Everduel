@@ -65,6 +65,20 @@ class CardSystem {
         const { tier, playerId } = data;
         console.log('🃏 CardSystem: Draft start requested for tier', tier, 'by', playerId);
         
+        const state = this.gameState.getState();
+        
+        // Check if there's already an active draft (e.g., after a reroll)
+        if (state.currentDraftTier && state.draftOptions && state.draftOptions.length > 0) {
+            console.log('📌 Draft already in progress for tier', state.currentDraftTier, '- showing existing options');
+            // Just re-show the existing draft options without charging again
+            this.eventBus.emit('draft:options-ready', {
+                options: state.draftOptions,
+                tier: state.currentDraftTier,
+                playerId
+            });
+            return;
+        }
+        
         // Validation
         if (!this.canAffordDraft(tier, playerId)) {
             console.log('❌ Draft failed: insufficient gold');
@@ -90,7 +104,6 @@ class CardSystem {
         }
 
         // Deduct gold immediately when starting draft
-        const state = this.gameState.getState();
         const cost = tier * 2;
         const currentGold = state.players[playerId].gold;
         
@@ -161,6 +174,9 @@ class CardSystem {
 
         // Clear draft options
         this.gameEngine.dispatch({ type: 'CLEAR_DRAFT' });
+
+        // Calculate the cost that was already paid when draft started
+        const cost = tier * 2;
 
         this.eventBus.emit('draft:completed', {
             selectedCard,

@@ -120,6 +120,16 @@ class DebugCardGenerator {
                 font-weight: bold;
                 margin-bottom: 10px;
             ">Clear Hand</button>
+            <button id="debug-fill-opponent-battlefield" style="
+                width: 100%;
+                padding: 5px;
+                background: #f80;
+                color: #fff;
+                border: none;
+                cursor: pointer;
+                font-weight: bold;
+                margin-bottom: 5px;
+            ">Fill Opponent Battlefield</button>
             <div style="font-size: 12px; color: #888;">
                 Shortcuts:<br>
                 • Backtick - Toggle this overlay<br>
@@ -135,6 +145,7 @@ class DebugCardGenerator {
         const generateBtn = document.getElementById('debug-generate-btn');
         const fillHandBtn = document.getElementById('debug-fill-hand');
         const clearHandBtn = document.getElementById('debug-clear-hand');
+        const fillOpponentBattlefieldBtn = document.getElementById('debug-fill-opponent-battlefield');
 
         searchInput.addEventListener('input', () => {
             this.updateSuggestions(searchInput.value, suggestionsDiv);
@@ -155,6 +166,10 @@ class DebugCardGenerator {
 
         clearHandBtn.addEventListener('click', () => {
             this.clearHand();
+        });
+
+        fillOpponentBattlefieldBtn.addEventListener('click', () => {
+            this.fillOpponentBattlefield();
         });
 
         searchInput.focus();
@@ -250,10 +265,7 @@ class DebugCardGenerator {
         console.log(`Generated card: ${cardData.name}`);
         this.showNotification(`Generated: ${cardData.name}`, 'success');
         
-        this.gameEngine.eventBus.emit('ui:update', {
-            component: 'hand',
-            player: 'player'
-        });
+        this.gameEngine.eventBus.emit('ui:refresh');
     }
 
     fillHandRandom() {
@@ -283,10 +295,7 @@ class DebugCardGenerator {
 
         this.showNotification(`Added ${cardsToAdd} random cards`, 'success');
         
-        this.gameEngine.eventBus.emit('ui:update', {
-            component: 'hand',
-            player: 'player'
-        });
+        this.gameEngine.eventBus.emit('ui:refresh');
     }
 
     clearHand() {
@@ -297,10 +306,49 @@ class DebugCardGenerator {
 
         this.showNotification('Hand cleared', 'info');
         
-        this.gameEngine.eventBus.emit('ui:update', {
-            component: 'hand',
-            player: 'player'
+        this.gameEngine.eventBus.emit('ui:refresh');
+    }
+
+    fillOpponentBattlefield() {
+        const state = this.gameEngine.gameState.getState();
+        const opponentBattlefield = state.players.ai.battlefield || [];
+        
+        // Count empty slots (null values)
+        const emptySlots = [];
+        for (let i = 0; i < 6; i++) { // Battlefield has 6 slots (3x2 grid)
+            if (!opponentBattlefield[i]) {
+                emptySlots.push(i);
+            }
+        }
+        
+        if (emptySlots.length === 0) {
+            this.showNotification('Opponent battlefield is already full!', 'warning');
+            return;
+        }
+
+        const allCards = Array.from(this.cardIndex.values());
+        let unitsPlaced = 0;
+        
+        // Fill all empty slots with random units
+        emptySlots.forEach(slotIndex => {
+            const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
+            const newUnit = UnitFactory.createUnit(randomCard);
+            
+            this.gameEngine.gameState.dispatch({
+                type: 'PLACE_UNIT',
+                payload: {
+                    playerId: 'ai',
+                    unit: newUnit,
+                    slotIndex: slotIndex
+                }
+            });
+            
+            unitsPlaced++;
         });
+
+        this.showNotification(`Placed ${unitsPlaced} random units on opponent battlefield`, 'success');
+        
+        this.gameEngine.eventBus.emit('ui:refresh');
     }
 
     showNotification(message, type = 'info') {

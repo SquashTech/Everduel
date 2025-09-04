@@ -456,7 +456,7 @@ export default class OptimizedBattlefieldComponent {
                 buffElement.className = 'slot-buff';
                 slotElement.appendChild(buffElement);
             }
-            buffElement.textContent = `+${buff.attack}/+${buff.health}`;
+            buffElement.textContent = `${buff.attack > 0 ? '+' : '+'}${buff.attack}/${buff.health > 0 ? '+' : '+'}${buff.health}`;
         }
     }
 
