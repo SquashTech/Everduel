@@ -660,9 +660,9 @@ export const CARD_DATABASE = {
     {
       "id": "fire_elemental",
       "name": "Fire Elemental",
-      "attack": 6,
-      "health": 5,
-      "ability": "Manacharge: Gain Rush",
+      "attack": 3,
+      "health": 4,
+      "ability": "Manacharge: Summon a Fire Spirit in a random slot",
       "tags": ["Mystic"],
       "color": "blue"
     },
@@ -678,7 +678,7 @@ export const CARD_DATABASE = {
     {
       "id": "storm_elemental",
       "name": "Storm Elemental",
-      "attack": 4,
+      "attack": 5,
       "health": 4,
       "ability": "Manacharge: Deal 5 damage to a random enemy unit",
       "tags": ["Mystic"],
@@ -699,7 +699,7 @@ export const CARD_DATABASE = {
       "attack": 4,
       "health": 5,
       "ability": "Last Gasp: Gain 1 Dragon Flame and summon a Skeleton here",
-      "tags": ["Dragon", "Undead"],
+      "tags": ["Undead"],
       "color": "purple"
     },
     {

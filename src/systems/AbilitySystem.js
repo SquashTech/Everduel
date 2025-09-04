@@ -1398,6 +1398,107 @@ class AbilitySystem {
             unit.owner = context.playerId;
         }
         
+        // Special handling for Skeleton King
+        if (unit.name === 'Skeleton King') {
+            const state = this.gameState.getState();
+            const playerId = unit.owner || context.playerId || 'player';
+            const battlefield = state.players[playerId].battlefield;
+            const skeletonCard = this.getSkeletonCard();
+            let skeletonsPlaced = 0;
+            
+            console.log(`💀👑 Skeleton King rises! Filling battlefield with Skeletons...`);
+            
+            // Fill all empty slots (0-5) with Skeletons
+            for (let slot = 0; slot < 6; slot++) {
+                if (!battlefield[slot]) {
+                    const skeleton = UnitFactory.createSummonedUnit(skeletonCard, playerId, slot, {
+                        canAttack: false,
+                        summoner: unit.name
+                    });
+                    
+                    // Place the skeleton
+                    this.gameEngine.dispatch({
+                        type: 'PLACE_UNIT',
+                        payload: { 
+                            playerId, 
+                            slotIndex: slot, 
+                            unit: skeleton 
+                        }
+                    });
+                    
+                    skeletonsPlaced++;
+                    console.log(`💀 Skeleton summoned to slot ${slot}`);
+                }
+            }
+            
+            if (skeletonsPlaced > 0) {
+                this.eventBus.emit('ability:activated', {
+                    type: 'skeleton-king-unleash',
+                    unit,
+                    effect: `Summoned ${skeletonsPlaced} Skeleton${skeletonsPlaced > 1 ? 's' : ''}`
+                });
+            } else {
+                console.log(`💀👑 Battlefield is already full, no Skeletons summoned`);
+            }
+            
+            return;
+        }
+
+        // Special handling for Soul Eater
+        if (unit.name === 'Soul Eater') {
+            const state = this.gameState.getState();
+            const playerId = unit.owner || context.playerId || 'player';
+            const enemyId = playerId === 'player' ? 'ai' : 'player';
+            
+            // Validate state structure
+            if (!state || !state.players || !state.players[enemyId] || !state.players[enemyId].battlefield) {
+                console.error(`💀 Soul Eater: Invalid state structure for enemy ${enemyId}`);
+                return;
+            }
+            
+            // Find the frontmost enemy in the same column
+            const column = context.slotIndex % 3; // 0, 1, or 2
+            const frontSlot = column;      // 0, 1, or 2 (front row)
+            const backSlot = column + 3;   // 3, 4, or 5 (back row)
+            
+            const enemyBattlefield = state.players[enemyId].battlefield;
+            const frontUnit = enemyBattlefield[frontSlot];
+            const backUnit = enemyBattlefield[backSlot];
+            
+            // Target the frontmost unit (prioritize front row)
+            let targetUnit = null;
+            let targetSlotIndex = null;
+            
+            if (frontUnit) {
+                targetUnit = frontUnit;
+                targetSlotIndex = frontSlot;
+            } else if (backUnit) {
+                targetUnit = backUnit;
+                targetSlotIndex = backSlot;
+            }
+            
+            if (targetUnit) {
+                console.log(`💀 Soul Eater destroys ${targetUnit.name} in column ${column}`);
+                
+                // Emit unit death event
+                this.eventBus.emit('unit:dies', {
+                    unit: targetUnit,
+                    cause: 'destroyed',
+                    owner: enemyId,
+                    slotIndex: targetSlotIndex
+                });
+                
+                this.eventBus.emit('ability:activated', {
+                    type: 'soul-eater-unleash',
+                    unit,
+                    effect: `Destroyed ${targetUnit.name}`
+                });
+            } else {
+                console.log(`💀 Soul Eater found no enemies to destroy in column ${column}`);
+            }
+            return;
+        }
+
         // Special handling for Bone Colossus
         if (unit.name === 'Bone Colossus') {
             const state = this.gameState.getState();
@@ -1458,6 +1559,84 @@ class AbilitySystem {
 
         // Remove "Last Gasp:" prefix and parse the effect
         let effectText = abilityText.replace(/^.*last gasp:\s*/i, '');
+        
+        // Special handling for Death
+        if (unit.name === 'Death') {
+            const state = this.gameState.getState();
+            const playerId = context.playerId || unit.owner || 'player';
+            const enemyId = playerId === 'player' ? 'ai' : 'player';
+            const souls = state.souls[playerId] || 0;
+            const damagePerSoul = 6;
+            const totalDamage = souls * damagePerSoul;
+            
+            console.log(`💀⚡ Death's Last Gasp: Dealing ${totalDamage} damage (${souls} souls × ${damagePerSoul}) in column`);
+            
+            if (souls > 0) {
+                // Get the column where Death died
+                const column = context.slotIndex % 3; // 0, 1, or 2
+                const frontSlot = column;      // 0, 1, or 2
+                const backSlot = column + 3;   // 3, 4, or 5
+                
+                // Get fresh state to check current battlefield after combat resolution
+                const freshState = this.gameState.getState();
+                const enemyBattlefield = freshState.players[enemyId].battlefield;
+                
+                // Column damage priority: Front → Back → Player
+                // Only target units that are still alive
+                const frontUnit = enemyBattlefield[frontSlot];
+                const backUnit = enemyBattlefield[backSlot];
+                
+                let target = null;
+                let targetType = null;
+                let targetSlotIndex = null;
+                
+                // Check if units are still alive (not null and have health > 0)
+                if (frontUnit && frontUnit.currentHealth > 0) {
+                    target = frontUnit;
+                    targetType = 'unit';
+                    targetSlotIndex = frontSlot;
+                    console.log(`💀 Death targets front unit ${frontUnit.name} in column ${column}`);
+                } else if (backUnit && backUnit.currentHealth > 0) {
+                    target = backUnit;
+                    targetType = 'unit';
+                    targetSlotIndex = backSlot;
+                    console.log(`💀 Death targets back unit ${backUnit.name} in column ${column}`);
+                } else {
+                    // No living units in column, hit player
+                    target = { type: 'player', playerId: enemyId };
+                    targetType = 'player';
+                    console.log(`💀 Death targets ${enemyId} player (no living units in column ${column})`);
+                }
+                
+                // Deal the damage
+                if (targetType === 'player') {
+                    this.eventBus.emit('combat:damage', {
+                        target: { type: 'player', playerId: enemyId },
+                        damage: totalDamage,
+                        source: unit
+                    });
+                } else {
+                    // Damage unit (only if we found a valid living target)
+                    this.eventBus.emit('combat:damage', {
+                        target: { type: 'unit', unit: target, slotIndex: targetSlotIndex, playerId: enemyId },
+                        damage: totalDamage,
+                        source: unit
+                    });
+                }
+                
+                this.eventBus.emit('ability:activated', {
+                    type: 'death-last-gasp',
+                    unit,
+                    effect: `Dealt ${totalDamage} damage in column ${column}`
+                });
+            } else {
+                console.log(`💀 Death has no souls, no damage dealt`);
+            }
+            
+            // Still trigger Necromancer buff
+            this.triggerNecromancerBuff(context.playerId);
+            return;
+        }
         
         // Handle Banish effect specially
         if (effectText.toLowerCase().includes('banish this')) {
@@ -1569,6 +1748,57 @@ class AbilitySystem {
             return;
         }
         
+        // Fire Elemental: Summon a Fire Spirit in a random slot
+        if (unit.name === 'Fire Elemental' && effectText.toLowerCase().includes('summon a fire spirit')) {
+            const state = this.gameState.getState();
+            const playerId = unit.owner || context.playerId || 'player';
+            const battlefield = state.players[playerId].battlefield;
+            
+            // Find all empty slots
+            const emptySlots = [];
+            for (let i = 0; i < 6; i++) {
+                if (!battlefield[i]) {
+                    emptySlots.push(i);
+                }
+            }
+            
+            if (emptySlots.length > 0) {
+                // Choose a random empty slot
+                const randomIndex = Math.floor(Math.random() * emptySlots.length);
+                const targetSlot = emptySlots[randomIndex];
+                
+                // Get Fire Spirit card definition
+                const fireSpirit = this.getFireSpiritCard();
+                
+                // Create the summoned unit
+                const summonedUnit = UnitFactory.createSummonedUnit(fireSpirit, playerId, targetSlot, {
+                    canAttack: false,
+                    summoner: unit.name
+                });
+                
+                // Place the Fire Spirit
+                this.gameEngine.dispatch({
+                    type: 'PLACE_UNIT',
+                    payload: { 
+                        playerId, 
+                        slotIndex: targetSlot, 
+                        unit: summonedUnit 
+                    }
+                });
+                
+                console.log(`🔥 Fire Elemental summoned a Fire Spirit to slot ${targetSlot}`);
+                
+                this.eventBus.emit('ability:activated', {
+                    type: 'fire-elemental-manacharge',
+                    unit,
+                    effect: `Summoned Fire Spirit to slot ${targetSlot}`
+                });
+            } else {
+                console.log(`🔥 Fire Elemental's battlefield is full, cannot summon Fire Spirit`);
+            }
+            return;
+        }
+        
         // Use the general ability parsing system to handle all other Manacharge effects
         const result = this.parseAndExecuteAbility(effectText, { unit, ...context });
         
@@ -1657,6 +1887,71 @@ class AbilitySystem {
             unit,
             player: context.owner || 'player'
         });
+
+        // Goblin Chief: Summon a random Goblin (Knife, Spear, or Muscle) in a random slot
+        if (unit.name === 'Goblin Chief' && abilityText.toLowerCase().includes('summon a knife, spear, or muscle goblin')) {
+            const state = this.gameState.getState();
+            const playerId = unit.owner || context.owner || 'player';
+            const battlefield = state.players[playerId].battlefield;
+            
+            // Find all empty slots
+            const emptySlots = [];
+            for (let i = 0; i < 6; i++) {
+                if (!battlefield[i]) {
+                    emptySlots.push(i);
+                }
+            }
+            
+            if (emptySlots.length > 0) {
+                // Choose a random empty slot
+                const targetSlot = emptySlots[Math.floor(Math.random() * emptySlots.length)];
+                
+                // Choose a random Goblin to summon
+                const goblinOptions = ['knife_goblin', 'spear_goblin', 'muscle_goblin'];
+                const selectedGoblin = goblinOptions[Math.floor(Math.random() * goblinOptions.length)];
+                
+                // Get the unit data using the specific method
+                let unitData;
+                if (selectedGoblin === 'knife_goblin') {
+                    unitData = this.getKnifeGoblinCard();
+                } else if (selectedGoblin === 'spear_goblin') {
+                    unitData = this.getSpearGoblinCard();
+                } else if (selectedGoblin === 'muscle_goblin') {
+                    unitData = this.getMuscleGoblinCard();
+                }
+                
+                if (unitData) {
+                    // Create the summoned unit using UnitFactory
+                    const summonedUnit = UnitFactory.createSummonedUnit(unitData, playerId, targetSlot, {
+                        canAttack: false,
+                        summoner: unit.name
+                    });
+                    
+                    // Place the unit on the battlefield
+                    this.gameEngine.dispatch({
+                        type: 'PLACE_UNIT',
+                        payload: { 
+                            playerId, 
+                            slotIndex: targetSlot, 
+                            unit: summonedUnit 
+                        }
+                    });
+                    
+                    console.log(`👑 Goblin Chief summoned a ${summonedUnit.name} to slot ${targetSlot}`);
+                    
+                    this.eventBus.emit('ability:activated', {
+                        type: 'goblin-chief-kindred',
+                        unit,
+                        effect: `Summoned ${summonedUnit.name} to slot ${targetSlot}`
+                    });
+                } else {
+                    console.error(`Failed to find unit data for ${selectedGoblin}`);
+                }
+            } else {
+                console.log(`👑 Goblin Chief's battlefield is full, cannot summon Goblin`);
+            }
+            return;
+        }
 
         // Remove "Kindred:" prefix and parse the effect
         // Handle special case: "Kindred and Manacharge:"
@@ -2061,6 +2356,70 @@ class AbilitySystem {
     }
     
     /**
+     * Get Fire Spirit card definition (Tier 2 unit)
+     * @returns {Object} Fire Spirit card
+     */
+    getFireSpiritCard() {
+        return {
+            id: 'fire_spirit',
+            name: 'Fire Spirit',
+            attack: 3,
+            health: 3,
+            ability: 'Manacharge: Gain +3/+2',
+            tags: ['Mystic'],
+            color: 'blue'
+        };
+    }
+    
+    /**
+     * Get Knife Goblin card definition (Tier 1 unit)
+     * @returns {Object} Knife Goblin card
+     */
+    getKnifeGoblinCard() {
+        return {
+            id: 'knife_goblin',
+            name: 'Knife Goblin',
+            attack: 1,
+            health: 1,
+            ability: 'Rush, Kindred: Gain +1/+1',
+            tags: ['Goblin'],
+            color: 'green'
+        };
+    }
+    
+    /**
+     * Get Spear Goblin card definition (Tier 1 unit)
+     * @returns {Object} Spear Goblin card
+     */
+    getSpearGoblinCard() {
+        return {
+            id: 'spear_goblin',
+            name: 'Spear Goblin',
+            attack: 1,
+            health: 1,
+            ability: 'Ranged, Kindred: Gain +1/+1',
+            tags: ['Goblin'],
+            color: 'green'
+        };
+    }
+    
+    /**
+     * Get Muscle Goblin card definition (Tier 1 unit)
+     * @returns {Object} Muscle Goblin card
+     */
+    getMuscleGoblinCard() {
+        return {
+            id: 'muscle_goblin',
+            name: 'Muscle Goblin',
+            attack: 1,
+            health: 1,
+            ability: 'Trample, Kindred: Gain +1/+1',
+            tags: ['Goblin'],
+            color: 'green'
+        };
+    }
+    
+    /**
      * Fill front row with 5/1 Spiders for Spider Queen
      * @param {string} playerId - Player ID
      * @param {Object} context - Context including the unit
@@ -2214,6 +2573,8 @@ class AbilitySystem {
             cardDefinition = this.getManaSurgeCard();
         } else if (cardName === 'Spider') {
             cardDefinition = this.getSpiderCard();
+        } else if (cardName === 'Fire Spirit') {
+            cardDefinition = this.getFireSpiritCard();
         } else {
             console.error(`❌ Unknown card to summon: ${cardName}`);
             return;

@@ -46,9 +46,9 @@ class GameLogger {
             this.logUnitDeath(data);
         });
         
-        // Damage to player events
+        // Damage to player events (only log non-combat damage to avoid redundancy)
         this.eventBus.on('combat:damage', (data) => {
-            if (data.target?.type === 'player') {
+            if (data.target?.type === 'player' && data.type !== 'combat') {
                 this.logPlayerDamage(data);
             }
         });
@@ -203,7 +203,9 @@ class GameLogger {
         else if (ability === 'kindred') emoji = '🤝';
         else if (ability === 'wisdom') emoji = '📚';
         
-        this.logMessage(`${emoji} ${playerName} ${unitName} uses ${ability}`, 'ability');
+        // Capitalize the ability name for display
+        const capitalizedAbility = ability.charAt(0).toUpperCase() + ability.slice(1);
+        this.logMessage(`${emoji} ${playerName} ${unitName} uses ${capitalizedAbility}`, 'ability');
     }
     
     /**

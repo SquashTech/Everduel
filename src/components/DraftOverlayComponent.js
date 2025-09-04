@@ -176,16 +176,6 @@ class DraftOverlayComponent {
                 }
             });
 
-            // Add hover effects
-            cardElement.addEventListener('mouseenter', () => {
-                cardElement.style.transform = 'translateY(-5px) scale(1.02)';
-                cardElement.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.4)';
-            });
-
-            cardElement.addEventListener('mouseleave', () => {
-                cardElement.style.transform = '';
-                cardElement.style.boxShadow = '';
-            });
         });
     }
 
@@ -350,7 +340,7 @@ class DraftOverlayComponent {
             }
 
             // Update tier button states
-            const tierButton = document.querySelector(`button[onclick="startDraft(${tier})"]`);
+            const tierButton = document.getElementById(`draftTier${tier}Btn`);
             if (tierButton) {
                 const canAfford = playerGold >= cost;
                 const hasSpace = handSize < 3;

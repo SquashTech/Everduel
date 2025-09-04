@@ -6,7 +6,10 @@
       "Bash(grep:*)",
       "Bash(node:*)",
       "Bash(timeout:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(claude --version)",
+      "Bash(npm update:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

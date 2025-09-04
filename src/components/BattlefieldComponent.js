@@ -936,8 +936,20 @@ class BattlefieldComponent {
                 button.disabled = !canAfford || !cardsAvailable;
                 
                 const remainingCount = cardSystem ? cardSystem.getDraftPoolCount(tier) : 25;
-                const statusText = (!cardsAvailable && tier <= 3) ? ' - No cards left' : '';
-                button.innerHTML = `Tier ${tier} (${cost} 💰) <span class="remaining-count" id="tier${tier}Count">${remainingCount}</span>${statusText}`;
+                
+                button.innerHTML = `
+                    <div class="tier-info">
+                        <span class="tier-name">Tier ${tier} -</span>
+                        <span class="tier-cost gold-cost">${cost} 💰</span>
+                    </div>
+                    <span class="remaining-count" id="tier${tier}Count">${remainingCount}</span>
+                `;
+                
+                // Set tooltip with status information
+                let tooltip = `Tier ${tier} costs ${cost} gold`;
+                if (!canAfford) tooltip += ' - Need more gold';
+                if (!cardsAvailable) tooltip += ' - No cards available';
+                button.title = tooltip;
             }
         }
     }

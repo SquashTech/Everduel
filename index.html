@@ -149,10 +149,9 @@
         <!-- Hand Cards - Extended Bottom Right -->
         <div class="hand-cards-horizontal" id="playerHand">
             <div class="hand-header">
-                <span>Your Hand</span>
-                <div class="hand-controls">
-                    <button class="btn btn-deck btn-deck-hand" id="playerDeckBtn" title="View Your Deck">Your Deck: <span id="playerDeckCount">0</span></button>
-                </div>
+                <button class="btn btn-deck btn-deck-hand" id="playerDeckBtn" title="View Your Deck">Your Deck: <span id="playerDeckCount">0</span></button>
+                <button class="btn btn-secondary btn-hand-action" id="spellDraftBtn">📖 Spellbook 📖</button>
+                <button class="btn btn-deck-draw btn-hand-action" id="drawDeckBtn">Draw from Deck (3 💰)</button>
             </div>
             <div class="hand-cards-container" id="handCardsContainer">
                 <!-- Cards will be dynamically added here -->
@@ -169,27 +168,42 @@
             <div class="control-section">
                 <h4>Draft Cards</h4>
                 <button class="btn btn-primary" id="draftTier1Btn" data-tier="1">
-                    Tier 1 (2 💰) <span class="remaining-count" id="tier1Count">25</span>
+                    <div class="tier-info">
+                        <span class="tier-name">Tier 1 -</span>
+                        <span class="tier-cost gold-cost">2 💰</span>
+                    </div>
+                    <span class="remaining-count" id="tier1Count">25</span>
                 </button>
                 <button class="btn btn-primary" id="draftTier2Btn" data-tier="2">
-                    Tier 2 (4 💰) <span class="remaining-count" id="tier2Count">25</span>
+                    <div class="tier-info">
+                        <span class="tier-name">Tier 2 -</span>
+                        <span class="tier-cost gold-cost">4 💰</span>
+                    </div>
+                    <span class="remaining-count" id="tier2Count">25</span>
                 </button>
                 <button class="btn btn-primary" id="draftTier3Btn" data-tier="3">
-                    Tier 3 (6 💰) <span class="remaining-count" id="tier3Count">25</span>
+                    <div class="tier-info">
+                        <span class="tier-name">Tier 3 -</span>
+                        <span class="tier-cost gold-cost">6 💰</span>
+                    </div>
+                    <span class="remaining-count" id="tier3Count">25</span>
                 </button>
                 <button class="btn btn-primary" id="draftTier4Btn" data-tier="4">
-                    Tier 4 (8 💰) <span class="remaining-count" id="tier4Count">25</span>
+                    <div class="tier-info">
+                        <span class="tier-name">Tier 4 -</span>
+                        <span class="tier-cost gold-cost">8 💰</span>
+                    </div>
+                    <span class="remaining-count" id="tier4Count">25</span>
                 </button>
                 <button class="btn btn-primary" id="draftTier5Btn" data-tier="5">
-                    Tier 5 (10 💰) <span class="remaining-count" id="tier5Count">25</span>
+                    <div class="tier-info">
+                        <span class="tier-name">Tier 5 -</span>
+                        <span class="tier-cost gold-cost">10 💰</span>
+                    </div>
+                    <span class="remaining-count" id="tier5Count">25</span>
                 </button>
             </div>
             
-            <div class="control-section">
-                <h4>Other Actions</h4>
-                <button class="btn btn-secondary" id="spellDraftBtn">📖 Spellbook</button>
-                <button class="btn btn-deck-draw" id="drawDeckBtn">Draw from Deck (3 💰)</button>
-            </div>
         </div>
     </div>
 
