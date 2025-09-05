@@ -14,7 +14,77 @@
         <div>🎮 Loading Everduel...</div>
     </div>
 
-    <div class="game-container">
+    <!-- Scenario Selection Screen -->
+    <div id="scenarioSelection" class="scenario-selection-screen">
+        <div class="scenario-header">
+            <h1>Welcome to Everduel!</h1>
+            <h2>Choose a scenario:</h2>
+        </div>
+        
+        <div class="scenario-grid">
+            <!-- Gray Scenarios (Tutorial/Easy) -->
+            <button class="scenario-btn scenario-gray" data-scenario="tutorial-1">
+                <div class="scenario-icon">📚</div>
+                <div class="scenario-title">Easy Mode</div>
+            </button>
+            <button class="scenario-btn scenario-gray" data-scenario="tutorial-2">
+                <div class="scenario-icon">⏰</div>
+                <div class="scenario-title">Behind the Curve</div>
+            </button>
+            
+            <!-- Red Scenarios (Easy) -->
+            <button class="scenario-btn scenario-red" data-scenario="easy-1">
+                <div class="scenario-icon">🏘️</div>
+                <div class="scenario-title">It Takes a Village</div>
+            </button>
+            <button class="scenario-btn scenario-red" data-scenario="easy-2">
+                <div class="scenario-icon">🐉</div>
+                <div class="scenario-title">Draconic Awakening</div>
+            </button>
+            
+            <!-- Yellow Scenarios (Medium) -->
+            <button class="scenario-btn scenario-yellow" data-scenario="medium-1">
+                <div class="scenario-icon">🐻</div>
+                <div class="scenario-title">Beasts of Burden</div>
+            </button>
+            <button class="scenario-btn scenario-yellow" data-scenario="medium-2">
+                <div class="scenario-icon">🦅</div>
+                <div class="scenario-title">The Sky Falls</div>
+            </button>
+            
+            <!-- Green Scenarios (Hard) -->
+            <button class="scenario-btn scenario-green" data-scenario="hard-1">
+                <div class="scenario-icon">🏹</div>
+                <div class="scenario-title">An Arrow to the Knee</div>
+            </button>
+            <button class="scenario-btn scenario-green" data-scenario="hard-2">
+                <div class="scenario-icon">👹</div>
+                <div class="scenario-title">Goofy Goblins</div>
+            </button>
+            
+            <!-- Blue Scenarios (Very Hard) -->
+            <button class="scenario-btn scenario-blue" data-scenario="vhard-1">
+                <div class="scenario-icon">✨</div>
+                <div class="scenario-title">Mana Cheating</div>
+            </button>
+            <button class="scenario-btn scenario-blue" data-scenario="vhard-2">
+                <div class="scenario-icon">🔥</div>
+                <div class="scenario-title">Burn It All Down</div>
+            </button>
+            
+            <!-- Purple Scenarios (Expert) -->
+            <button class="scenario-btn scenario-purple" data-scenario="expert-1">
+                <div class="scenario-icon">👻</div>
+                <div class="scenario-title">The Goal is Souls</div>
+            </button>
+            <button class="scenario-btn scenario-purple" data-scenario="expert-2">
+                <div class="scenario-icon">💀</div>
+                <div class="scenario-title">Death is Only the Beginning</div>
+            </button>
+        </div>
+    </div>
+
+    <div class="game-container hidden">
         <!-- AI Player Area -->
         <div class="player-area">
             <div class="battlefield-container">
@@ -281,6 +351,14 @@
             <h4>⚡ Combat Mechanics:</h4>
             <p>• Units deal attack damage to each other simultaneously</p>
             <p>• When health reaches 0, unit is destroyed</p>
+            
+            <h3>✨ Slot Buffs</h3>
+            <p>Some abilities can permanently buff battlefield slots, granting bonuses to any unit placed there:</p>
+            <p>• Slot buffs persist for the entire game</p>
+            <p>• They apply to any unit currently in that slot</p>
+            <p>• When a new unit is placed in a buffed slot, it gains those bonuses</p>
+            <p>• Damaged units keep their damage when slot buffs are applied</p>
+            <p>• Look for the buff indicator (+X/+Y) on battlefield slots</p>
             
             <h3>🛡️ Keyword Abilities</h3>
             <p><strong>Unleash:</strong> Trigger effect when unit is summoned</p>

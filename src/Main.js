@@ -9,6 +9,8 @@ import AbilitySystem from './systems/AbilitySystem.js';
 import SimpleAISystem from './systems/SimpleAISystem.js';
 import OptimizedUIManager from './components/OptimizedUIManager.js';
 import DebugCardGenerator from './debug/DebugCardGenerator.js';
+import ScenarioManager from './scenarios/ScenarioManager.js';
+import ScenarioSelectionComponent from './components/ScenarioSelectionComponent.js';
 
 /**
  * Simple Main Application Class
@@ -18,6 +20,9 @@ class SimpleCardGameApp {
         this.gameEngine = null;
         this.isInitialized = false;
         this.systems = {};
+        this.scenarioManager = null;
+        this.scenarioSelectionComponent = null;
+        this.gameStarted = false;
     }
 
     /**
@@ -39,11 +44,12 @@ class SimpleCardGameApp {
             // Setup window functions for UI compatibility
             this.setupWindowFunctions();
             
-            // Start new game
-            this.gameEngine.startGame();
+            // Initialize scenario system
+            await this.initializeScenarioSystem();
             
-            // Hide loading indicator
+            // Hide loading indicator and show scenario selection
             this.hideLoadingIndicator();
+            this.showScenarioSelection();
             
             this.isInitialized = true;
             console.log('✅ Everduel initialized successfully');
@@ -139,18 +145,133 @@ class SimpleCardGameApp {
             return this.gameEngine.getState();
         };
 
+        // Scenario functions
+        window.returnToScenarioSelection = () => {
+            this.returnToScenarioSelection();
+        };
 
         console.log('🔧 Window functions registered for simple UI compatibility');
+    }
+
+    /**
+     * Initialize scenario system
+     */
+    async initializeScenarioSystem() {
+        console.log('🎭 Initializing scenario system...');
+        
+        // Create scenario manager
+        this.scenarioManager = new ScenarioManager();
+        await this.scenarioManager.initialize(this.gameEngine);
+        
+        // Create scenario selection component
+        this.scenarioSelectionComponent = new ScenarioSelectionComponent();
+        await this.scenarioSelectionComponent.initialize(
+            this.scenarioManager,
+            this.onScenarioSelected.bind(this)
+        );
+        
+        console.log('✅ Scenario system initialized');
+    }
+
+    /**
+     * Handle scenario selection
+     */
+    async onScenarioSelected(scenarioId) {
+        try {
+            console.log(`🎬 Loading scenario: ${scenarioId}`);
+            
+            // Select and load the scenario
+            await this.scenarioManager.selectScenario(scenarioId);
+            
+            // Hide scenario selection and show game
+            this.hideScenarioSelection();
+            this.showGame();
+            
+            // Start the game with the selected scenario
+            this.gameEngine.startGame();
+            this.gameStarted = true;
+            
+            console.log(`🎮 Game started with scenario: ${scenarioId}`);
+            
+        } catch (error) {
+            console.error('Failed to load scenario:', error);
+            this.scenarioSelectionComponent.showError(error.message);
+        }
+    }
+
+    /**
+     * Show scenario selection screen
+     */
+    showScenarioSelection() {
+        if (this.scenarioSelectionComponent) {
+            this.scenarioSelectionComponent.show();
+        }
+    }
+
+    /**
+     * Hide scenario selection screen
+     */
+    hideScenarioSelection() {
+        if (this.scenarioSelectionComponent) {
+            this.scenarioSelectionComponent.hide();
+        }
+    }
+
+    /**
+     * Show game interface
+     */
+    showGame() {
+        const gameContainer = document.querySelector('.game-container');
+        if (gameContainer) {
+            gameContainer.classList.remove('hidden');
+        }
+    }
+
+    /**
+     * Hide game interface
+     */
+    hideGame() {
+        const gameContainer = document.querySelector('.game-container');
+        if (gameContainer) {
+            gameContainer.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Return to scenario selection (for future "back to menu" functionality)
+     */
+    returnToScenarioSelection() {
+        if (this.gameStarted) {
+            // Reset game state
+            this.gameEngine.reset();
+            this.gameStarted = false;
+        }
+        
+        // Hide game and show scenario selection
+        this.hideGame();
+        this.showScenarioSelection();
+        
+        // Reset scenario selection component
+        if (this.scenarioSelectionComponent) {
+            this.scenarioSelectionComponent.reset();
+        }
     }
 
     /**
      * Cleanup resources
      */
     destroy() {
+        if (this.scenarioSelectionComponent) {
+            this.scenarioSelectionComponent.destroy();
+        }
+        if (this.scenarioManager) {
+            this.scenarioManager.endCurrentScenario('destroyed');
+        }
         if (this.gameEngine) {
             this.gameEngine.destroy();
         }
         this.isInitialized = false;
+        this.gameStarted = false;
         console.log('🗑️ Everduel destroyed');
     }
 }
