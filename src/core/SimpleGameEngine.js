@@ -406,12 +406,17 @@ class SimpleGameEngine {
             console.log(`🚫 ${unit.name} is marked as banished (from Unleash or other effect)`);
         }
         
-        // Check if Last Gasp will banish the unit
+        // Check if Last Gasp will banish the unit or return it to hand
         if (unit.ability && unit.ability.toLowerCase().includes('last gasp')) {
             const lastGaspText = unit.ability.toLowerCase();
             if (lastGaspText.includes('banish this') || lastGaspText.includes('banish')) {
                 isBanished = true;
                 console.log(`🚫 ${unit.name} will be banished`);
+            }
+            // Abomination returns to hand instead of deck
+            if (lastGaspText.includes('return this to your hand')) {
+                isBanished = true;
+                console.log(`🔄 ${unit.name} will return to hand instead of deck`);
             }
         }
         
@@ -581,15 +586,21 @@ class SimpleGameEngine {
             const baseAttack = currentUnit.attack;
             const baseHealth = currentUnit.health;
             
+            // Calculate the damage the unit has taken (if any)
+            const currentDamage = currentUnit.maxHealth ? 
+                (currentUnit.maxHealth - currentUnit.currentHealth) : 0;
+            
             // Apply the TOTAL slot buff to the BASE stats
+            // For health, increase max health but preserve damage taken
+            const newMaxHealth = baseHealth + slotBuff.health;
             const buffedUnit = {
                 ...currentUnit,
                 currentAttack: baseAttack + slotBuff.attack,
-                currentHealth: baseHealth + slotBuff.health,
-                maxHealth: baseHealth + slotBuff.health
+                currentHealth: newMaxHealth - currentDamage, // Preserve damage
+                maxHealth: newMaxHealth
             };
             
-            console.log(`📊 Updating unit in buffed slot: ${currentUnit.name} base(${baseAttack}/${baseHealth}) + slot(${slotBuff.attack}/${slotBuff.health}) = ${buffedUnit.currentAttack}/${buffedUnit.currentHealth}`);
+            console.log(`📊 Updating unit in buffed slot: ${currentUnit.name} base(${baseAttack}/${baseHealth}) + slot(${slotBuff.attack}/${slotBuff.health}) = ${buffedUnit.currentAttack}/${buffedUnit.currentHealth}/${buffedUnit.maxHealth}${currentDamage > 0 ? ` (preserved ${currentDamage} damage)` : ''}`);
             
             this.dispatch({
                 type: 'UPDATE_UNIT',

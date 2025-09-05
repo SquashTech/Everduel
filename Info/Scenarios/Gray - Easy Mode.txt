@@ -1,0 +1,5 @@
+The player goes first. Both players start with 2 max gold.
+This is the base level difficulty. The SimpleAISystem will be used. 
+Description for UI:
+"Practice Everduel! The opponent will simply buy one thing per turn and place it randomly. Great for learning the basics!"
+

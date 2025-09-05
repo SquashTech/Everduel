@@ -84,6 +84,28 @@
         </div>
     </div>
 
+    <!-- Scenario Confirmation Modal -->
+    <div id="scenarioConfirmationModal" class="modal-overlay scenario-confirmation-modal hidden">
+        <div class="modal-content scenario-confirmation-content">
+            <div class="scenario-confirmation-header">
+                <div class="confirmation-scenario-icon" id="confirmationScenarioIcon">🎮</div>
+                <div class="confirmation-scenario-title" id="confirmationScenarioTitle">Scenario Name</div>
+            </div>
+            <div class="scenario-confirmation-body">
+                <div class="scenario-description" id="scenarioDescription">
+                    Are you ready to begin this scenario?
+                </div>
+                <div class="scenario-details" id="scenarioDetails">
+                    <!-- Additional scenario details will be populated here -->
+                </div>
+            </div>
+            <div class="scenario-confirmation-actions">
+                <button class="btn btn-secondary scenario-cancel-btn" id="scenarioConfirmationCancel">Cancel</button>
+                <button class="btn btn-primary scenario-confirm-btn" id="scenarioConfirmationConfirm">Start Scenario</button>
+            </div>
+        </div>
+    </div>
+
     <div class="game-container hidden">
         <!-- AI Player Area -->
         <div class="player-area">

@@ -196,6 +196,11 @@ class GameLogger {
         const unitName = unit?.name || 'Unit';
         const playerName = player === 'player' ? 'Your' : 'Opponent';
         
+        // Skip if ability is undefined (handled by more specific logging)
+        if (!ability) {
+            return;
+        }
+        
         let emoji = '✨';
         if (ability === 'unleash') emoji = '🔥';
         else if (ability === 'lastGasp') emoji = '💨';

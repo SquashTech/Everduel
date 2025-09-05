@@ -1,0 +1,8 @@
+The player starts with 2 max gold and the AI starts with 3 max gold.
+
+The AI goes first and the player goes second.
+
+Otherwise, the rules are the same as normal.
+
+Description for UI:
+"It's like the opponent played a ramp spell on turn 0 and they're going first. Still the same easy AI, but a bit more difficult than Easy Mode."

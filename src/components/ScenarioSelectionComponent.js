@@ -35,29 +35,17 @@ export default class ScenarioSelectionComponent {
                 const scenarioId = button.getAttribute('data-scenario');
                 this.handleScenarioSelection(scenarioId, button);
             });
-
-            // Add hover effects for additional feedback
-            button.addEventListener('mouseenter', (e) => {
-                this.showScenarioPreview(button.getAttribute('data-scenario'));
-            });
-
-            button.addEventListener('mouseleave', (e) => {
-                this.hideScenarioPreview();
-            });
         });
 
         console.log(`🎮 Set up event listeners for ${scenarioButtons.length} scenario buttons`);
     }
 
     /**
-     * Handle scenario selection
+     * Handle scenario selection - now shows confirmation modal
      */
     async handleScenarioSelection(scenarioId, buttonElement) {
         try {
-            console.log(`🎯 Scenario selected: ${scenarioId}`);
-            
-            // Add visual feedback
-            this.showSelectionFeedback(buttonElement);
+            console.log(`🎯 Scenario clicked: ${scenarioId}`);
             
             // Get scenario info for confirmation
             const scenario = this.scenarioManager.getScenario(scenarioId);
@@ -65,16 +53,127 @@ export default class ScenarioSelectionComponent {
                 throw new Error(`Scenario not found: ${scenarioId}`);
             }
 
+            // Show confirmation modal instead of immediately starting
+            this.showConfirmationModal(scenarioId, buttonElement, scenario);
+
+        } catch (error) {
+            console.error('Failed to show scenario confirmation:', error);
+            this.showError(error.message);
+        }
+    }
+
+    /**
+     * Show confirmation modal for scenario
+     */
+    showConfirmationModal(scenarioId, buttonElement, scenario) {
+        const modal = document.getElementById('scenarioConfirmationModal');
+        const iconElement = document.getElementById('confirmationScenarioIcon');
+        const titleElement = document.getElementById('confirmationScenarioTitle');
+        const descriptionElement = document.getElementById('scenarioDescription');
+        const detailsElement = document.getElementById('scenarioDetails');
+
+        if (!modal || !iconElement || !titleElement || !descriptionElement) {
+            console.error('Confirmation modal elements not found');
+            return;
+        }
+
+        // Get scenario info and button details
+        const scenarioInfo = scenario.getScenarioInfo();
+        const iconText = buttonElement.querySelector('.scenario-icon').textContent;
+
+        // Populate modal content
+        iconElement.textContent = iconText;
+        titleElement.textContent = scenarioInfo.name;
+        descriptionElement.textContent = scenarioInfo.description || 'Are you ready to begin this scenario?';
+        
+        // Add difficulty info to details
+        detailsElement.innerHTML = `<strong>Difficulty:</strong> ${scenarioInfo.difficulty.replace('_', ' ').toUpperCase()}`;
+
+        // Store scenario info for confirmation
+        modal.setAttribute('data-scenario-id', scenarioId);
+
+        // Show modal
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100vw';
+        modal.style.height = '100vh';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
+        modal.style.zIndex = '99999';
+        modal.style.justifyContent = 'center';
+        modal.style.alignItems = 'center';
+        
+        // Set up event listeners for modal buttons
+        this.setupConfirmationModalListeners();
+    }
+
+    /**
+     * Setup event listeners for confirmation modal buttons
+     */
+    setupConfirmationModalListeners() {
+        const modal = document.getElementById('scenarioConfirmationModal');
+        const cancelBtn = document.getElementById('scenarioConfirmationCancel');
+        const confirmBtn = document.getElementById('scenarioConfirmationConfirm');
+
+        // Remove existing listeners to avoid duplicates
+        cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+        confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+
+        // Get fresh references
+        const newCancelBtn = document.getElementById('scenarioConfirmationCancel');
+        const newConfirmBtn = document.getElementById('scenarioConfirmationConfirm');
+
+        // Cancel button - hide modal
+        newCancelBtn.addEventListener('click', () => {
+            this.hideConfirmationModal();
+        });
+
+        // Confirm button - start scenario
+        newConfirmBtn.addEventListener('click', async () => {
+            const scenarioId = modal.getAttribute('data-scenario-id');
+            this.hideConfirmationModal();
+            await this.confirmScenarioSelection(scenarioId);
+        });
+
+        // Click outside modal to cancel
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.hideConfirmationModal();
+            }
+        });
+    }
+
+    /**
+     * Hide confirmation modal
+     */
+    hideConfirmationModal() {
+        const modal = document.getElementById('scenarioConfirmationModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            modal.removeAttribute('data-scenario-id');
+        }
+    }
+
+    /**
+     * Confirm scenario selection and start the scenario
+     */
+    async confirmScenarioSelection(scenarioId) {
+        try {
+            console.log(`✅ Scenario confirmed: ${scenarioId}`);
+            
             // Show loading state
             this.showLoadingState(true);
             
-            // Notify parent that scenario was selected
+            // Notify parent that scenario was confirmed
             if (this.onScenarioSelected) {
                 await this.onScenarioSelected(scenarioId);
             }
 
         } catch (error) {
-            console.error('Failed to select scenario:', error);
+            console.error('Failed to start confirmed scenario:', error);
             this.showError(error.message);
             this.showLoadingState(false);
         }
@@ -99,41 +198,6 @@ export default class ScenarioSelectionComponent {
         }, 150);
     }
 
-    /**
-     * Show scenario preview on hover (optional enhancement)
-     */
-    showScenarioPreview(scenarioId) {
-        const scenario = this.scenarioManager.getScenario(scenarioId);
-        if (!scenario) return;
-
-        // Create or update preview tooltip
-        let preview = document.getElementById('scenarioPreview');
-        if (!preview) {
-            preview = document.createElement('div');
-            preview.id = 'scenarioPreview';
-            preview.className = 'scenario-preview';
-            document.body.appendChild(preview);
-        }
-
-        const scenarioInfo = scenario.getScenarioInfo();
-        preview.innerHTML = `
-            <div class="preview-header">${scenarioInfo.name}</div>
-            <div class="preview-description">${scenarioInfo.description}</div>
-            <div class="preview-difficulty">Difficulty: ${scenarioInfo.difficulty}</div>
-        `;
-
-        preview.style.display = 'block';
-    }
-
-    /**
-     * Hide scenario preview
-     */
-    hideScenarioPreview() {
-        const preview = document.getElementById('scenarioPreview');
-        if (preview) {
-            preview.style.display = 'none';
-        }
-    }
 
     /**
      * Show loading state
@@ -238,7 +302,7 @@ export default class ScenarioSelectionComponent {
 
         // Hide any overlays
         this.showLoadingState(false);
-        this.hideScenarioPreview();
+        this.hideConfirmationModal();
 
         // Hide error messages
         const errorDiv = document.getElementById('scenarioError');
@@ -260,7 +324,6 @@ export default class ScenarioSelectionComponent {
 
         // Clean up created elements
         const elementsToRemove = [
-            'scenarioPreview',
             'scenarioLoading', 
             'scenarioError'
         ];

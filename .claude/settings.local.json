@@ -9,7 +9,10 @@
       "Bash(npm run lint)",
       "Bash(claude --version)",
       "Bash(npm update:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(dir index.html)"
     ],
     "deny": [],
     "ask": []

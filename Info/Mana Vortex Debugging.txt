@@ -6,3 +6,5 @@ AbilitySystem.js:289 🔍 [MANA VORTEX] lowerTargetText: "all enemies"
 AbilitySystem.js:70 🔍 [MANA VORTEX] parseDamageEffect returned: Objectamount: 1targetSelection: "all"targetType: "unit"type: "damage"[[Prototype]]: Object
 AbilitySystem.js:78 🔍 [MANA VORTEX] About to call executeDamageEffect with: Objectamount: 1targetSelection: "all"targetType: "unit"type: "damage"[[Prototype]]: Object
 AbilitySystem.js:1628 🔍 [MANA VORTEX] parseAndExecuteAbility result: Objecteffects: Array(1)0: amount: 1targetSelection: "all"targetType: "unit"type: "damage"
+
+npm update -g @anthropic-ai/claude-code
