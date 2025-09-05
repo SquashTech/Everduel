@@ -1060,6 +1060,17 @@ export const CARD_DATABASE = {
       "color": "purple",
       "isToken": true
     }
+  ],
+  "6": [
+    {
+      "id": "debug_bro",
+      "name": "Debug Bro",
+      "attack": 30,
+      "health": 30,
+      "ability": "Rush",
+      "tags": ["Debug"],
+      "color": "purple"
+    }
   ]
 };
 

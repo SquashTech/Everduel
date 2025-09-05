@@ -164,7 +164,7 @@ class PlaceholderScenario extends BaseScenario {
             description: description,
             difficulty: difficulty,
             aiDeckConfig: {
-                health: 20,
+                health: 30,
                 startingGold: 2,
                 behavior: {
                     aggression: 0.5,

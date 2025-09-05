@@ -1,8 +1,20 @@
-The player starts with 2 max gold and the AI starts with 3 max gold.
-
 The AI goes first and the player goes second.
 
-Otherwise, the rules are the same as normal.
+The AI always plays units to a random slot and attacks with any unit that legally can.
+
+On turn 1, the AI plays a random tier 2 unit.
+On turn 2, the AI plays two random tier 1 units
+On turn 3, the AI plays a random tier 3 unit
+On turn 4, the AI plays two random tier 2 units
+On turn 5, the AI plays a random tier 4 unit
+On turn 6, the AI plays a random tier 3 unit and a random tier 1 unit
+On turn 7, the AI plays a random tier 5 unit
+On turn 8, the AI plays two random tier 4 units
+On turn 9, the AI plays a random tier 5 unit
+On turn 10 or later, the AI randomly chooses one:
+A: Play a random tier 5 unit
+B: Play three tier 3 units
+C: Play a random Tier 4 unit and a random tier 2 unit
 
 Description for UI:
 "It's like the opponent played a ramp spell on turn 0 and they're going first. Still the same easy AI, but a bit more difficult than Easy Mode."

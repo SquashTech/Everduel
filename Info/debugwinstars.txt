@@ -1,0 +1,56 @@
+Debug Bro attacking player
+SimpleGameEngine.js:486 💀 Player damage: ai takes 30 damage (20 -> -10)
+SimpleGameEngine.js:632 🎮 Game ended: VICTORY! ai was defeated
+ControlsComponent.js:67 🏆 Game Over - You wins!
+GameInfoComponent.js:305 🎯 showGameOver called with winner: player
+GameInfoComponent.js:308 🔍 Win check debug: Object
+GameInfoComponent.js:344 🔍 Modal elements check: Object
+GameInfoComponent.js:359 ✅ All modal elements found - showing modal
+GameInfoComponent.js:378 🔘 Setting up return button click handler
+GameInfoComponent.js:405 🎭 Before showing modal, classes: modal-overlay game-end-modal hidden victory
+GameInfoComponent.js:407 🎭 After removing hidden, classes: modal-overlay game-end-modal victory
+GameInfoComponent.js:417 🎭 Modal should now be visible with inline styles
+GameInfoComponent.js:419 🎮 Game Over - Player wins!
+ControlsComponent.js:67 🏆 Game Over - You wins!
+GameInfoComponent.js:305 🎯 showGameOver called with winner: player
+GameInfoComponent.js:308 🔍 Win check debug: Object
+GameInfoComponent.js:344 🔍 Modal elements check: Object
+GameInfoComponent.js:359 ✅ All modal elements found - showing modal
+GameInfoComponent.js:378 🔘 Setting up return button click handler
+GameInfoComponent.js:405 🎭 Before showing modal, classes: modal-overlay game-end-modal victory
+GameInfoComponent.js:407 🎭 After removing hidden, classes: modal-overlay game-end-modal victory
+GameInfoComponent.js:417 🎭 Modal should now be visible with inline styles
+GameInfoComponent.js:419 🎮 Game Over - Player wins!
+CombatSystem.js:399 ⚔️ Marking slot 2 (Debug Bro) as having attacked
+OptimizedUIManager.js:105 🔄 UI update #4 - Player: player, Turn: 1
+OptimizedUIManager.js:120 ⏭️ Skipped duplicate UI update (prevented 4 duplicates)
+SimpleGameEngine.js:715 🔄 Returning to scenario selection
+ScenarioSelectionComponent.js:287 ⭐ Updating scenario win indicators...
+ScenarioSelectionComponent.js:291 ⭐ All completed scenarios in localStorage: Object
+ScenarioSelectionComponent.js:294 ⭐ Found 12 scenario buttons
+ScenarioSelectionComponent.js:299 ⭐ Button tutorial-1: hasWon = false
+ScenarioSelectionComponent.js:302 🔍 All current wins: ObjectallWins: {}completedScenarios: []totalCompleted: 0[[Prototype]]: Object
+ScenarioSelectionComponent.js:299 ⭐ Button tutorial-2: hasWon = false
+ScenarioSelectionComponent.js:302 🔍 All current wins: ObjectallWins: {}completedScenarios: []totalCompleted: 0[[Prototype]]: Object
+ScenarioSelectionComponent.js:299 ⭐ Button easy-1: hasWon = false
+ScenarioSelectionComponent.js:302 🔍 All current wins: Object
+ScenarioSelectionComponent.js:299 ⭐ Button easy-2: hasWon = false
+ScenarioSelectionComponent.js:302 🔍 All current wins: Object
+ScenarioSelectionComponent.js:299 ⭐ Button medium-1: hasWon = false
+ScenarioSelectionComponent.js:302 🔍 All current wins: Object
+ScenarioSelectionComponent.js:299 ⭐ Button medium-2: hasWon = false
+ScenarioSelectionComponent.js:302 🔍 All current wins: Object
+ScenarioSelectionComponent.js:299 ⭐ Button hard-1: hasWon = false
+ScenarioSelectionComponent.js:302 🔍 All current wins: Object
+ScenarioSelectionComponent.js:299 ⭐ Button hard-2: hasWon = false
+ScenarioSelectionComponent.js:302 🔍 All current wins: Object
+ScenarioSelectionComponent.js:299 ⭐ Button vhard-1: hasWon = false
+ScenarioSelectionComponent.js:302 🔍 All current wins: Object
+ScenarioSelectionComponent.js:299 ⭐ Button vhard-2: hasWon = false
+ScenarioSelectionComponent.js:302 🔍 All current wins: Object
+ScenarioSelectionComponent.js:299 ⭐ Button expert-1: hasWon = false
+ScenarioSelectionComponent.js:302 🔍 All current wins: Object
+ScenarioSelectionComponent.js:299 ⭐ Button expert-2: hasWon = false
+ScenarioSelectionComponent.js:302 🔍 All current wins: Object
+ScenarioSelectionComponent.js:309 ⭐ Updated 12 scenario buttons
+ScenarioSelectionComponent.js:279 📺 Scenario selection screen shown

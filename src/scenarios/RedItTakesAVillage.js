@@ -11,7 +11,7 @@ export default class RedItTakesAVillage extends BaseScenario {
             description: 'Face a community-focused opponent strategy',
             difficulty: 'easy',
             aiDeckConfig: {
-                health: 20,
+                health: 30,
                 startingGold: 2,
                 behavior: {
                     aggression: 0.6,

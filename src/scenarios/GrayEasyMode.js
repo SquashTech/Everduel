@@ -11,7 +11,7 @@ export default class GrayEasyMode extends BaseScenario {
             description: 'Practice Everduel! The opponent will simply buy one thing per turn and place it randomly. Great for learning the basics!',
             difficulty: 'tutorial',
             aiDeckConfig: {
-                health: 20, // Standard health
+                health: 30, // Updated health
                 startingGold: 2, // Both start with 2 max gold
                 behavior: {
                     aggression: 0.3,
@@ -21,7 +21,7 @@ export default class GrayEasyMode extends BaseScenario {
                 }
             },
             playerStartingDeck: {
-                health: 20,
+                health: 30,
                 startingGold: 2
             },
             specialRules: [

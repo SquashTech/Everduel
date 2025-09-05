@@ -1,3 +1,5 @@
+import WinTracker from '../utils/WinTracker.js';
+
 /**
  * Scenario Selection Component
  * Handles the scenario selection UI and user interactions
@@ -7,6 +9,7 @@ export default class ScenarioSelectionComponent {
         this.scenarioManager = null;
         this.onScenarioSelected = null;
         this.isInitialized = false;
+        this.winTracker = new WinTracker();
     }
 
     /**
@@ -36,6 +39,14 @@ export default class ScenarioSelectionComponent {
                 this.handleScenarioSelection(scenarioId, button);
             });
         });
+
+        // Set up reset progress button listener
+        const resetProgressBtn = document.getElementById('resetProgressBtn');
+        if (resetProgressBtn) {
+            resetProgressBtn.addEventListener('click', () => {
+                this.handleResetProgress();
+            });
+        }
 
         console.log(`🎮 Set up event listeners for ${scenarioButtons.length} scenario buttons`);
     }
@@ -180,6 +191,67 @@ export default class ScenarioSelectionComponent {
     }
 
     /**
+     * Handle reset progress button click
+     */
+    handleResetProgress() {
+        // Show confirmation dialog
+        if (confirm('Are you sure you want to reset all scenario progress? This will remove all completion stars and cannot be undone.')) {
+            console.log('🗑️ Resetting all scenario progress...');
+            
+            // Clear all wins
+            this.winTracker.clearAllWins();
+            
+            // Remove all win stars from buttons
+            document.querySelectorAll('.win-star').forEach(star => {
+                star.remove();
+            });
+            
+            // Show success message
+            this.showProgressResetMessage();
+            
+            console.log('✅ All scenario progress has been reset');
+        }
+    }
+
+    /**
+     * Show progress reset confirmation message
+     */
+    showProgressResetMessage() {
+        // Create temporary success message
+        const message = document.createElement('div');
+        message.className = 'progress-reset-message';
+        message.innerHTML = `
+            <div class="message-content">
+                <div class="message-icon">✅</div>
+                <div class="message-text">All progress has been reset!</div>
+            </div>
+        `;
+        message.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+        `;
+        
+        document.body.appendChild(message);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
+            }
+        }, 3000);
+    }
+
+    /**
      * Show visual feedback for selection
      */
     showSelectionFeedback(buttonElement) {
@@ -268,8 +340,66 @@ export default class ScenarioSelectionComponent {
         const scenarioScreen = document.getElementById('scenarioSelection');
         if (scenarioScreen) {
             scenarioScreen.classList.remove('hidden');
+            scenarioScreen.style.display = 'block';
+            
+            // Update win indicators when showing
+            this.updateScenarioWinIndicators();
+            
             console.log('📺 Scenario selection screen shown');
         }
+    }
+    
+    /**
+     * Update scenario buttons with win indicators
+     */
+    updateScenarioWinIndicators() {
+        console.log('⭐ Updating scenario win indicators...');
+        
+        // Debug: Show all wins in localStorage
+        const allWins = this.winTracker.getStats();
+        console.log('⭐ All completed scenarios in localStorage:', allWins);
+        
+        const scenarioButtons = document.querySelectorAll('.scenario-btn');
+        console.log(`⭐ Found ${scenarioButtons.length} scenario buttons`);
+        
+        scenarioButtons.forEach(button => {
+            const scenarioId = button.getAttribute('data-scenario');
+            const hasWon = this.winTracker.hasWon(scenarioId);
+            console.log(`⭐ Button ${scenarioId}: hasWon = ${hasWon}`);
+            
+            // Debug: Show all wins for this check
+            console.log('🔍 All current wins:', this.winTracker.getStats());
+            
+            if (scenarioId && hasWon) {
+                this.addWinIndicatorToButton(button, scenarioId);
+            }
+        });
+        
+        console.log(`⭐ Updated ${scenarioButtons.length} scenario buttons`);
+    }
+    
+    /**
+     * Add win indicator to a scenario button
+     * @param {HTMLElement} button - The scenario button element
+     * @param {string} scenarioId - The scenario ID
+     */
+    addWinIndicatorToButton(button, scenarioId) {
+        // Check if star already exists
+        if (button.querySelector('.win-star')) {
+            console.log(`⭐ Star already exists for scenario: ${scenarioId}`);
+            return;
+        }
+        
+        // Create star element
+        const star = document.createElement('div');
+        star.className = 'win-star';
+        star.textContent = '⭐';
+        star.title = 'Completed';
+        
+        // Add to button (position is now handled by CSS)
+        button.appendChild(star);
+        
+        console.log(`⭐ Added win star to scenario: ${scenarioId}`);
     }
 
     /**

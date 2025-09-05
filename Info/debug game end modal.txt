@@ -1,0 +1,25 @@
+Debug Bro attempting attack...
+CombatSystem.js:41 ⚔️ CombatSystem.handleUnitClick received: Object
+CombatSystem.js:46 ⚔️ Current player: player Clicked by: player
+CombatSystem.js:77 ⚔️ Unit validated: Object
+CombatSystem.js:484 ⚔️ getDeterministicTarget: attacker=Debug Bro in column 1, enemyPlayer=ai
+CombatSystem.js:485 ⚔️ Enemy battlefield: Array(6)
+CombatSystem.js:491 ⚔️ Checking column 1: front slot 1, back slot 4
+CombatSystem.js:580 ⚔️ Column 1 empty - normal unit attacking player
+CombatSystem.js:92 ⚔️ Debug Bro attacking player
+SimpleGameEngine.js:486 💀 Player damage: ai takes 30 damage (20 -> -10)
+SimpleGameEngine.js:632 🎮 Game ended: VICTORY! ai was defeated
+ControlsComponent.js:67 🏆 Game Over - You wins!
+GameInfoComponent.js:301 🎯 showGameOver called with winner: player
+GameInfoComponent.js:309 🔍 Modal elements check: Object
+GameInfoComponent.js:324 ✅ All modal elements found - showing modal
+GameInfoComponent.js:354 🎮 Game Over - Player wins!
+ControlsComponent.js:67 🏆 Game Over - You wins!
+GameInfoComponent.js:301 🎯 showGameOver called with winner: player
+GameInfoComponent.js:309 🔍 Modal elements check: Object
+GameInfoComponent.js:324 ✅ All modal elements found - showing modal
+GameInfoComponent.js:354 🎮 Game Over - Player wins!
+CombatSystem.js:399 ⚔️ Marking slot 1 (Debug Bro) as having attacked
+OptimizedUIManager.js:105 🔄 UI update #4 - Player: player, Turn: 1
+OptimizedUIManager.js:120 ⏭️ Skipped duplicate UI update (prevented 4 duplicates)
+BattlefieldComponent.js:68 ✅ Debug Bro can now attack if able

@@ -12,7 +12,8 @@
       "Bash(python:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(dir index.html)"
+      "Bash(dir index.html)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

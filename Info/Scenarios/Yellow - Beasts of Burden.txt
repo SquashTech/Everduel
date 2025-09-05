@@ -1,6 +1,10 @@
 On all turns, the AI will attack with any unit that legally can.
 Unless otherwise noted, units are played to random slots
 
+Description for UI:
+"The wild calls! Look for high health units to withstand to onslaught of big trampling
+Beasts!"
+
 On turn 1, the AI randomly chooses one:
 A: Play Hawk to a random slot
 B: Play Wolf Cub to a random slot
@@ -9,10 +13,29 @@ C: Play Bear Cub to a random slot
 On turn 2, the AI plays Piglet to a random slot.
 
 On turn 3, the AI randomly chooses one:
-A: Play Cow, then Wolf Pup
-B: Play Brown Bear
-C: Play Wolf
+A: Play Cow, then Brown Bear 
+B: Play Cow, then Wolf 
 
 On turn 4, the AI plays Pack Leader
 
-On turn 5, 
+On turn 5, the AI randomly chooses one:
+A: Play Wolf, then Wolf Pup
+B: Play Brown Bear, then Bear Cub
+C: Play Wild Boar, then Bee Swarm
+
+On turn 6, the AI plays Giant Toad
+
+On turn 7, the AI plays Grizzly Bear
+
+On turn 8, the AI randomly chooses one:
+A: Play Mammoth
+B: Play Ancient Tortoise
+
+On turn 9, the AI plays Lion King, then Wolf Pup, then Bear Cub
+
+On turn 10+, the AI chooses randomly:
+A: Play King Kong
+B: Play Primal Alpha
+C: Play Wolf, Brown Bear, and Pack Leader
+D: Play Elder Stag and Giant Toad
+E: Play Lion King, then Wolf Pup, then Bear Cub

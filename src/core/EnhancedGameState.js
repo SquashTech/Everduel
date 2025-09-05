@@ -42,7 +42,7 @@ class EnhancedGameState {
             turn: 1,
             players: {
                 player: {
-                    health: 20,
+                    health: 30,
                     gold: 2,
                     maxGold: 2,
                     hand: [],
@@ -52,7 +52,7 @@ class EnhancedGameState {
                     slotBuffs: Array(6).fill(null).map(() => ({attack: 0, health: 0}))
                 },
                 ai: {
-                    health: 20,
+                    health: 30,
                     gold: 2,
                     maxGold: 2,
                     hand: [],

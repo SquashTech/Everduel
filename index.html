@@ -28,7 +28,7 @@
                 <div class="scenario-title">Easy Mode</div>
             </button>
             <button class="scenario-btn scenario-gray" data-scenario="tutorial-2">
-                <div class="scenario-icon">⏰</div>
+                <div class="scenario-icon">📐</div>
                 <div class="scenario-title">Behind the Curve</div>
             </button>
             
@@ -82,6 +82,20 @@
                 <div class="scenario-title">Death is Only the Beginning</div>
             </button>
         </div>
+        
+        <!-- Multiplayer Coming Soon Button -->
+        <div class="multiplayer-section">
+            <button class="multiplayer-coming-soon-btn" disabled>
+                <div class="multiplayer-icon">🌐</div>
+                <div class="multiplayer-title">Multiplayer</div>
+                <div class="multiplayer-subtitle">Coming Soon</div>
+            </button>
+        </div>
+        
+        <!-- Reset Progress Button -->
+        <button id="resetProgressBtn" class="reset-progress-btn-corner">
+            🗑️
+        </button>
     </div>
 
     <!-- Scenario Confirmation Modal -->
@@ -164,7 +178,7 @@
             <h3>Opponent</h3>
             <button class="btn btn-deck btn-deck-hand" id="aiDeckBtn" title="View Opponent Deck">Deck: <span id="aiDeckCount">0</span></button>
             <div class="player-stats-compact">
-                <div class="health">🛡️ <span id="aiHealth">20</span></div>
+                <div class="health">🛡️ <span id="aiHealth">30</span></div>
                 <div class="gold">💰 <span id="aiGoldCurrent">2</span></div>
             </div>
         </div>
@@ -232,7 +246,7 @@
         <div class="player-info-box player-info">
             <h3>Player</h3>
             <div class="player-stats-compact">
-                <div class="health">🛡️ <span id="playerHealth">20</span></div>
+                <div class="health">🛡️ <span id="playerHealth">30</span></div>
                 <div class="gold">💰 <span id="playerGoldCurrent">2</span></div>
             </div>
             <button class="btn btn-primary" id="endTurnBtn">End Turn</button>
@@ -241,8 +255,8 @@
         <!-- Hand Cards - Extended Bottom Right -->
         <div class="hand-cards-horizontal" id="playerHand">
             <div class="hand-header">
-                <button class="btn btn-deck btn-deck-hand" id="playerDeckBtn" title="View Your Deck">Your Deck: <span id="playerDeckCount">0</span></button>
                 <button class="btn btn-secondary btn-hand-action" id="spellDraftBtn">📖 Spellbook 📖</button>
+                <button class="btn btn-deck btn-deck-hand" id="playerDeckBtn" title="View Your Deck">Your Deck: <span id="playerDeckCount">0</span></button>
                 <button class="btn btn-deck-draw btn-hand-action" id="drawDeckBtn">Draw from Deck (3 💰)</button>
             </div>
             <div class="hand-cards-container" id="handCardsContainer">
@@ -320,7 +334,26 @@
             <div class="modal-header">
                 <h2>Your Deck</h2>
             </div>
+            <div class="deck-description">
+                <p>Cards are ordered from left to right by the order they will be drawn from your deck.</p>
+            </div>
             <div id="deckContent" class="deck-cards"></div>
+        </div>
+    </div>
+
+    <!-- Game End Modal -->
+    <div id="gameEndModal" class="modal-overlay game-end-modal hidden">
+        <div class="modal-content game-end-content">
+            <div class="game-end-header">
+                <div class="game-end-icon" id="gameEndIcon">🏆</div>
+                <h2 id="gameEndTitle">Victory!</h2>
+            </div>
+            <div class="game-end-body">
+                <p id="gameEndMessage">Congratulations! You have defeated your opponent!</p>
+            </div>
+            <div class="game-end-actions">
+                <button class="btn btn-primary game-end-btn" id="returnToScenariosBtn">Return to Scenarios</button>
+            </div>
         </div>
     </div>
 
@@ -337,7 +370,7 @@
             <h2>How to Play - Everduel</h2>
             
             <h3>🎯 Objective</h3>
-            <p>Reduce your opponent's health from 20 to 0 by strategically drafting cards, placing units, and attacking.</p>
+            <p>Reduce your opponent's health from 30 to 0 by strategically drafting cards, placing units, and attacking.</p>
             
             <h3>💰 Gold System</h3>
             <p>• Both players start with 2 max gold, increasing by 1 each turn</p>

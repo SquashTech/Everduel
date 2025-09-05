@@ -183,12 +183,33 @@ class SimpleCardGameApp {
             // Select and load the scenario
             await this.scenarioManager.selectScenario(scenarioId);
             
+            // Store scenario ID globally for win tracking
+            window.currentScenarioId = scenarioId;
+            console.log('🔧 Set global currentScenarioId:', scenarioId);
+            
+            // Notify GameInfoComponent about current scenario for win tracking
+            if (this.gameEngine && this.gameEngine.uiManager) {
+                const gameInfoComponent = this.gameEngine.uiManager.components.get('gameInfo');
+                if (gameInfoComponent && gameInfoComponent.setCurrentScenario) {
+                    gameInfoComponent.setCurrentScenario(scenarioId);
+                    console.log('✅ Successfully called setCurrentScenario on GameInfoComponent');
+                } else {
+                    console.warn('⚠️ GameInfoComponent or setCurrentScenario method not found');
+                }
+            } else {
+                console.warn('⚠️ GameEngine or UIManager not found');
+            }
+            
             // Hide scenario selection and show game
             this.hideScenarioSelection();
             this.showGame();
             
             // Start the game with the selected scenario
             this.gameEngine.startGame();
+            
+            // Re-apply scenario setup after startGame() to override any resets
+            await this.scenarioManager.getCurrentScenario().applyScenarioSetup();
+            
             this.gameStarted = true;
             
             console.log(`🎮 Game started with scenario: ${scenarioId}`);
@@ -242,8 +263,10 @@ class SimpleCardGameApp {
      */
     returnToScenarioSelection() {
         if (this.gameStarted) {
-            // Reset game state
-            this.gameEngine.reset();
+            // Reset game state if the method exists
+            if (this.gameEngine && typeof this.gameEngine.reset === 'function') {
+                this.gameEngine.reset();
+            }
             this.gameStarted = false;
         }
         
@@ -252,7 +275,7 @@ class SimpleCardGameApp {
         this.showScenarioSelection();
         
         // Reset scenario selection component
-        if (this.scenarioSelectionComponent) {
+        if (this.scenarioSelectionComponent && typeof this.scenarioSelectionComponent.reset === 'function') {
             this.scenarioSelectionComponent.reset();
         }
     }

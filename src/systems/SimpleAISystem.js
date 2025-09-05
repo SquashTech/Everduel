@@ -230,6 +230,7 @@ class SimpleAISystem {
         return unit.ability && unit.ability.toLowerCase().includes('rush');
     }
 
+
     /**
      * Make draft choice when options are ready
      */

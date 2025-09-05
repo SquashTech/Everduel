@@ -1,3 +1,5 @@
+import WinTracker from '../utils/WinTracker.js';
+
 /**
  * Game Info Component for displaying player stats and game information
  * Manages health, gold, turn indicators, and other game state displays
@@ -8,6 +10,8 @@ class GameInfoComponent {
         this.eventBus = null;
         this.gameState = null;
         this.uiManager = null;
+        this.winTracker = new WinTracker();
+        this.currentScenarioId = null;
     }
 
     /**
@@ -25,6 +29,7 @@ class GameInfoComponent {
         this.eventBus.on('turn:started', (data) => this.updateTurnDisplay(data.player));
         this.eventBus.on('player:health-changed', (data) => this.updateHealth(data));
         this.eventBus.on('player:gold-changed', (data) => this.updateGold(data));
+        this.eventBus.on('game:ended', (data) => this.showGameOver(data.winner));
     }
 
     /**
@@ -297,30 +302,274 @@ class GameInfoComponent {
      * @param {string} winner - Winner of the game
      */
     showGameOver(winner) {
-        const gameOverModal = document.createElement('div');
-        gameOverModal.className = 'game-over-modal';
-        gameOverModal.innerHTML = `
-            <div class="game-over-content">
-                <h2>${winner === 'player' ? 'Victory!' : 'Defeat!'}</h2>
-                <p>${winner === 'player' ? 'Congratulations! You won!' : 'Better luck next time!'}</p>
-                <button onclick="resetGame()" class="restart-btn">Play Again</button>
+        console.log('🎯 showGameOver called with winner:', winner);
+        
+        // Save win to localStorage if player won
+        console.log('🔍 Win check debug:', {
+            winner,
+            currentScenarioId: this.currentScenarioId,
+            condition: winner === 'player' && this.currentScenarioId
+        });
+        
+        // Try to get scenario ID from alternative sources if not set
+        let scenarioId = this.currentScenarioId;
+        if (!scenarioId) {
+            // Try to get from global variable
+            if (window.currentScenarioId) {
+                scenarioId = window.currentScenarioId;
+                console.log('🔄 Got scenario ID from global variable:', scenarioId);
+            }
+            // Try to get from the game engine or scenario manager
+            else if (this.gameState?.currentScenario?.id) {
+                scenarioId = this.gameState.currentScenario.id;
+                console.log('🔄 Got scenario ID from gameState:', scenarioId);
+            } else if (window.cardGameApp?.scenarioManager?.currentScenario) {
+                scenarioId = window.cardGameApp.scenarioManager.currentScenario.id || window.cardGameApp.scenarioManager.currentScenario.scenarioId;
+                console.log('🔄 Got scenario ID from scenarioManager:', scenarioId);
+            }
+        }
+        
+        console.log('🔍 Final scenario ID check:', {
+            originalId: this.currentScenarioId,
+            finalId: scenarioId,
+            willRecord: winner === 'player' && scenarioId
+        });
+        
+        if (winner === 'player' && scenarioId) {
+            // Use ScenarioSelectionComponent's WinTracker if available, fallback to local one
+            const winTracker = window.cardGameApp && window.cardGameApp.scenarioSelectionComponent 
+                ? window.cardGameApp.scenarioSelectionComponent.winTracker 
+                : this.winTracker;
+                
+            console.log('🏆 Recording win for scenario:', scenarioId);
+            console.log('🔍 WinTracker source:', window.cardGameApp?.scenarioSelectionComponent ? 'ScenarioSelectionComponent' : 'local');
+            
+            winTracker.markScenarioWon(scenarioId);
+            
+            // Debug: Check if win was recorded
+            console.log('✅ Win recorded? Check:', winTracker.hasWon(scenarioId));
+            
+            // Immediately update any visible scenario buttons with stars
+            if (window.cardGameApp && window.cardGameApp.scenarioSelectionComponent) {
+                // Only update if scenario selection is currently visible
+                const scenarioScreen = document.getElementById('scenarioSelection');
+                if (scenarioScreen && !scenarioScreen.classList.contains('hidden')) {
+                    window.cardGameApp.scenarioSelectionComponent.updateScenarioWinIndicators();
+                }
+            }
+        }
+        
+        const modal = document.getElementById('gameEndModal');
+        const iconElement = document.getElementById('gameEndIcon');
+        const titleElement = document.getElementById('gameEndTitle');
+        const messageElement = document.getElementById('gameEndMessage');
+        const returnBtn = document.getElementById('returnToScenariosBtn');
+        
+        console.log('🔍 Modal elements check:', {
+            modal: !!modal,
+            icon: !!iconElement,
+            title: !!titleElement,
+            message: !!messageElement,
+            button: !!returnBtn
+        });
+        
+        if (!modal || !iconElement || !titleElement || !messageElement) {
+            console.error('❌ Game end modal elements not found - using fallback');
+            // Fallback: try to create the modal if it doesn't exist
+            this.createGameOverModalFallback(winner);
+            return;
+        }
+        
+        console.log('✅ All modal elements found - showing modal');
+        
+        // Update modal content based on winner
+        if (winner === 'player') {
+            modal.classList.add('victory');
+            modal.classList.remove('defeat');
+            iconElement.textContent = '🏆';
+            titleElement.textContent = 'Victory!';
+            messageElement.textContent = 'Congratulations! You have defeated your opponent!';
+        } else {
+            modal.classList.add('defeat');
+            modal.classList.remove('victory');
+            iconElement.textContent = '💀';
+            titleElement.textContent = 'Defeat!';
+            messageElement.textContent = 'Your opponent has emerged victorious. Try again!';
+        }
+        
+        // Set up return to scenarios button
+        if (returnBtn) {
+            console.log('🔘 Setting up return button click handler');
+            returnBtn.onclick = (e) => {
+                console.log('🔘 Return to scenarios button clicked!');
+                e.preventDefault();
+                e.stopPropagation();
+                
+                try {
+                    // Hide the modal
+                    modal.classList.add('hidden');
+                    modal.style.display = 'none';
+                    console.log('🔘 Modal hidden');
+                    
+                    // Return to scenario selection
+                    console.log('🔘 Calling returnToScenarioSelection()');
+                    this.returnToScenarioSelection();
+                } catch (error) {
+                    console.error('🔘 Error in return button handler:', error);
+                    // Fallback - just reload the page
+                    console.log('🔘 Fallback: reloading page');
+                    location.reload();
+                }
+            };
+        } else {
+            console.error('🔘 Return button not found!');
+        }
+        
+        // Show the modal
+        console.log('🎭 Before showing modal, classes:', modal.className);
+        modal.classList.remove('hidden');
+        console.log('🎭 After removing hidden, classes:', modal.className);
+        
+        // Force display in case CSS is overriding
+        modal.style.display = 'flex';
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.zIndex = '10000';
+        console.log('🎭 Modal should now be visible with inline styles');
+        
+        console.log(`🎮 Game Over - ${winner === 'player' ? 'Player' : 'AI'} wins!`);
+    }
+    
+    /**
+     * Return to scenario selection screen
+     */
+    returnToScenarioSelection() {
+        console.log('🔄 Returning to scenario selection...');
+        
+        try {
+            // Try to use the Main.js returnToScenarioSelection method if available
+            if (window.cardGameApp && typeof window.cardGameApp.returnToScenarioSelection === 'function') {
+                console.log('🔄 Using Main.js returnToScenarioSelection');
+                window.cardGameApp.returnToScenarioSelection();
+                
+                // Reset current scenario tracking
+                this.currentScenarioId = null;
+                window.currentScenarioId = null;
+                
+                // Update scenario UI with win stars after Main.js handles the navigation
+                setTimeout(() => {
+                    if (window.cardGameApp && window.cardGameApp.scenarioSelectionComponent) {
+                        window.cardGameApp.scenarioSelectionComponent.updateScenarioWinIndicators();
+                    }
+                }, 100);
+                
+                return;
+            }
+            
+            // Fallback: Manual DOM manipulation
+            console.log('🔄 Using manual DOM manipulation');
+            
+            // Hide game container (using class selector since it doesn't have an ID)
+            const gameContainer = document.querySelector('.game-container');
+            if (gameContainer) {
+                gameContainer.style.display = 'none';
+                gameContainer.classList.add('hidden');
+                console.log('🔄 Game container hidden');
+            } else {
+                console.log('🔄 Game container not found');
+            }
+            
+            // Show scenario selection
+            const scenarioSelection = document.getElementById('scenarioSelection');
+            if (scenarioSelection) {
+                scenarioSelection.style.display = 'block';
+                scenarioSelection.classList.remove('hidden');
+                console.log('🔄 Scenario selection shown');
+                
+                // Update scenario UI with win stars
+                // Update scenario win indicators via ScenarioSelectionComponent
+            if (window.cardGameApp && window.cardGameApp.scenarioSelectionComponent) {
+                window.cardGameApp.scenarioSelectionComponent.updateScenarioWinIndicators();
+            }
+            } else {
+                console.log('🔄 Scenario selection not found');
+            }
+            
+            // Reset current scenario tracking
+            this.currentScenarioId = null;
+            window.currentScenarioId = null;
+            console.log('🔄 Successfully returned to scenario selection');
+            
+        } catch (error) {
+            console.error('🔄 Error returning to scenarios:', error);
+            // Fallback to page reload if state-based navigation fails
+            console.log('🔄 Fallback: reloading page');
+            location.reload();
+        }
+    }
+    
+    /**
+     * Set the current scenario ID for win tracking
+     * @param {string} scenarioId - The current scenario ID
+     */
+    setCurrentScenario(scenarioId) {
+        this.currentScenarioId = scenarioId;
+        console.log(`📝 Current scenario set to: ${scenarioId}`);
+    }
+    
+    /**
+     * Create game over modal as fallback if HTML element doesn't exist
+     * @param {string} winner - Winner of the game
+     */
+    createGameOverModalFallback(winner) {
+        console.log('Creating game over modal dynamically as fallback');
+        
+        // Check if modal already exists to avoid duplicates
+        let modal = document.getElementById('gameEndModalDynamic');
+        if (modal) {
+            modal.remove();
+        }
+        
+        // Create modal HTML
+        modal = document.createElement('div');
+        modal.id = 'gameEndModalDynamic';
+        modal.className = `modal-overlay game-end-modal ${winner === 'player' ? 'victory' : 'defeat'}`;
+        
+        modal.innerHTML = `
+            <div class="modal-content game-end-content">
+                <div class="game-end-header">
+                    <div class="game-end-icon">${winner === 'player' ? '🏆' : '💀'}</div>
+                    <h2>${winner === 'player' ? 'Victory!' : 'Defeat!'}</h2>
+                </div>
+                <div class="game-end-body">
+                    <p>${winner === 'player' 
+                        ? 'Congratulations! You have defeated your opponent!' 
+                        : 'Your opponent has emerged victorious. Try again!'}</p>
+                </div>
+                <div class="game-end-actions">
+                    <button class="btn btn-primary game-end-btn" id="returnToScenariosBtnDynamic">Return to Scenarios</button>
+                </div>
             </div>
         `;
         
-        gameOverModal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        `;
+        // Add to document
+        document.body.appendChild(modal);
         
-        document.body.appendChild(gameOverModal);
+        // Set up button event
+        const returnBtn = document.getElementById('returnToScenariosBtnDynamic');
+        if (returnBtn) {
+            returnBtn.onclick = () => {
+                modal.remove();
+                this.returnToScenarioSelection();
+            };
+        }
+        
+        // Show the modal
+        modal.classList.remove('hidden');
+        console.log(`🎮 Game Over Modal shown - ${winner === 'player' ? 'Player' : 'AI'} wins!`);
     }
 
     /**

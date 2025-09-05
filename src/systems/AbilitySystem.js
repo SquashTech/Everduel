@@ -1988,7 +1988,7 @@ class AbilitySystem {
             
             // Heal your player 3
             const currentHealth = state.players[playerId].health;
-            const maxHealth = 20; // Standard max health
+            const maxHealth = 30; // Updated max health
             const newHealth = Math.min(currentHealth + 3, maxHealth);
             
             this.gameEngine.dispatch({
@@ -2309,7 +2309,7 @@ class AbilitySystem {
         const playerId = unit.owner || context.playerId;
         const state = this.gameState.getState();
         const currentHealth = state.players[playerId].health;
-        const newHealth = Math.min(currentHealth + effect.amount, 20); // Max health is 20
+        const newHealth = Math.min(currentHealth + effect.amount, 30); // Max health is 30
         
         this.gameEngine.dispatch({
             type: 'SET_PLAYER_HEALTH',

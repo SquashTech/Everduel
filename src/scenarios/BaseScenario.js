@@ -32,14 +32,14 @@ export default class BaseScenario {
      * Apply scenario-specific setup - override in subclasses
      */
     async applyScenarioSetup() {
-        // Configure AI deck if specified
+        // Configure AI settings if specified
         if (this.aiDeckConfig) {
-            await this.configureAIDeck();
+            await this.configureAISettings();
         }
 
-        // Configure player starting deck if specified  
+        // Configure player settings if specified  
         if (this.playerStartingDeck) {
-            await this.configurePlayerStartingDeck();
+            await this.configurePlayerSettings();
         }
 
         // Apply special rules
@@ -50,14 +50,14 @@ export default class BaseScenario {
     }
 
     /**
-     * Configure AI deck for this scenario
+     * Configure AI settings for this scenario
      */
-    async configureAIDeck() {
+    async configureAISettings() {
         if (!this.gameEngine || !this.aiDeckConfig) return;
         
-        console.log(`🤖 Configuring AI deck for scenario: ${this.name}`);
+        console.log(`🤖 Configuring AI settings for scenario: ${this.name}`);
         
-        // Apply AI deck configuration
+        // Apply AI configuration
         const aiState = this.gameEngine.getState().players.ai;
         
         // Set AI health if specified
@@ -66,15 +66,16 @@ export default class BaseScenario {
             aiState.maxHealth = this.aiDeckConfig.health;
         }
 
-        // Set AI starting gold if specified
+        // Set AI starting gold if specified (for drafting game)
         if (this.aiDeckConfig.startingGold !== undefined) {
-            aiState.goldCurrent = this.aiDeckConfig.startingGold;
-            aiState.goldMax = this.aiDeckConfig.startingGold;
-        }
-
-        // Configure AI deck composition if specified
-        if (this.aiDeckConfig.deckCards) {
-            aiState.deck = [...this.aiDeckConfig.deckCards];
+            aiState.gold = this.aiDeckConfig.startingGold;
+            aiState.maxGold = this.aiDeckConfig.startingGold;
+            
+            // Also dispatch through state management to ensure it sticks
+            this.gameEngine.dispatch({ 
+                type: 'SET_PLAYER_GOLD', 
+                payload: { playerId: 'ai', gold: this.aiDeckConfig.startingGold, maxGold: this.aiDeckConfig.startingGold }
+            });
         }
 
         // Set AI behavior modifiers if specified
@@ -88,12 +89,12 @@ export default class BaseScenario {
     }
 
     /**
-     * Configure player starting deck for this scenario
+     * Configure player settings for this scenario
      */
-    async configurePlayerStartingDeck() {
+    async configurePlayerSettings() {
         if (!this.gameEngine || !this.playerStartingDeck) return;
         
-        console.log(`👤 Configuring player starting deck for scenario: ${this.name}`);
+        console.log(`👤 Configuring player settings for scenario: ${this.name}`);
         
         const playerState = this.gameEngine.getState().players.player;
         
@@ -103,20 +104,16 @@ export default class BaseScenario {
             playerState.maxHealth = this.playerStartingDeck.health;
         }
 
-        // Set player starting gold if specified
+        // Set player starting gold if specified (for drafting game)
         if (this.playerStartingDeck.startingGold !== undefined) {
-            playerState.goldCurrent = this.playerStartingDeck.startingGold;
-            playerState.goldMax = this.playerStartingDeck.startingGold;
-        }
-
-        // Configure starting cards in hand if specified
-        if (this.playerStartingDeck.startingHand) {
-            playerState.hand = [...this.playerStartingDeck.startingHand];
-        }
-
-        // Configure starting deck if specified
-        if (this.playerStartingDeck.deckCards) {
-            playerState.deck = [...this.playerStartingDeck.deckCards];
+            playerState.gold = this.playerStartingDeck.startingGold;
+            playerState.maxGold = this.playerStartingDeck.startingGold;
+            
+            // Also dispatch through state management to ensure it sticks
+            this.gameEngine.dispatch({ 
+                type: 'SET_PLAYER_GOLD', 
+                payload: { playerId: 'player', gold: this.playerStartingDeck.startingGold, maxGold: this.playerStartingDeck.startingGold }
+            });
         }
     }
 
@@ -146,9 +143,11 @@ export default class BaseScenario {
             const state = this.gameEngine.getState();
             if (rule.playerFirst) {
                 state.currentPlayer = 'player';
+                this.gameEngine.currentPlayer = 'player'; // Also update engine property
                 console.log('🎮 Special rule: Player goes first');
             } else if (rule.aiFirst) {
                 state.currentPlayer = 'ai';
+                this.gameEngine.currentPlayer = 'ai'; // Also update engine property
                 console.log('🤖 Special rule: AI goes first');
             }
         }
