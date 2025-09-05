@@ -79,6 +79,16 @@ export default class OptimizedBattlefieldComponent {
         this.eventBus.on('batch:attackable-units-update', () => {
             this.executeAttackableUnitsUpdate();
         });
+
+        // Handle game reset - clear visual slot buffs when game starts
+        this.eventBus.on('game:started', () => {
+            this.initializeSlotBuffs();
+        });
+
+        // Handle returning to scenarios - clear visual slot buffs immediately
+        this.eventBus.on('game:reset-to-scenarios', () => {
+            this.initializeSlotBuffs();
+        });
     }
 
     /**

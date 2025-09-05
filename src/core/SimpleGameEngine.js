@@ -493,6 +493,11 @@ class SimpleGameEngine {
                 }
             });
             
+            // Check for game over condition
+            if (newHealth <= 0) {
+                this.handleGameEnd(target.playerId);
+            }
+            
         } else if (target.type === 'unit') {
             const state = this.getState();
             const unit = state.players[target.playerId].battlefield[target.slotIndex];
@@ -614,6 +619,122 @@ class SimpleGameEngine {
                     }
                 }
             });
+        }
+    }
+
+    /**
+     * Handle game end when a player's health reaches 0
+     */
+    handleGameEnd(defeatedPlayerId) {
+        const isPlayerDefeated = defeatedPlayerId === 'player';
+        const result = isPlayerDefeated ? 'defeat' : 'victory';
+        
+        console.log(`🎮 Game ended: ${result.toUpperCase()}! ${defeatedPlayerId} was defeated`);
+        
+        // Emit game end event
+        this.eventBus.emit('game:ended', {
+            result,
+            winner: isPlayerDefeated ? 'ai' : 'player',
+            loser: defeatedPlayerId
+        });
+        
+        // Show game end modal
+        this.showGameEndModal(result);
+    }
+
+    /**
+     * Show the game end modal with victory or defeat message
+     */
+    showGameEndModal(result) {
+        const modal = document.getElementById('gameEndModal');
+        const header = modal.querySelector('.game-end-header');
+        const icon = document.getElementById('gameEndIcon');
+        const title = document.getElementById('gameEndTitle');
+        const message = document.getElementById('gameEndMessage');
+        
+        if (result === 'victory') {
+            header.className = 'game-end-header victory';
+            icon.textContent = '🏆';
+            title.textContent = 'Victory!';
+            message.textContent = 'Congratulations! You have defeated your opponent!';
+        } else {
+            header.className = 'game-end-header defeat';
+            icon.textContent = '💀';
+            title.textContent = 'Defeat...';
+            message.textContent = 'Your opponent has defeated you. Better luck next time!';
+        }
+        
+        // Show the modal
+        modal.classList.remove('hidden');
+        
+        // Set up return to scenarios button
+        const returnBtn = document.getElementById('returnToScenariosBtn');
+        if (returnBtn) {
+            // Remove any existing event listeners
+            returnBtn.replaceWith(returnBtn.cloneNode(true));
+            const newReturnBtn = document.getElementById('returnToScenariosBtn');
+            
+            newReturnBtn.addEventListener('click', () => {
+                this.returnToScenarios();
+            });
+        }
+        
+        // Disable game controls
+        this.disableGameControls();
+    }
+
+    /**
+     * Disable game controls when game ends
+     */
+    disableGameControls() {
+        // Disable end turn button
+        const endTurnBtn = document.getElementById('endTurnBtn');
+        if (endTurnBtn) {
+            endTurnBtn.disabled = true;
+        }
+        
+        // Disable draft buttons
+        for (let tier = 1; tier <= 5; tier++) {
+            const draftBtn = document.getElementById(`draftTier${tier}Btn`);
+            if (draftBtn) {
+                draftBtn.disabled = true;
+            }
+        }
+        
+        // Disable draw deck button
+        const drawDeckBtn = document.getElementById('drawDeckBtn');
+        if (drawDeckBtn) {
+            drawDeckBtn.disabled = true;
+        }
+    }
+
+    /**
+     * Return to scenario selection screen
+     */
+    returnToScenarios() {
+        console.log('🔄 Returning to scenario selection');
+        
+        // Reset game state and clear battlefield
+        this.dispatch({ type: 'RESET_GAME' });
+        this.eventBus.emit('game:reset-to-scenarios');
+        
+        // Hide game end modal
+        const modal = document.getElementById('gameEndModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+        
+        // Emit event to return to scenario selection
+        this.eventBus.emit('game:return-to-scenarios');
+        
+        // The Main.js should handle this event to switch screens
+        // If we need to trigger it directly, we can access the main app
+        if (window.cardGameApp && window.cardGameApp.returnToScenarioSelection) {
+            window.cardGameApp.returnToScenarioSelection();
+        } else {
+            // Fallback: reload the page
+            console.log('🔄 Fallback: Reloading page to return to scenarios');
+            window.location.reload();
         }
     }
 

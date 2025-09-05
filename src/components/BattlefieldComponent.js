@@ -52,6 +52,16 @@ class BattlefieldComponent {
             this.updateAttackableUnits(data);
             this.recalculateAllStats();
         });
+
+        // Handle game reset - clear visual slot buffs when game starts
+        this.eventBus.on('game:started', () => {
+            this.initializeSlotBuffs();
+        });
+
+        // Handle returning to scenarios - clear visual slot buffs immediately
+        this.eventBus.on('game:reset-to-scenarios', () => {
+            this.initializeSlotBuffs();
+        });
         this.eventBus.on('card:played', (data) => {
             // Only update attackable units when a card is actually played to the battlefield
             // Don't update during drafting or other non-battlefield card actions
