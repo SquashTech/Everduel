@@ -152,8 +152,8 @@ export default class RedItTakesAVillage extends BaseScenario {
                 forceToFrontRow = true;
                 break;
             case 2:
-                // Turn 2: Play Soldier and Squire in random slots
-                targetCards = ['Soldier', 'Squire'];
+                // Turn 2: Play Squire in random slot
+                targetCards = ['Squire'];
                 break;
             case 3:
                 // Turn 3: Randomly choose Knight, Berserker, or Blacksmith

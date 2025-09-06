@@ -8,6 +8,10 @@ class DragonFlameComponent {
         this.playerDisplay = null;
         this.aiDisplay = null;
         this.animationTimeouts = new Map();
+        this.hasEverGained = {
+            player: false,
+            ai: false
+        };
     }
 
     /**
@@ -21,6 +25,10 @@ class DragonFlameComponent {
             console.error('Dragon Flame display elements not found');
             return;
         }
+        
+        // Hide indicators initially
+        this.playerDisplay.style.display = 'none';
+        this.aiDisplay.style.display = 'none';
         
         this.setupEventListeners();
         this.updateDisplay();
@@ -55,6 +63,13 @@ class DragonFlameComponent {
      */
     handleDragonFlameGain(data) {
         const { player: playerId, amount = 1 } = data;
+        
+        // Show the indicator if this is the first time gaining
+        if (!this.hasEverGained[playerId]) {
+            this.hasEverGained[playerId] = true;
+            const display = playerId === 'player' ? this.playerDisplay : this.aiDisplay;
+            display.style.display = 'block';
+        }
         
         // Trigger gain animation
         this.animateGain(playerId);
@@ -144,6 +159,14 @@ class DragonFlameComponent {
         // Clear all animation timeouts
         this.animationTimeouts.forEach(timeout => clearTimeout(timeout));
         this.animationTimeouts.clear();
+        
+        // Reset tracking and hide indicators
+        this.hasEverGained = {
+            player: false,
+            ai: false
+        };
+        this.playerDisplay.style.display = 'none';
+        this.aiDisplay.style.display = 'none';
         
         // Reset displays
         this.updateDisplay();

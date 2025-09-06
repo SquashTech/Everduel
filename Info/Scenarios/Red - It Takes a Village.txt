@@ -8,7 +8,7 @@ The AI starts with three Workers in the back row.
 
 On turn 1, the AI plays Fighter in the front row. 
 
-On turn 2, the AI plays Soldier and Squire in random slots. 
+On turn 2, the AI plays Squire in a random slot
 
 On turn 3, the AI randomly chooses one:
 A: Play Knight

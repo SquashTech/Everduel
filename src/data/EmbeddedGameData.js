@@ -116,7 +116,7 @@ export const CARD_DATABASE = {
     {
       "id": "archer",
       "name": "Archer",
-      "attack": 2,
+      "attack": 3,
       "health": 2,
       "ability": "Ranged",
       "tags": ["Elf"],
@@ -152,7 +152,7 @@ export const CARD_DATABASE = {
     {
       "id": "spear_goblin",
       "name": "Spear Goblin",
-      "attack": 1,
+      "attack": 2,
       "health": 1,
       "ability": "Ranged, Kindred: Gain +1/+1",
       "tags": ["Goblin"],
@@ -161,7 +161,7 @@ export const CARD_DATABASE = {
     {
       "id": "muscle_goblin",
       "name": "Muscle Goblin",
-      "attack": 1,
+      "attack": 2,
       "health": 1,
       "ability": "Trample, Kindred: Gain +1/+1",
       "tags": ["Goblin"],
@@ -379,7 +379,7 @@ export const CARD_DATABASE = {
     {
       "id": "marksman",
       "name": "Marksman",
-      "attack": 2,
+      "attack": 3,
       "health": 2,
       "ability": "Ranged. Unleash: Deal 2 damage to the back row enemy here",
       "tags": ["Elf"],
@@ -606,7 +606,7 @@ export const CARD_DATABASE = {
     {
       "id": "elven_minstrel",
       "name": "Elven Minstrel",
-      "attack": 4,
+      "attack": 5,
       "health": 4,
       "ability": "Kindred: Give a random slot +2/+2",
       "tags": ["Elf"],
@@ -616,7 +616,7 @@ export const CARD_DATABASE = {
       "id": "forest_spirit",
       "name": "Forest Spirit",
       "attack": 3,
-      "health": 3,
+      "health": 5,
       "ability": "Unleash: Give your other Mystics +2/+1",
       "tags": ["Mystic"],
       "color": "green"
@@ -670,7 +670,7 @@ export const CARD_DATABASE = {
       "id": "ice_elemental",
       "name": "Ice Elemental",
       "attack": 2,
-      "health": 5,
+      "health": 7,
       "ability": "Manacharge: Give all of your units +2 Health",
       "tags": ["Mystic"],
       "color": "blue"
@@ -852,7 +852,7 @@ export const CARD_DATABASE = {
       "id": "living_mana",
       "name": "Living Mana",
       "attack": 8,
-      "health": 4,
+      "health": 6,
       "ability": "Kindred: Add a Mana Surge to your hand",
       "tags": ["Mystic"],
       "color": "blue"
@@ -952,8 +952,8 @@ export const CARD_DATABASE = {
     {
       "id": "primal_alpha",
       "name": "Primal Alpha",
-      "attack": 8,
-      "health": 4,
+      "attack": 6,
+      "health": 6,
       "ability": "Kindred: Give your Beasts +4/+4.",
       "tags": ["Beast"],
       "color": "yellow"
@@ -1024,8 +1024,8 @@ export const CARD_DATABASE = {
     {
       "id": "soul_eater",
       "name": "Soul Eater",
-      "attack": 1,
-      "health": 1,
+      "attack": 5,
+      "health": 5,
       "ability": "Unleash: Destroy the frontmost enemy here.",
       "tags": ["Mystic"],
       "color": "purple"
