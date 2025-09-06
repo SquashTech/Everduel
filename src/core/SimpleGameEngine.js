@@ -190,7 +190,7 @@ class SimpleGameEngine {
     }
 
     /**
-     * Do AI turn - with proper event-based actions
+     * Do AI turn - with proper event-based actions and delays
      */
     async doAITurn() {
         const state = this.getState();
@@ -211,9 +211,9 @@ class SimpleGameEngine {
             // AI plays all cards from hand
             aiSystem.playCardsFromHand();
             
-            // AI attacks with all units
+            // AI attacks with all units (now async with internal delays)
             await this.delay(800);
-            aiSystem.attackWithAllUnits();
+            await aiSystem.attackWithAllUnits();
             console.log('🤖 AI turn completed');
             
             // Emit turn ended event for AI's end-of-turn abilities

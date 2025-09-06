@@ -1,0 +1,18 @@
+Spear Goblin at slot 3 attempting to attack
+CombatSystem.js:487 ⚔️ getDeterministicTarget: attacker=Spear Goblin in column 0, enemyPlayer=player
+CombatSystem.js:488 ⚔️ Enemy battlefield: Array(6)
+CombatSystem.js:494 ⚔️ Checking column 0: front slot 0, back slot 3
+CombatSystem.js:556 ⚔️ Ranged unit targeting player directly: player
+CombatSystem.js:113 Invalid attack attempted: not_players_turn
+handleAttack @ CombatSystem.js:113Understand this warning
+OptimizedUIManager.js:251 🚫 Invalid attack: not_players_turn It's not ai's turn
+OptimizedUIManager.js:296 📢 [WARNING] It's not ai's turn
+OptimizedUIManager.js:251 🚫 Invalid attack: not_players_turn It's not ai's turn
+OptimizedUIManager.js:296 📢 [WARNING] It's not ai's turn
+SimpleAISystem.js:139 🤖 Spider Queen at slot 5 attempting to attack
+CombatSystem.js:487 ⚔️ getDeterministicTarget: attacker=Spider Queen in column 2, enemyPlayer=player
+CombatSystem.js:488 ⚔️ Enemy battlefield: Array(6)
+CombatSystem.js:494 ⚔️ Checking column 2: front slot 2, back slot 5
+CombatSystem.js:583 ⚔️ Column 2 empty - normal unit attacking player
+CombatSystem.js:113 Invalid attack attempted: not_players_turn
+handleAttack @ CombatSystem.js:113

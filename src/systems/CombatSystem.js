@@ -223,9 +223,12 @@ class CombatSystem {
         // Mark attacker as having attacked
         this.markAsAttacked(attacker);
         
-        // Emit attack completed event
+        // Emit attack completed event with full information
         this.eventBus.emit('combat:attack-completed', {
-            attacker,
+            attacker: {
+                ...attacker,
+                owner: attacker.owner  // Ensure owner is included
+            },
             target,
             damage,
             attackerSlot,
@@ -259,8 +262,20 @@ class CombatSystem {
             };
         }
 
+        // Debug: Check attacker owner
+        if (!attacker.owner) {
+            console.error('⚔️ ERROR: Attacker missing owner property!', attacker);
+            return {
+                valid: false,
+                reason: 'missing_owner',
+                userMessage: 'Unit has no owner'
+            };
+        }
+
         // Check if it's the attacker's turn
-        if (!this.stateSelectors.isPlayerTurn(attacker.owner)) {
+        const currentPlayer = this.stateSelectors.getCurrentPlayer();
+        if (attacker.owner !== currentPlayer) {
+            console.log(`⚔️ Turn validation failed: attacker.owner=${attacker.owner}, currentPlayer=${currentPlayer}`);
             return {
                 valid: false,
                 reason: 'not_players_turn',

@@ -39,18 +39,21 @@ class SimpleAISystem {
     }
 
     /**
-     * Take full AI turn - SYNCHRONOUS AND SIMPLE
+     * Take full AI turn - NOW WITH DELAYS
      * Called directly from SimpleGameEngine.doAITurn()
      */
-    takeFullTurn() {
-        console.log('🤖 SimpleAI takeFullTurn() - SYNCHRONOUS VERSION');
+    async takeFullTurn() {
+        console.log('🤖 SimpleAI takeFullTurn() - WITH DELAYS VERSION');
         
         try {
             // AI plays all cards from hand
             this.playAllCards();
             
-            // AI attacks with all units
-            this.attackWithAllUnits();
+            // Wait a bit before attacking
+            await this.delay(500);
+            
+            // AI attacks with all units (now has internal delays)
+            await this.attackWithAllUnits();
             
             console.log('🤖 SimpleAI turn completed');
             
@@ -111,43 +114,67 @@ class SimpleAISystem {
     }
 
     /**
-     * Attack with all available units - DIRECT METHOD CALLS
+     * Attack with all available units - WITH DELAYS FOR READABILITY
      */
-    attackWithAllUnits() {
+    async attackWithAllUnits() {
         const state = this.gameState.getState();
         const aiData = state.players[this.playerId];
         const battlefield = aiData.battlefield || [];
         
         console.log('🤖 Attacking with available units');
         
-        let attackCount = 0;
+        // Collect all units that can attack
+        const attackingUnits = [];
         battlefield.forEach((unit, slotIndex) => {
             if (unit && this.canUnitAttack(unit, aiData)) {
-                // Ensure unit has proper properties for combat system
-                unit.slotIndex = slotIndex;
-                unit.owner = this.playerId;
-                
-                console.log(`🤖 ${unit.name} at slot ${slotIndex} attempting to attack`);
-                
-                // Get deterministic target and emit combat:attack directly
-                const combatSystem = this.gameEngine.systems.get('CombatSystem');
-                if (combatSystem) {
-                    const target = combatSystem.getDeterministicTarget(unit);
-                    if (target) {
-                        this.eventBus.emit('combat:attack', {
-                            attacker: unit,
-                            target: target,
-                            attackerSlot: slotIndex,
-                            targetSlot: target.slotIndex
-                        });
-                    }
-                }
-                
-                attackCount++;
+                // Create a copy of the unit with proper properties to avoid reference issues
+                const attackingUnit = {
+                    ...unit,
+                    slotIndex: slotIndex,
+                    owner: this.playerId
+                };
+                attackingUnits.push({ unit: attackingUnit, slotIndex });
             }
         });
         
-        console.log(`🤖 Attacked with ${attackCount} units`);
+        // Attack with each unit sequentially with delays
+        for (const { unit, slotIndex } of attackingUnits) {
+            // Get fresh state for each attack to ensure turn is still valid
+            const currentState = this.gameState.getState();
+            
+            // Double-check it's still AI's turn (in case of any async issues)
+            if (currentState.currentPlayer !== this.playerId) {
+                console.log(`🤖 Turn changed during AI attacks, stopping`);
+                break;
+            }
+            
+            console.log(`🤖 ${unit.name} at slot ${slotIndex} attempting to attack (owner: ${unit.owner})`);
+            
+            // Ensure owner is absolutely set before emitting attack
+            if (!unit.owner) {
+                console.error(`🤖 ERROR: Unit ${unit.name} missing owner! Setting to ${this.playerId}`);
+                unit.owner = this.playerId;
+            }
+            
+            // Get deterministic target and emit combat:attack directly
+            const combatSystem = this.gameEngine.systems.get('CombatSystem');
+            if (combatSystem) {
+                const target = combatSystem.getDeterministicTarget(unit);
+                if (target) {
+                    this.eventBus.emit('combat:attack', {
+                        attacker: { ...unit, owner: this.playerId }, // Ensure owner is always set
+                        target: target,
+                        attackerSlot: slotIndex,
+                        targetSlot: target.slotIndex
+                    });
+                    
+                    // Add delay between attacks for readability
+                    await this.delay(800);
+                }
+            }
+        }
+        
+        console.log(`🤖 Attacked with ${attackingUnits.length} units`);
     }
 
     /**
@@ -261,6 +288,13 @@ class SimpleAISystem {
             selectedCard: bestCard,
             playerId: this.playerId
         });
+    }
+    
+    /**
+     * Helper method for delays
+     */
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 }
 

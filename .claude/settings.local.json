@@ -13,7 +13,11 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(dir index.html)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(claude doctor)",
+      "Bash(npm start)",
+      "Bash(npx http-server:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

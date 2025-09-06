@@ -276,7 +276,7 @@ class AbilitySystem {
             targetSelection = 'targeted';
         }
 
-        if (lowerTargetText.includes('enemy') || lowerTargetText.includes('enemies')) {
+        if (lowerTargetText.includes('enemy') || lowerTargetText.includes('enemies') || lowerTargetText.includes('opponent')) {
             if (lowerTargetText.includes('back row')) {
                 targetType = 'enemy_back_row';
             } else if (lowerTargetText.includes('front row')) {
@@ -292,12 +292,15 @@ class AbilitySystem {
             targetType = 'friendly_unit';
         }
 
-        return {
+        const result = {
             type: 'damage',
             amount: damage,
             targetType,
             targetSelection
         };
+        
+        console.log(`🔍 Parsed damage effect: "${text}" -> type: ${targetType}, amount: ${damage}`);
+        return result;
     }
 
     /**
@@ -331,6 +334,7 @@ class AbilitySystem {
                 .map(slotIndex => enemyBattlefield[slotIndex])
                 .filter(u => u !== null);
             
+            console.log(`🧙 Wizard targeting enemy back row: found ${backRowUnits.length} units`);
             targets = backRowUnits;
         } else if (effect.targetType === 'enemy_front_row') {
             const enemyBattlefield = state.players[enemyId].battlefield;

@@ -151,8 +151,21 @@ class GameLogger {
      * Combat attack logging
      */
     logCombatAttack(data) {
+        // Determine attacker ownership prefix
+        const attackerOwner = data.attacker?.owner === 'player' ? 'Your' : "AI's";
         const attacker = data.attacker?.name || 'Unit';
-        const target = data.target?.type === 'player' ? 'player' : data.target?.name || 'unit';
+        
+        // Get target name based on target type - units have target.unit.name structure
+        let targetName;
+        if (data.target?.type === 'player') {
+            targetName = data.target.playerId === 'player' ? 'you' : 'the AI';
+        } else if (data.target?.type === 'unit' && data.target?.unit) {
+            const targetOwner = data.target.unit.owner === 'player' ? 'your' : "AI's";
+            targetName = `${targetOwner} ${data.target.unit.name || 'unit'}`;
+        } else {
+            targetName = data.target?.name || 'unit';
+        }
+        
         const damage = data.damage || 0;
         
         let emoji = '⚔️';
@@ -160,7 +173,7 @@ class GameLogger {
         else if (data.attacker?.abilities?.includes('sneaky')) emoji = '🥷';
         else if (data.attacker?.abilities?.includes('ranged')) emoji = '🏹';
         
-        this.logMessage(`${emoji} ${attacker} attacks ${target} for ${damage} damage`, 'combat');
+        this.logMessage(`${emoji} ${attackerOwner} ${attacker} attacks ${targetName} for ${damage} damage`, 'combat');
     }
     
     /**
