@@ -12,6 +12,7 @@ import DebugCardGenerator from './debug/DebugCardGenerator.js';
 import ScenarioManager from './scenarios/ScenarioManager.js';
 import ScenarioSelectionComponent from './components/ScenarioSelectionComponent.js';
 import AttackAnimationManager from './animations/AttackAnimationManager.js';
+import KeywordSystem from './components/KeywordSystem.js';
 
 /**
  * Simple Main Application Class
@@ -23,6 +24,7 @@ class SimpleCardGameApp {
         this.systems = {};
         this.scenarioManager = null;
         this.scenarioSelectionComponent = null;
+        this.keywordSystem = null;
         this.gameStarted = false;
     }
 
@@ -47,6 +49,9 @@ class SimpleCardGameApp {
             
             // Initialize scenario system
             await this.initializeScenarioSystem();
+            
+            // Initialize keyword system
+            this.initializeKeywordSystem();
             
             // Hide loading indicator and show scenario selection
             this.hideLoadingIndicator();
@@ -177,6 +182,19 @@ class SimpleCardGameApp {
     }
 
     /**
+     * Initialize keyword system
+     */
+    initializeKeywordSystem() {
+        console.log('📝 Initializing keyword system...');
+        
+        // Create keyword system
+        this.keywordSystem = new KeywordSystem();
+        this.keywordSystem.initialize();
+        
+        console.log('✅ Keyword system initialized');
+    }
+
+    /**
      * Handle scenario selection
      */
     async onScenarioSelected(scenarioId) {
@@ -292,6 +310,9 @@ class SimpleCardGameApp {
         }
         if (this.scenarioManager) {
             this.scenarioManager.endCurrentScenario('destroyed');
+        }
+        if (this.keywordSystem) {
+            this.keywordSystem.destroy();
         }
         if (this.gameEngine) {
             this.gameEngine.destroy();
