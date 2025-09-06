@@ -348,6 +348,145 @@
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
 }
 
+/* Card Library Button */
+.card-library-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    border: 2px solid #45a049;
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.card-library-btn:hover {
+    background: linear-gradient(135deg, #5CBF60, #4CAF50);
+    border-color: #4CAF50;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+/* Card Library Modal */
+.card-library-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 20000;
+}
+
+.card-library-content {
+    max-width: 90vw;
+    max-height: 90vh;
+    width: 1200px;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 3px solid #444;
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-library-header {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #444;
+    flex-shrink: 0;
+}
+
+.card-library-header h2 {
+    color: #ffd700;
+    margin: 0;
+    font-size: 1.8rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.modal-close-btn {
+    background: #555;
+    border: 2px solid #777;
+    color: white;
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.modal-close-btn:hover {
+    background: #666;
+    border-color: #999;
+    transform: scale(1.1);
+}
+
+.card-library-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: rgba(0,0,0,0.2);
+}
+
+.tier-section {
+    margin-bottom: 30px;
+}
+
+.tier-title {
+    color: #ffd700;
+    font-size: 1.5rem;
+    margin: 0 0 15px 0;
+    padding: 10px 15px;
+    background: rgba(255,215,0,0.1);
+    border-left: 4px solid #ffd700;
+    border-radius: 0 8px 8px 0;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+    justify-items: center;
+}
+
+/* Card library uses standard game-card styling */
+
+/* Scrollbar styling for card library */
+.card-library-body::-webkit-scrollbar {
+    width: 12px;
+}
+
+.card-library-body::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+}
+
+.card-library-body::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #444, #666);
+    border-radius: 6px;
+}
+
+.card-library-body::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #555, #777);
+}
+
 /* Multiplayer Coming Soon Section */
 .multiplayer-section {
     margin-top: 30px;

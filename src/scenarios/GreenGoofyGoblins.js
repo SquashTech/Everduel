@@ -9,7 +9,7 @@ export default class GreenGoofyGoblins extends BaseScenario {
         super('hard-2', {
             name: 'Goofy Goblins',
             description: 'Face a chaotic goblin swarm strategy',
-            difficulty: 'hard',
+            difficulty: 4,
             aiDeckConfig: {
                 health: 23,
                 startingGold: 3,

@@ -9,7 +9,7 @@ export default class RedItTakesAVillage extends BaseScenario {
         super('easy-1', {
             name: 'It Takes a Village',
             description: 'Face a community-focused opponent strategy',
-            difficulty: 'easy',
+            difficulty: 3,
             aiDeckConfig: {
                 health: 30,
                 startingGold: 2,

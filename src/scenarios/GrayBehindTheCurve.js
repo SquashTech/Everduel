@@ -9,7 +9,7 @@ export default class GrayBehindTheCurve extends BaseScenario {
         super('tutorial-2', {
             name: 'Behind the Curve',
             description: "It's like the opponent played a ramp spell on turn 0, but the AI is still stupid.",
-            difficulty: 'tutorial',
+            difficulty: 2,
             aiDeckConfig: {
                 health: 30,
                 startingGold: 10, // AI starts with enough gold for scripted plays

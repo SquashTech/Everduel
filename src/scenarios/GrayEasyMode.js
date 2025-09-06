@@ -9,7 +9,7 @@ export default class GrayEasyMode extends BaseScenario {
         super('tutorial-1', {
             name: 'Easy Mode',
             description: 'Practice Everduel! The opponent will simply buy one thing per turn and place it randomly. Great for learning the basics!',
-            difficulty: 'tutorial',
+            difficulty: 1,
             aiDeckConfig: {
                 health: 30, // Updated health
                 startingGold: 2, // Both start with 2 max gold

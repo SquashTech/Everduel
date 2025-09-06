@@ -9,7 +9,7 @@ export default class YellowTheSkyFalls extends BaseScenario {
         super('medium-2', {
             name: 'The Sky Falls',
             description: 'Face a devastating aerial assault strategy',
-            difficulty: 'medium',
+            difficulty: 5,
             aiDeckConfig: {
                 health: 22,
                 startingGold: 3,

@@ -9,7 +9,7 @@ export default class GreenAnArrowToTheKnee extends BaseScenario {
         super('hard-1', {
             name: 'An Arrow to the Knee',
             description: 'Face an opponent that specializes in ranged attacks',
-            difficulty: 'hard',
+            difficulty: 3,
             aiDeckConfig: {
                 health: 25,
                 startingGold: 3,

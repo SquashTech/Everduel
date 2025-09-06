@@ -1,4 +1,5 @@
 import WinTracker from '../utils/WinTracker.js';
+import { CARD_DATABASE } from '../data/EmbeddedGameData.js';
 
 /**
  * Scenario Selection Component
@@ -22,8 +23,169 @@ export default class ScenarioSelectionComponent {
         // Set up event listeners
         this.setupEventListeners();
         
+        // Set up card library
+        this.setupCardLibrary();
+        
         this.isInitialized = true;
         console.log('🎭 ScenarioSelectionComponent initialized');
+    }
+
+    /**
+     * Setup card library functionality
+     */
+    setupCardLibrary() {
+        const cardLibraryBtn = document.getElementById('cardLibraryBtn');
+        if (cardLibraryBtn) {
+            cardLibraryBtn.addEventListener('click', () => {
+                this.showCardLibrary();
+            });
+        }
+
+        // Setup modal close functionality
+        const cardLibraryModal = document.getElementById('cardLibraryModal');
+        const closeBtn = document.getElementById('cardLibraryCloseBtn');
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                this.hideCardLibrary();
+            });
+        }
+
+        if (cardLibraryModal) {
+            cardLibraryModal.addEventListener('click', (e) => {
+                if (e.target === cardLibraryModal) {
+                    this.hideCardLibrary();
+                }
+            });
+        }
+
+        console.log('📚 Card library functionality initialized');
+    }
+
+    /**
+     * Show the card library modal
+     */
+    showCardLibrary() {
+        // Load cards if not already loaded
+        this.loadCardLibrary();
+        
+        const modal = document.getElementById('cardLibraryModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100vw';
+            modal.style.height = '100vh';
+            modal.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
+            modal.style.zIndex = '20000';
+            modal.style.justifyContent = 'center';
+            modal.style.alignItems = 'center';
+        }
+        
+        console.log('📚 Card library opened');
+    }
+
+    /**
+     * Hide the card library modal
+     */
+    hideCardLibrary() {
+        const modal = document.getElementById('cardLibraryModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+        }
+        
+        console.log('📚 Card library closed');
+    }
+
+    /**
+     * Load and display all cards in the library
+     */
+    loadCardLibrary() {
+        // Check if already loaded
+        if (document.querySelector('.card-library-card')) {
+            return;
+        }
+
+        // Color order: red first, then yellow, green, blue, purple
+        const colorOrder = ['red', 'yellow', 'green', 'blue', 'purple'];
+
+        // Load cards for each tier
+        for (let tier = 1; tier <= 5; tier++) {
+            const tierCards = CARD_DATABASE[tier.toString()] || [];
+            const container = document.getElementById(`tier${tier}Cards`);
+            
+            if (!container) continue;
+
+            // Sort cards by color order
+            const sortedCards = tierCards.sort((a, b) => {
+                const aIndex = colorOrder.indexOf(a.color);
+                const bIndex = colorOrder.indexOf(b.color);
+                const aOrder = aIndex === -1 ? 999 : aIndex;
+                const bOrder = bIndex === -1 ? 999 : bIndex;
+                return aOrder - bOrder;
+            });
+
+            // Create card elements
+            sortedCards.forEach(card => {
+                const cardElement = this.createCardElement(card, tier);
+                container.appendChild(cardElement);
+            });
+        }
+
+        console.log('📚 Card library loaded with all cards');
+    }
+
+    /**
+     * Create a card element for the library using draft card format
+     */
+    createCardElement(card, tier) {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = `game-card game-card--draft draft-card ${card.color}`;
+        
+        // Convert tier to Roman numeral
+        const tierRoman = this.getTierRomanNumeral(tier);
+        const tierIndicatorHTML = `<div class="tier-indicator">${tierRoman}</div>`;
+        
+        // Create card HTML matching draft format
+        cardDiv.innerHTML = `
+            ${tierIndicatorHTML}
+            <div class="card-header">
+                <div class="card-name">${card.name}</div>
+            </div>
+            <div class="card-ability">
+                ${card.ability || ''}
+            </div>
+            <div class="card-stats">
+                <div class="stat-attack">
+                    <span class="stat-value">${card.attack}</span>
+                </div>
+                <div class="stat-health">
+                    <span class="stat-value">${card.health}</span>
+                </div>
+            </div>
+            <div class="card-tags">
+                ${card.tags ? card.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
+            </div>
+        `;
+
+        return cardDiv;
+    }
+
+    /**
+     * Convert tier number to Roman numeral
+     */
+    getTierRomanNumeral(tier) {
+        const romanNumerals = {
+            1: 'I',
+            2: 'II', 
+            3: 'III',
+            4: 'IV',
+            5: 'V'
+        };
+        return romanNumerals[tier] || tier.toString();
     }
 
     /**
@@ -97,8 +259,9 @@ export default class ScenarioSelectionComponent {
         titleElement.textContent = scenarioInfo.name;
         descriptionElement.textContent = scenarioInfo.description || 'Are you ready to begin this scenario?';
         
-        // Add difficulty info to details
-        detailsElement.innerHTML = `<strong>Difficulty:</strong> ${scenarioInfo.difficulty.replace('_', ' ').toUpperCase()}`;
+        // Add difficulty info with sword rating
+        const difficultyRating = '⚔️'.repeat(scenarioInfo.difficulty);
+        detailsElement.innerHTML = `<strong>Difficulty:</strong> ${difficultyRating} (${scenarioInfo.difficulty}/5)`;
 
         // Store scenario info for confirmation
         modal.setAttribute('data-scenario-id', scenarioId);

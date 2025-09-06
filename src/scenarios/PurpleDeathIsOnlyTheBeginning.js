@@ -9,7 +9,7 @@ export default class PurpleDeathIsOnlyTheBeginning extends BaseScenario {
         super('expert-2', {
             name: 'Death is Only the Beginning',
             description: 'Face the ultimate nightmare challenge',
-            difficulty: 'expert',
+            difficulty: 5,
             aiDeckConfig: {
                 health: 40,
                 startingGold: 5,

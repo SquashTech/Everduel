@@ -9,7 +9,7 @@ export default class RedDraconicAwakening extends BaseScenario {
         super('easy-2', {
             name: 'Draconic Awakening',
             description: 'Face the power of awakened dragons',
-            difficulty: 'easy',
+            difficulty: 4,
             aiDeckConfig: {
                 health: 25,
                 startingGold: 2,

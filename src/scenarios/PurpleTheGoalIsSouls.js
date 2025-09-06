@@ -9,7 +9,7 @@ export default class PurpleTheGoalIsSouls extends BaseScenario {
         super('expert-1', {
             name: 'The Goal is Souls',
             description: 'Face an opponent obsessed with collecting souls',
-            difficulty: 'expert',
+            difficulty: 3,
             aiDeckConfig: {
                 health: 35,
                 startingGold: 5,

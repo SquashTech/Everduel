@@ -16,6 +16,11 @@
 
     <!-- Scenario Selection Screen -->
     <div id="scenarioSelection" class="scenario-selection-screen">
+        <!-- Card Library Button -->
+        <button id="cardLibraryBtn" class="card-library-btn" title="View all cards in the game">
+            📚 Card Library
+        </button>
+        
         <div class="scenario-header">
             <h1>Welcome to Everduel!</h1>
             <h2>Choose a scenario:</h2>
@@ -450,6 +455,38 @@
         <div class="log-entries" id="gameLogEntries">
             <div class="log-entry">🎮 Welcome to Everduel!</div>
             <div class="log-entry">🔄 Game started - Your turn</div>
+        </div>
+    </div>
+
+    <!-- Card Library Modal -->
+    <div id="cardLibraryModal" class="modal-overlay card-library-modal hidden">
+        <div class="modal-content card-library-content">
+            <div class="card-library-header">
+                <h2>📚 Card Library</h2>
+                <button class="modal-close-btn" id="cardLibraryCloseBtn">×</button>
+            </div>
+            <div class="card-library-body">
+                <div class="tier-section" data-tier="1">
+                    <h3 class="tier-title">Tier 1</h3>
+                    <div class="cards-grid" id="tier1Cards"></div>
+                </div>
+                <div class="tier-section" data-tier="2">
+                    <h3 class="tier-title">Tier 2</h3>
+                    <div class="cards-grid" id="tier2Cards"></div>
+                </div>
+                <div class="tier-section" data-tier="3">
+                    <h3 class="tier-title">Tier 3</h3>
+                    <div class="cards-grid" id="tier3Cards"></div>
+                </div>
+                <div class="tier-section" data-tier="4">
+                    <h3 class="tier-title">Tier 4</h3>
+                    <div class="cards-grid" id="tier4Cards"></div>
+                </div>
+                <div class="tier-section" data-tier="5">
+                    <h3 class="tier-title">Tier 5</h3>
+                    <div class="cards-grid" id="tier5Cards"></div>
+                </div>
+            </div>
         </div>
     </div>
 

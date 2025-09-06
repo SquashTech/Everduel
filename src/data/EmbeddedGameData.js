@@ -617,7 +617,7 @@ export const CARD_DATABASE = {
       "name": "Forest Spirit",
       "attack": 3,
       "health": 3,
-      "ability": "Unleash: For the rest of the game, Mystics have +1/+1",
+      "ability": "Unleash: Give your other Mystics +2/+1",
       "tags": ["Mystic"],
       "color": "green"
     },

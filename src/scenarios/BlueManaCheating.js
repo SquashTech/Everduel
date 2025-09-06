@@ -9,7 +9,7 @@ export default class BlueManaCheating extends BaseScenario {
         super('vhard-1', {
             name: 'Mana Cheating',
             description: 'Face an opponent that bends the rules of resource management',
-            difficulty: 'very_hard',
+            difficulty: 5,
             aiDeckConfig: {
                 health: 30,
                 startingGold: 4,

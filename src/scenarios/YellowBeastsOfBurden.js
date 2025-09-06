@@ -9,7 +9,7 @@ export default class YellowBeastsOfBurden extends BaseScenario {
         super('medium-1', {
             name: 'Beasts of Burden',
             description: 'The wild calls! Look for high health units to withstand the onslaught of big trampling Beasts!',
-            difficulty: 'medium',
+            difficulty: 2,
             aiDeckConfig: {
                 health: 30,
                 startingGold: 15, // AI starts with enough gold for scripted plays

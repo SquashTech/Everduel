@@ -9,7 +9,7 @@ export default class BlueBurnItAllDown extends BaseScenario {
         super('vhard-2', {
             name: 'Burn It All Down',
             description: 'Face an opponent obsessed with destruction and chaos',
-            difficulty: 'very_hard',
+            difficulty: 2,
             aiDeckConfig: {
                 health: 28,
                 startingGold: 4,
