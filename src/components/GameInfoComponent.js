@@ -362,18 +362,16 @@ class GameInfoComponent {
         const modal = document.getElementById('gameEndModal');
         const iconElement = document.getElementById('gameEndIcon');
         const titleElement = document.getElementById('gameEndTitle');
-        const messageElement = document.getElementById('gameEndMessage');
         const returnBtn = document.getElementById('returnToScenariosBtn');
         
         console.log('🔍 Modal elements check:', {
             modal: !!modal,
             icon: !!iconElement,
             title: !!titleElement,
-            message: !!messageElement,
             button: !!returnBtn
         });
         
-        if (!modal || !iconElement || !titleElement || !messageElement) {
+        if (!modal || !iconElement || !titleElement) {
             console.error('❌ Game end modal elements not found - using fallback');
             // Fallback: try to create the modal if it doesn't exist
             this.createGameOverModalFallback(winner);
@@ -388,13 +386,11 @@ class GameInfoComponent {
             modal.classList.remove('defeat');
             iconElement.textContent = '🏆';
             titleElement.textContent = 'Victory!';
-            messageElement.textContent = 'Congratulations! You have defeated your opponent!';
         } else {
             modal.classList.add('defeat');
             modal.classList.remove('victory');
             iconElement.textContent = '💀';
             titleElement.textContent = 'Defeat!';
-            messageElement.textContent = 'Your opponent has emerged victorious. Try again!';
         }
         
         // Set up return to scenarios button
@@ -543,11 +539,6 @@ class GameInfoComponent {
                 <div class="game-end-header">
                     <div class="game-end-icon">${winner === 'player' ? '🏆' : '💀'}</div>
                     <h2>${winner === 'player' ? 'Victory!' : 'Defeat!'}</h2>
-                </div>
-                <div class="game-end-body">
-                    <p>${winner === 'player' 
-                        ? 'Congratulations! You have defeated your opponent!' 
-                        : 'Your opponent has emerged victorious. Try again!'}</p>
                 </div>
                 <div class="game-end-actions">
                     <button class="btn btn-primary game-end-btn" id="returnToScenariosBtnDynamic">Return to Scenarios</button>

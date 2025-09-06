@@ -244,6 +244,18 @@ class AbilitySystem {
             };
         }
         
+        // Special pattern: "deal X damage to enemies in this column" (for Archmage)
+        const enemiesInColumnMatch = text.match(/deal (\d+) damage to enemies in this column/i);
+        if (enemiesInColumnMatch) {
+            const damage = parseInt(enemiesInColumnMatch[1]);
+            return {
+                type: 'damage',
+                amount: damage,
+                targetType: 'enemy_units_column',
+                targetSelection: 'column'
+            };
+        }
+
         // Special pattern: "deal X damage to the back row enemy here" (for Marksman)
         const backRowHereMatch = text.match(/deal (\d+) damage to the back row enemy here/i);
         if (backRowHereMatch) {
@@ -351,6 +363,26 @@ class AbilitySystem {
                 { type: 'player', playerId: owner },
                 { type: 'player', playerId: enemyId }
             ];
+        } else if (effect.targetType === 'enemy_units_column') {
+            // Column damage to units only (for Archmage) - does NOT target player
+            const enemyBattlefield = state.players[enemyId].battlefield;
+            const castingColumn = unit.slotIndex % 3; // 0, 1, or 2
+            const frontSlot = castingColumn;      // 0, 1, or 2
+            const backSlot = castingColumn + 3;   // 3, 4, or 5
+            
+            // Collect all units in this column (both front and back row)
+            targets = [];
+            const frontUnit = enemyBattlefield[frontSlot];
+            const backUnit = enemyBattlefield[backSlot];
+            
+            if (frontUnit) {
+                targets.push(frontUnit);
+            }
+            if (backUnit) {
+                targets.push(backUnit);
+            }
+            
+            console.log(`🏛️ Archmage targeting ${targets.length} enemy units in column ${castingColumn}`);
         } else if (effect.targetType === 'enemy_column') {
             // Column damage priority: Front → Back → Player
             const enemyBattlefield = state.players[enemyId].battlefield;
@@ -651,6 +683,19 @@ class AbilitySystem {
                 target: 'self',
                 targetSlot: null,
                 temporary: true
+            };
+        }
+
+        // Pattern: "gain X Attack" (permanent attack-only) - for Wild Boar, Alpha Wolf, etc.
+        const permAttackMatch = text.match(/gain \+?(\d+) attack(?!\s+this turn)(?!\s+for\s+each)/i);
+        if (permAttackMatch) {
+            return {
+                type: 'buff',
+                attack: parseInt(permAttackMatch[1]),
+                health: 0,
+                target: 'self',
+                targetSlot: null,
+                temporary: false
             };
         }
 

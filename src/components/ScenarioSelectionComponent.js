@@ -11,6 +11,14 @@ export default class ScenarioSelectionComponent {
         this.onScenarioSelected = null;
         this.isInitialized = false;
         this.winTracker = new WinTracker();
+        
+        // Define which scenarios are currently available
+        this.availableScenarios = new Set([
+            'tutorial-1',  // Easy Mode
+            'tutorial-2',  // Behind the Curve
+            'medium-1',    // Beasts of Burden
+            'easy-1'       // It Takes a Village
+        ]);
     }
 
     /**
@@ -25,6 +33,9 @@ export default class ScenarioSelectionComponent {
         
         // Set up card library
         this.setupCardLibrary();
+        
+        // Update scenario availability display
+        this.updateScenarioAvailability();
         
         this.isInitialized = true;
         console.log('🎭 ScenarioSelectionComponent initialized');
@@ -219,6 +230,13 @@ export default class ScenarioSelectionComponent {
     async handleScenarioSelection(scenarioId, buttonElement) {
         try {
             console.log(`🎯 Scenario clicked: ${scenarioId}`);
+            
+            // Check if scenario is available
+            if (!this.availableScenarios.has(scenarioId)) {
+                console.log(`🚫 Scenario ${scenarioId} is not available yet`);
+                this.showUnavailableMessage(buttonElement);
+                return;
+            }
             
             // Get scenario info for confirmation
             const scenario = this.scenarioManager.getScenario(scenarioId);
@@ -497,6 +515,82 @@ export default class ScenarioSelectionComponent {
     }
 
     /**
+     * Update scenario availability display
+     */
+    updateScenarioAvailability() {
+        console.log('🔒 Updating scenario availability...');
+        
+        const scenarioButtons = document.querySelectorAll('.scenario-btn');
+        scenarioButtons.forEach(button => {
+            const scenarioId = button.getAttribute('data-scenario');
+            if (scenarioId && !this.availableScenarios.has(scenarioId)) {
+                // Gray out unavailable scenarios
+                button.classList.add('scenario-unavailable');
+                button.setAttribute('title', 'Coming Soon - This scenario is not yet available');
+                
+                // Add a lock icon or "Coming Soon" indicator
+                if (!button.querySelector('.unavailable-overlay')) {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'unavailable-overlay';
+                    overlay.innerHTML = `
+                        <div class="unavailable-icon">🔒</div>
+                        <div class="unavailable-text">Coming Soon</div>
+                    `;
+                    button.appendChild(overlay);
+                }
+                
+                console.log(`🔒 Marked ${scenarioId} as unavailable`);
+            }
+        });
+        
+        console.log(`🔒 Updated availability for ${scenarioButtons.length} scenarios`);
+    }
+
+    /**
+     * Show unavailable scenario message
+     */
+    showUnavailableMessage(buttonElement) {
+        // Create temporary message
+        const message = document.createElement('div');
+        message.className = 'unavailable-message';
+        message.innerHTML = `
+            <div class="message-content">
+                <div class="message-icon">🔒</div>
+                <div class="message-text">This scenario is not yet available!</div>
+            </div>
+        `;
+        message.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ff6b6b;
+            color: white;
+            padding: 20px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            font-size: 16px;
+        `;
+        
+        document.body.appendChild(message);
+        
+        // Add shake effect to button
+        buttonElement.style.animation = 'shake 0.5s ease-in-out';
+        
+        // Auto-remove after 2 seconds
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
+            }
+            buttonElement.style.animation = '';
+        }, 2000);
+    }
+
+    /**
      * Show the scenario selection screen
      */
     show() {
@@ -507,6 +601,9 @@ export default class ScenarioSelectionComponent {
             
             // Update win indicators when showing
             this.updateScenarioWinIndicators();
+            
+            // Update scenario availability
+            this.updateScenarioAvailability();
             
             console.log('📺 Scenario selection screen shown');
         }

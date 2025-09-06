@@ -1692,6 +1692,43 @@ body {
     transform: translateY(-5px);
 }
 
+/* Attack animation for units */
+.game-card.attacking {
+    animation: attackPulse 0.8s ease-in-out;
+    z-index: 1000;
+}
+
+@keyframes attackPulse {
+    0% {
+        transform: scale(1) translateX(0);
+    }
+    25% {
+        transform: scale(1.05) translateX(10px);
+        box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+    }
+    50% {
+        transform: scale(1.1) translateX(5px);
+        box-shadow: 0 0 25px rgba(255, 0, 0, 0.8);
+    }
+    75% {
+        transform: scale(1.05) translateX(-5px);
+        box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+    }
+    100% {
+        transform: scale(1) translateX(0);
+        box-shadow: none;
+    }
+}
+
+/* Different animation speeds for different abilities */
+.game-card.attacking.quick-strike {
+    animation-duration: 0.4s;
+}
+
+.game-card.attacking.slow {
+    animation-duration: 1.2s;
+}
+
 .game-card .stat-health.damaged {
     color: #dc2626;
     background: rgba(220, 38, 38, 0.2);
@@ -3318,4 +3355,50 @@ body {
         text-shadow: 0 0 10px rgba(153, 27, 27, 1);
         transform: scale(1.05);
     }
+}
+
+/* === UNAVAILABLE SCENARIO STYLES === */
+.scenario-btn.scenario-unavailable {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(80%);
+    position: relative;
+}
+
+.scenario-btn.scenario-unavailable:hover {
+    transform: none;
+    box-shadow: none;
+    background: rgba(255,255,255,0.1);
+}
+
+.scenario-btn.scenario-unavailable .unavailable-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+}
+
+.scenario-btn.scenario-unavailable .unavailable-icon {
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+.scenario-btn.scenario-unavailable .unavailable-text {
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Shake animation for unavailable scenarios */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
 }

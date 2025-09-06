@@ -138,7 +138,8 @@ class SimpleAISystem {
         });
         
         // Attack with each unit sequentially with delays
-        for (const { unit, slotIndex } of attackingUnits) {
+        let attacksExecuted = 0;
+        for (const { unit: originalUnit, slotIndex } of attackingUnits) {
             // Get fresh state for each attack to ensure turn is still valid
             const currentState = this.gameState.getState();
             
@@ -148,33 +149,60 @@ class SimpleAISystem {
                 break;
             }
             
-            console.log(`🤖 ${unit.name} at slot ${slotIndex} attempting to attack (owner: ${unit.owner})`);
+            // Get fresh unit data from current battlefield state (critical for post-delay accuracy)
+            const currentAiData = currentState.players[this.playerId];
+            const freshUnit = currentAiData.battlefield[slotIndex];
+            
+            // Skip if unit no longer exists or has been replaced
+            if (!freshUnit || freshUnit.name !== originalUnit.name) {
+                console.log(`🤖 Unit at slot ${slotIndex} changed/removed during attacks, skipping`);
+                continue;
+            }
+            
+            // Re-validate if this unit can still attack with fresh data
+            if (!this.canUnitAttack(freshUnit, currentAiData)) {
+                console.log(`🤖 ${freshUnit.name} at slot ${slotIndex} can no longer attack, skipping`);
+                continue;
+            }
+            
+            console.log(`🤖 ${freshUnit.name} at slot ${slotIndex} attempting to attack (owner: ${freshUnit.owner})`);
             
             // Ensure owner is absolutely set before emitting attack
-            if (!unit.owner) {
-                console.error(`🤖 ERROR: Unit ${unit.name} missing owner! Setting to ${this.playerId}`);
-                unit.owner = this.playerId;
+            if (!freshUnit.owner) {
+                console.error(`🤖 ERROR: Unit ${freshUnit.name} missing owner! Setting to ${this.playerId}`);
+                freshUnit.owner = this.playerId;
             }
             
             // Get deterministic target and emit combat:attack directly
             const combatSystem = this.gameEngine.systems.get('CombatSystem');
             if (combatSystem) {
-                const target = combatSystem.getDeterministicTarget(unit);
+                const target = combatSystem.getDeterministicTarget(freshUnit);
                 if (target) {
                     this.eventBus.emit('combat:attack', {
-                        attacker: { ...unit, owner: this.playerId }, // Ensure owner is always set
+                        attacker: { ...freshUnit, owner: this.playerId }, // Use fresh unit data
                         target: target,
                         attackerSlot: slotIndex,
                         targetSlot: target.slotIndex
                     });
                     
-                    // Add delay between attacks for readability
-                    await this.delay(800);
+                    attacksExecuted++;
+                    
+                    // Wait for attack animation to complete instead of arbitrary delay
+                    const animationManager = this.gameEngine.systems.get('AnimationManager');
+                    if (animationManager) {
+                        const attackerId = freshUnit.unitId || `${this.playerId}-${slotIndex}`;
+                        await animationManager.waitForAttackerAnimation(attackerId);
+                    } else {
+                        // Fallback to delay if animation system not available
+                        await this.delay(800);
+                    }
+                } else {
+                    console.log(`🤖 No target found for ${freshUnit.name}, skipping attack`);
                 }
             }
         }
         
-        console.log(`🤖 Attacked with ${attackingUnits.length} units`);
+        console.log(`🤖 Attack phase complete: ${attacksExecuted}/${attackingUnits.length} attacks executed (${attackingUnits.length - attacksExecuted} skipped due to state changes)`);
     }
 
     /**
@@ -202,7 +230,7 @@ class SimpleAISystem {
     }
 
     /**
-     * Check if unit can attack
+     * Check if unit can attack - aligned with Combat System logic
      */
     canUnitAttack(unit, aiData) {
         if (!unit) return false;
@@ -210,11 +238,13 @@ class SimpleAISystem {
         // Check if already attacked (slot-based tracking)
         const hasAttacked = aiData.hasAttacked || [];
         if (hasAttacked.includes(unit.slotIndex)) {
+            console.log(`🤖 ${unit.name} already attacked this turn`);
             return false;
         }
         
-        // Check summoning sickness - units can't attack turn they're summoned unless Rush
-        if (unit.summonedThisTurn && !this.hasRush(unit)) {
+        // Check summoning sickness - use same logic as Combat System
+        if (!unit.canAttack && !this.hasAbility(unit, 'Rush')) {
+            console.log(`🤖 ${unit.name} has summoning sickness (canAttack: ${unit.canAttack}, Rush: ${this.hasAbility(unit, 'Rush')})`);
             return false;
         }
         
@@ -251,10 +281,17 @@ class SimpleAISystem {
     }
 
     /**
+     * Check if unit has a specific ability - aligned with other systems
+     */
+    hasAbility(unit, ability) {
+        return unit.ability && unit.ability.toLowerCase().includes(ability.toLowerCase());
+    }
+
+    /**
      * Check if unit has Rush ability
      */
     hasRush(unit) {
-        return unit.ability && unit.ability.toLowerCase().includes('rush');
+        return this.hasAbility(unit, 'Rush');
     }
 
 

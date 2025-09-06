@@ -120,6 +120,14 @@ class CombatSystem {
             return;
         }
 
+        // Start attack animation
+        const animationManager = this.gameEngine.systems.get('AnimationManager');
+        if (animationManager) {
+            const attackerId = attacker.unitId || `${attacker.owner}-${attackerSlot}`;
+            const animationDuration = this.getAttackAnimationDuration(attacker);
+            animationManager.startAttackAnimation(attackerId, animationDuration);
+        }
+
         // Calculate damage
         const actualTarget = target.type === 'unit' ? target.unit : target;
         const damage = this.calculateDamage(attacker, actualTarget);
@@ -604,6 +612,25 @@ class CombatSystem {
     getValidTargets(attacker) {
         const target = this.getDeterministicTarget(attacker);
         return target ? [target] : [];
+    }
+
+    /**
+     * Get animation duration for an attack based on unit abilities
+     * @param {Object} attacker - The attacking unit
+     * @returns {number} Animation duration in milliseconds
+     */
+    getAttackAnimationDuration(attacker) {
+        // Base duration
+        let duration = 800;
+        
+        // Modify duration based on abilities
+        if (this.hasAbility(attacker, 'Quick Strike')) {
+            duration *= 0.5; // 400ms for quick attacks
+        } else if (this.hasAbility(attacker, 'Slow')) {
+            duration *= 1.5; // 1200ms for slow attacks
+        }
+        
+        return duration;
     }
 }
 

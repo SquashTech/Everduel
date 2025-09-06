@@ -85,6 +85,29 @@ class BattlefieldComponent {
                 this.recalculateAllStats();
             }
         });
+
+        // Animation event handlers
+        this.setupAnimationListeners();
+    }
+
+    /**
+     * Setup animation event listeners
+     */
+    setupAnimationListeners() {
+        this.eventBus.on('animation:attack:start', ({ attackerId, duration }) => {
+            const unitElement = document.querySelector(`[data-unit-id="${attackerId}"]`);
+            if (unitElement) {
+                const card = unitElement.querySelector('.game-card');
+                if (card) {
+                    card.classList.add('attacking');
+                    
+                    // Remove class after animation
+                    setTimeout(() => {
+                        card.classList.remove('attacking');
+                    }, duration);
+                }
+            }
+        });
     }
 
     /**

@@ -7,7 +7,7 @@ Beasts!"
 
 On turn 1, the AI randomly chooses one:
 A: Play Hawk to a random slot
-B: Play Wolf Cub to a random slot
+B: Play Wolf Pup to a random slot
 C: Play Bear Cub to a random slot
 
 On turn 2, the AI plays Piglet to a random slot.
@@ -16,7 +16,7 @@ On turn 3, the AI randomly chooses one:
 A: Play Cow, then Brown Bear 
 B: Play Cow, then Wolf 
 
-On turn 4, the AI plays Pack Leader
+On turn 4, the AI plays Pack Leader and Bear Cub
 
 On turn 5, the AI randomly chooses one:
 A: Play Wolf, then Wolf Pup

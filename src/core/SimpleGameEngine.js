@@ -697,18 +697,15 @@ class SimpleGameEngine {
         const header = modal.querySelector('.game-end-header');
         const icon = document.getElementById('gameEndIcon');
         const title = document.getElementById('gameEndTitle');
-        const message = document.getElementById('gameEndMessage');
         
         if (result === 'victory') {
             header.className = 'game-end-header victory';
             icon.textContent = '🏆';
             title.textContent = 'Victory!';
-            message.textContent = 'Congratulations! You have defeated your opponent!';
         } else {
             header.className = 'game-end-header defeat';
             icon.textContent = '💀';
             title.textContent = 'Defeat...';
-            message.textContent = 'Your opponent has defeated you. Better luck next time!';
         }
         
         // Show the modal

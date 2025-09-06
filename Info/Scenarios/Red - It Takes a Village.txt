@@ -1,0 +1,40 @@
+On all turns, the AI will attack with any unit that legally can.
+Unless otherwise noted, units are played to random slots
+
+Description for UI:
+"Humans working together? That's how you know this is a fictional game."
+
+The AI starts with three Workers in the back row.
+
+On turn 1, the AI plays Fighter in the front row. 
+
+On turn 2, the AI plays Soldier and Squire in random slots. 
+
+On turn 3, the AI randomly chooses one:
+A: Play Knight
+B: Play Berserker
+C: Play Blacksmith
+
+On turn 4, the AI randomly chooses one:
+A: Play Knight
+B: Play Berserker
+C: Play Blacksmith
+
+On turn 5, the AI plays Paladin
+
+On turn 6, the AI randomly chooses one:
+A: Play Warlord
+B: Play Captain
+C: Play Dwarf Knight
+
+On turn 7, the AI plays two Knights
+
+On turn 8, the AI fills the front row with Fighters, then plays Tavernmaster
+
+On turn 9, the AI plays Hero
+
+On turn 10+, the AI chooses randomly:
+A: Play Hero
+B: Play Paladin, then Knight
+C: Play Dwarf King
+D: Play Warlord, then Berserker

@@ -11,6 +11,7 @@ import OptimizedUIManager from './components/OptimizedUIManager.js';
 import DebugCardGenerator from './debug/DebugCardGenerator.js';
 import ScenarioManager from './scenarios/ScenarioManager.js';
 import ScenarioSelectionComponent from './components/ScenarioSelectionComponent.js';
+import AttackAnimationManager from './animations/AttackAnimationManager.js';
 
 /**
  * Simple Main Application Class
@@ -83,6 +84,7 @@ class SimpleCardGameApp {
         this.systems.abilities = new AbilitySystem();
         this.systems.ai = new SimpleAISystem(); // Use new simple AI
         this.systems.ui = new OptimizedUIManager(); // Fixed OptimizedUIManager - now has components!
+        this.systems.animationManager = new AttackAnimationManager(this.gameEngine.eventBus); // Animation manager
         
         // Create debug system (only for testing)
         this.debugCardGenerator = new DebugCardGenerator();
@@ -93,6 +95,7 @@ class SimpleCardGameApp {
         this.gameEngine.registerSystem('AbilitySystem', this.systems.abilities);
         this.gameEngine.registerSystem('ai', this.systems.ai);  // AI system registered as 'ai'
         this.gameEngine.registerSystem('UIManager', this.systems.ui);
+        this.gameEngine.registerSystem('AnimationManager', this.systems.animationManager);
         
         // Initialize UI Manager
         await this.systems.ui.initialize();

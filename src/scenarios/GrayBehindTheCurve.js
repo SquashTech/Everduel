@@ -82,9 +82,9 @@ export default class GrayBehindTheCurve extends BaseScenario {
             await this.gameEngine.delay(600);
             aiSystem.playCardsFromHand();
             
-            // AI attacks with all units
-            await this.gameEngine.delay(800);
-            aiSystem.attackWithAllUnits();
+            // AI attacks with all units using animation-based timing
+            await this.gameEngine.delay(500);
+            await aiSystem.attackWithAllUnits();
             
             console.log('🎭 Scripted AI turn completed');
             
