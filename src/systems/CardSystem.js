@@ -313,10 +313,16 @@ class CardSystem {
         this.applyExistingSlotBuffs(unit, playerId, slotIndex);
 
         // Place on battlefield (with buffs already applied)
+        console.log(`⚔️ Placing ${unit.name} at slot ${slotIndex}. Has Rush: ${unit.ability && unit.ability.includes('Rush')}`);
         this.gameEngine.dispatch({
             type: 'PLACE_UNIT',
             payload: { playerId, unit, slotIndex }
         });
+        
+        // Log attack status after placement for debugging
+        const updatedState = this.gameState.getState();
+        const hasAttacked = updatedState.players[playerId].hasAttacked || [];
+        console.log(`⚔️ Attack tracking after placement: hasAttacked slots = [${hasAttacked.join(', ')}]`);
 
         // Trigger unleash ability if present - Route directly to AbilitySystem
         if (unit.ability && unit.ability.toLowerCase().includes('unleash')) {

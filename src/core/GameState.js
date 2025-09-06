@@ -196,13 +196,19 @@ class GameState {
             const battlefield = [...state.players[playerId].battlefield];
             battlefield[slotIndex] = { ...unit, slotIndex, owner: playerId };
             
+            // Clear attack tracking for this slot when a new unit is placed
+            // This ensures Rush units can attack immediately, even if previous unit had attacked
+            const currentHasAttacked = state.players[playerId].hasAttacked || [];
+            const updatedHasAttacked = currentHasAttacked.filter(slot => slot !== slotIndex);
+            
             return {
                 ...state,
                 players: {
                     ...state.players,
                     [playerId]: {
                         ...state.players[playerId],
-                        battlefield
+                        battlefield,
+                        hasAttacked: updatedHasAttacked
                     }
                 }
             };

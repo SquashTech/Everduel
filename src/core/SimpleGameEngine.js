@@ -380,6 +380,11 @@ class SimpleGameEngine {
         this.eventBus.on('combat:damage', (data) => {
             this.handleDamage(data);
         });
+        
+        // Handle heal events
+        this.eventBus.on('player:heal', (data) => {
+            this.handleHeal(data);
+        });
 
         // Handle spending gold
         this.eventBus.on('player:spend-gold', (data) => {
@@ -493,6 +498,14 @@ class SimpleGameEngine {
                 }
             });
             
+            // Emit health changed event for UI animations
+            this.eventBus.emit('player:health-changed', {
+                playerId: target.playerId,
+                health: newHealth,
+                previousHealth: currentHealth,
+                change: newHealth - currentHealth
+            });
+            
             // Check for game over condition
             if (newHealth <= 0) {
                 this.handleGameEnd(target.playerId);
@@ -532,6 +545,40 @@ class SimpleGameEngine {
                 }
             }
         }
+    }
+
+    /**
+     * Handle healing events for player health
+     * @param {Object} data - Heal data with target, amount, source
+     */
+    handleHeal(data) {
+        const { target, amount, source, type = 'heal' } = data;
+        
+        if (target.type === 'player') {
+            const state = this.getState();
+            const currentHealth = state.players[target.playerId].health;
+            const maxHealth = 30; // Assuming max health is 30
+            const newHealth = Math.min(maxHealth, currentHealth + amount);
+            
+            console.log(`💚 Player heal: ${target.playerId} gains ${amount} health (${currentHealth} -> ${newHealth})`);
+            
+            this.dispatch({
+                type: 'SET_PLAYER_HEALTH',
+                payload: {
+                    playerId: target.playerId,
+                    health: newHealth
+                }
+            });
+            
+            // Emit health changed event for UI animations
+            this.eventBus.emit('player:health-changed', {
+                playerId: target.playerId,
+                health: newHealth,
+                previousHealth: currentHealth,
+                change: newHealth - currentHealth
+            });
+        }
+        // Unit healing could be implemented here if needed in the future
     }
 
     /**
