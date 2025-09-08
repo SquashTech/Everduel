@@ -7,9 +7,9 @@ class OptimizedUpdater {
         this.eventBus = eventBus;
         this.pendingUpdates = new Set();
         this.updateTimer = null;
-        this.batchDelay = 16; // ~60fps batching
+        this.batchDelay = 32; // ~30fps batching, reduced from 16ms to prevent excessive updates
         this.lastUpdateTime = 0;
-        this.minUpdateInterval = 50; // Minimum 50ms between updates
+        this.minUpdateInterval = 100; // Minimum 100ms between updates, increased from 50ms
         
         // Track what needs updating
         this.pendingOperations = {

@@ -117,7 +117,10 @@ export default class OptimizedUIManager {
             this.lastUpdateState = this.createStateSignature(state);
         } else {
             this.duplicateUpdatesPrevented++;
-            console.log(`⏭️ Skipped duplicate UI update (prevented ${this.duplicateUpdatesPrevented} duplicates)`);
+            // Only log every 10th duplicate to reduce console noise
+            if (this.duplicateUpdatesPrevented % 10 === 0) {
+                console.log(`⏭️ Skipped duplicate UI updates (prevented ${this.duplicateUpdatesPrevented} total)`);
+            }
         }
     }
 
@@ -144,14 +147,46 @@ export default class OptimizedUIManager {
             aiHealth: state.players?.ai?.health,
             playerGold: state.players?.player?.gold,
             aiGold: state.players?.ai?.gold,
-            playerHandCount: state.players?.player?.hand?.length,
-            aiHandCount: state.players?.ai?.hand?.length,
+            // Include actual hand cards, not just count
+            playerHand: this.createHandSignature(state.players?.player?.hand),
+            aiHand: this.createHandSignature(state.players?.ai?.hand),
             // Battlefield signatures (unit count and health totals)
             playerBattlefield: this.createBattlefieldSignature(state.players?.player?.battlefield),
-            aiBattlefield: this.createBattlefieldSignature(state.players?.ai?.battlefield)
+            aiBattlefield: this.createBattlefieldSignature(state.players?.ai?.battlefield),
+            // Slot buffs
+            playerSlotBuffs: this.createSlotBuffsSignature(state.players?.player?.slotBuffs),
+            aiSlotBuffs: this.createSlotBuffsSignature(state.players?.ai?.slotBuffs),
+            // Draft state
+            draftOptions: state.draftOptions?.length || 0,
+            // Game over state
+            gameOver: state.gameOver,
+            winner: state.winner
         };
         
         return JSON.stringify(significantState);
+    }
+
+    /**
+     * Create a compact signature of the hand state
+     */
+    createHandSignature(hand) {
+        if (!hand) return '';
+        
+        return hand.map(card => {
+            if (card.type === 'spell') {
+                return `S:${card.id}:${card.handId}`;
+            }
+            return `U:${card.id}:${card.attack}/${card.health}:${card.handId}`;
+        }).join('|');
+    }
+
+    /**
+     * Create a compact signature of slot buffs
+     */
+    createSlotBuffsSignature(slotBuffs) {
+        if (!slotBuffs) return '';
+        
+        return slotBuffs.map(buff => `${buff.attack}/${buff.health}`).join('|');
     }
 
     /**
@@ -162,7 +197,10 @@ export default class OptimizedUIManager {
         
         return battlefield.map(unit => {
             if (!unit) return 'null';
-            return `${unit.name}:${unit.currentHealth || unit.health}:${unit.hasAttacked ? 'A' : 'R'}`;
+            // Include currentAttack if it exists, otherwise use attack
+            const attack = unit.currentAttack !== undefined ? unit.currentAttack : unit.attack;
+            const health = unit.currentHealth || unit.health;
+            return `${unit.name}:${attack}/${health}:${unit.hasAttacked ? 'A' : 'R'}`;
         }).join('|');
     }
 

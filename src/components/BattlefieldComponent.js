@@ -154,7 +154,71 @@ class BattlefieldComponent {
             }
         });
         
+        // Setup battlefield-level drop zones for special spells
+        this.setupBattlefieldDropZones();
+        
         console.log('Drag and drop setup complete');
+    }
+
+    /**
+     * Setup battlefield-level drop zones for spells that require battlefield targeting
+     */
+    setupBattlefieldDropZones() {
+        const playerBattlefield = document.getElementById('playerBattlefield');
+        
+        if (playerBattlefield) {
+            playerBattlefield.addEventListener('dragover', (e) => this.handleBattlefieldDragOver(e));
+            playerBattlefield.addEventListener('dragleave', (e) => this.handleBattlefieldDragLeave(e));
+            playerBattlefield.addEventListener('drop', (e) => this.handleBattlefieldDrop(e));
+        }
+    }
+
+    /**
+     * Handle dragover for battlefield targeting spells
+     */
+    handleBattlefieldDragOver(e) {
+        e.preventDefault();
+        
+        // Check if this is a battlefield-targeting spell using global reference
+        const card = window.currentDraggedCard;
+        if (!card) return;
+        
+        if ((card.isSpell || card.type === 'spell') && card.requiresBattlefieldTargeting) {
+            e.dataTransfer.dropEffect = 'move';
+            e.currentTarget.classList.add('battlefield-drag-over');
+        }
+    }
+
+    /**
+     * Handle dragleave for battlefield targeting spells
+     */
+    handleBattlefieldDragLeave(e) {
+        e.currentTarget.classList.remove('battlefield-drag-over');
+    }
+
+    /**
+     * Handle drop for battlefield targeting spells
+     */
+    handleBattlefieldDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.currentTarget.classList.remove('battlefield-drag-over');
+        
+        const cardData = e.dataTransfer.getData('text/plain');
+        if (!cardData) return;
+        
+        try {
+            const card = JSON.parse(cardData);
+            if ((card.isSpell || card.type === 'spell') && card.requiresBattlefieldTargeting) {
+                console.log(`Battlefield-targeting spell ${card.name} dropped on battlefield - casting`);
+                const spellSystem = this.gameEngine.systems.get('SpellSystem');
+                if (spellSystem) {
+                    spellSystem.playSpell(card, 'player');
+                }
+            }
+        } catch (error) {
+            console.error('Error parsing battlefield drop card data:', error);
+        }
     }
 
     /**
@@ -205,11 +269,16 @@ class BattlefieldComponent {
      * @param {Object} data - {player, slot, attack, health, type}
      */
     updateSlotBuff(data) {
+        console.log('🔄 BattlefieldComponent.updateSlotBuff called with data:', data);
         const { player, slot, attack, health, type } = data;
-        const buffElement = document.getElementById(`${player}-slot-${slot}-buff`);
+        const buffElementId = `${player}-slot-${slot}-buff`;
+        const buffElement = document.getElementById(buffElementId);
+        
+        console.log(`  Looking for buff element with ID: ${buffElementId}`);
+        console.log(`  Element found:`, !!buffElement);
         
         if (!buffElement) {
-            console.warn(`Slot buff element not found: ${player}-slot-${slot}-buff`);
+            console.warn(`Slot buff element not found: ${buffElementId}`);
             return;
         }
 
@@ -334,6 +403,11 @@ class BattlefieldComponent {
                 if (unit) {
                     // Preserve cursor style before updating HTML
                     const oldCursor = slotElement.style.cursor;
+                    
+                    // Debug logging for stat updates
+                    if (unit.name) {
+                        console.log(`🔄 Updating ${unit.name}: ${unit.attack}/${unit.currentHealth || unit.health} (StatCalc: ${this.statCalculator.calculateEffectiveAttack(unit)}/${this.statCalculator.calculateEffectiveHealth(unit)})`);
+                    }
                     
                     slotElement.innerHTML = this.createUnitHTML(unit, playerId);
                     slotElement.classList.add('occupied');
@@ -731,6 +805,27 @@ class BattlefieldComponent {
             const card = JSON.parse(cardData);
             console.log(`Attempting to drop card ${card.name} in slot ${slotIndex} for ${playerId}`);
             
+            // Check if this is a spell card
+            if (card.isSpell || card.type === 'spell') {
+                // Special case: spells that require battlefield targeting
+                if (card.requiresBattlefieldTargeting && playerId === 'player') {
+                    console.log(`Battlefield-targeting spell ${card.name} dropped on battlefield - casting`);
+                    const spellSystem = this.gameEngine.systems.get('SpellSystem');
+                    if (spellSystem) {
+                        spellSystem.playSpell(card, 'player');
+                    }
+                    this.justDropped = false;
+                    this.isProcessingPlacement = false;
+                    return;
+                } else {
+                    console.log(`Spell ${card.name} cannot be placed on battlefield - casting instead`);
+                    this.uiManager.showNotification('Spells cannot be placed on the battlefield. Click to cast them.', 'warning');
+                    this.justDropped = false;
+                    this.isProcessingPlacement = false;
+                    return;
+                }
+            }
+            
             // Validate placement before emitting event
             if (!this.validateCardPlacement(card, slotIndex, playerId)) {
                 this.justDropped = false;
@@ -779,6 +874,26 @@ class BattlefieldComponent {
             justDropped: this.justDropped,
             timestamp: Date.now()
         });
+        
+        // PRIORITY 0: Check if SpellSystem is in targeting mode
+        const spellSystem = this.gameEngine?.systems?.get('SpellSystem');
+        if (spellSystem && spellSystem.targetingMode) {
+            console.log('🎯 Spell targeting mode detected - handling spell target selection');
+            
+            // Find the matching target for this slot
+            const matchingTarget = spellSystem.validTargets.find(target => 
+                target.playerId === playerId && target.slotIndex === slotIndex
+            );
+            
+            if (matchingTarget) {
+                console.log('✅ Valid spell target found - executing spell');
+                spellSystem.selectTarget(matchingTarget);
+            } else {
+                console.log('❌ Invalid spell target');
+                spellSystem.showNotification('Invalid target for this spell', 'warning');
+            }
+            return;
+        }
         
         // Prevent attack processing during placement
         if (this.isProcessingPlacement) {

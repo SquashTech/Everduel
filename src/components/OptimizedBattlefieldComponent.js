@@ -448,6 +448,7 @@ export default class OptimizedBattlefieldComponent {
      * Update slot buff display
      */
     updateSlotBuff(data) {
+        console.log('🔄 OptimizedBattlefieldComponent.updateSlotBuff called with data:', data);
         this.updateSlotBuffDisplay(data.playerId, data.slotIndex, data.buff);
     }
 
@@ -455,18 +456,28 @@ export default class OptimizedBattlefieldComponent {
      * Update slot buff display
      */
     updateSlotBuffDisplay(playerId, slotIndex, buff) {
+        console.log(`🎨 Updating slot buff display: ${playerId} slot ${slotIndex}`, buff);
+        
         const slotElement = document.querySelector(`[data-player="${playerId}"][data-slot="${slotIndex}"]`);
+        console.log('  Slot element found:', !!slotElement);
         if (!slotElement) return;
 
         // Add buff indicator if buffs exist
         if (buff.attack > 0 || buff.health > 0) {
+            console.log('  Adding buff indicator');
             let buffElement = slotElement.querySelector('.slot-buff');
             if (!buffElement) {
+                console.log('  Creating new buff element');
                 buffElement = document.createElement('div');
                 buffElement.className = 'slot-buff';
                 slotElement.appendChild(buffElement);
             }
-            buffElement.textContent = `${buff.attack > 0 ? '+' : '+'}${buff.attack}/${buff.health > 0 ? '+' : '+'}${buff.health}`;
+            const buffText = `+${buff.attack}/+${buff.health}`;
+            console.log('  Setting buff text:', buffText);
+            buffElement.textContent = buffText;
+            buffElement.style.display = 'block';
+        } else {
+            console.log('  No buffs to display');
         }
     }
 

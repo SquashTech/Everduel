@@ -120,7 +120,69 @@
             </div>
             <div class="scenario-confirmation-actions">
                 <button class="btn btn-secondary scenario-cancel-btn" id="scenarioConfirmationCancel">Cancel</button>
-                <button class="btn btn-primary scenario-confirm-btn" id="scenarioConfirmationConfirm">Start Scenario</button>
+                <button class="btn btn-primary scenario-confirm-btn" id="scenarioConfirmationConfirm">Select Scenario</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Champion Selection Modal -->
+    <div id="championSelectionModal" class="modal-overlay champion-selection-modal hidden">
+        <div class="champion-selection-content">
+            <div class="champion-selection-header">
+                <h1>Choose Your Champion</h1>
+            </div>
+            
+            <!-- Champion Cards Display (Card Library Format) -->
+            <div id="championCardsDisplay" class="champion-cards-display">
+                <div class="champion-cards-grid">
+                    <!-- Champion card + 4 spell cards will be populated here -->
+                </div>
+            </div>
+            
+            <!-- PLAY Button -->
+            <div class="champion-selection-actions">
+                <button id="playWithChampionBtn" class="play-champion-btn" disabled>
+                    PLAY
+                </button>
+            </div>
+            
+            <!-- Champion Selection Grid (5x2 by Color) -->
+            <div class="champion-selection-grid">
+                <div class="champion-grid-body">
+                    <!-- Row 1 -->
+                    <div class="champion-grid-slot" data-color="red" data-slot="0">
+                        <!-- Champion button will be populated here -->
+                    </div>
+                    <div class="champion-grid-slot" data-color="yellow" data-slot="0">
+                        <!-- Champion button will be populated here -->
+                    </div>
+                    <div class="champion-grid-slot" data-color="green" data-slot="0">
+                        <!-- Champion button will be populated here -->
+                    </div>
+                    <div class="champion-grid-slot" data-color="blue" data-slot="0">
+                        <!-- Champion button will be populated here -->
+                    </div>
+                    <div class="champion-grid-slot" data-color="purple" data-slot="0">
+                        <!-- Champion button will be populated here -->
+                    </div>
+                    
+                    <!-- Row 2 -->
+                    <div class="champion-grid-slot" data-color="red" data-slot="1">
+                        <!-- Champion button will be populated here -->
+                    </div>
+                    <div class="champion-grid-slot" data-color="yellow" data-slot="1">
+                        <!-- Champion button will be populated here -->
+                    </div>
+                    <div class="champion-grid-slot" data-color="green" data-slot="1">
+                        <!-- Champion button will be populated here -->
+                    </div>
+                    <div class="champion-grid-slot" data-color="blue" data-slot="1">
+                        <!-- Champion button will be populated here -->
+                    </div>
+                    <div class="champion-grid-slot" data-color="purple" data-slot="1">
+                        <!-- Champion button will be populated here -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -469,6 +531,44 @@
                     <h3 class="tier-title">Tier 5</h3>
                     <div class="cards-grid" id="tier5Cards"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spellbook Modal -->
+    <div id="spellbookModal" class="modal-overlay spellbook-modal hidden">
+        <div class="modal-content spellbook-content">
+            <div class="spellbook-header">
+                <h2 id="spellbookTitle">📖 Spellbook 📖</h2>
+                <button class="modal-close-btn" id="spellbookCloseBtn">×</button>
+            </div>
+            <div class="spellbook-body">
+                <div id="spellbookSpells" class="spellbook-spells-grid">
+                    <!-- Spells will be populated here -->
+                </div>
+                <div class="spellbook-footer">
+                    <div class="spellbook-status" id="spellbookStatus">
+                        <!-- Status text will be shown here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portal Modal (for Champion summoning) -->
+    <div id="portalModal" class="modal-overlay portal-modal hidden">
+        <div class="modal-content portal-content">
+            <div class="portal-header">
+                <h2>🌟 Portal Open 🌟</h2>
+                <button class="modal-close-btn" id="portalCloseBtn">×</button>
+            </div>
+            <div class="portal-body">
+                <div id="championPortalCard" class="champion-portal-card">
+                    <!-- Champion card will be displayed here -->
+                </div>
+                <button id="summonChampionBtn" class="btn btn-primary summon-champion-btn">
+                    Buy Champion
+                </button>
             </div>
         </div>
     </div>

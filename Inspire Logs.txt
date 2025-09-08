@@ -1,0 +1,17 @@
+Playing spell: Inspire
+SpellSystem.js:280 ✨ Executing Inspire for player Object
+SpellSystem.js:434 🔍 Buffing units with tag "Human" - Attack: +3, Health: +3
+SpellSystem.js:438 Unit at slot 5: Squire Tags: Array(1)
+SpellSystem.js:440 ✅ Buffing Squire at slot 5 with +3/+3
+GameState.js:498 🎯 BUFF_UNIT reducer: Squire at slot 5
+GameState.js:499    Before: 3/3 (current: 3)
+GameState.js:500    Buffs: +3/+3
+GameState.js:510    After: 6/6 (current: 6)
+SpellSystem.js:455 📊 Total units buffed: 1
+OptimizedUIManager.js:105 🔄 UI update #19 - Player: player, Turn: 3
+BattlefieldComponent.js:409 🔄 Updating Squire: 6/6 (StatCalc: 3/6)
+BattlefieldComponent.js:409 🔄 Updating Bear Cub: 3/2 (StatCalc: 3/2)
+OptimizedUIManager.js:120 ⏭️ Skipped duplicate UI update (prevented 19 duplicates)
+SpellSystem.js:460 🔄 Forcing UI update after spell buff
+OptimizedUIManager.js:120 ⏭️ Skipped duplicate UI update (prevented 20 duplicates)
+OptimizedUIManager.js:120 ⏭️ Skipped duplicate UI update (prevented 21 duplicates)

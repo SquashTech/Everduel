@@ -4,6 +4,7 @@
  */
 import ErrorHandler from '../core/ErrorHandler.js';
 import UnitFactory from '../utils/UnitFactory.js';
+import { SPELL_TOKENS, CHAMPIONS } from '../data/EmbeddedGameData.js';
 
 class AbilitySystem {
     constructor() {
@@ -1840,6 +1841,37 @@ class AbilitySystem {
             return;
         }
         
+        // Kolus the Wise: Add a random spell to hand
+        if (unit.name === 'Kolus the Wise' && effectText.toLowerCase().includes('add a flame pillar, frost wall, or thunderbolt to your hand')) {
+            const spellOptions = ['flame_pillar', 'frost_wall', 'thunderbolt'];
+            const randomSpellId = spellOptions[Math.floor(Math.random() * spellOptions.length)];
+            
+            const playerId = unit.owner || context.playerId || 'player';
+            console.log(`⚡ ${unit.name} adds ${randomSpellId} to ${playerId}'s hand!`);
+            
+            // Find the spell in Kolus's spellbook
+            const kolusData = CHAMPIONS.kolus;
+            if (kolusData && kolusData.spellbook) {
+                const spellToAdd = kolusData.spellbook.find(spell => spell.id === randomSpellId);
+                if (spellToAdd) {
+                    this.gameEngine.dispatch({
+                        type: 'ADD_CARD_TO_HAND',
+                        payload: {
+                            playerId,
+                            card: { ...spellToAdd }
+                        }
+                    });
+                    console.log(`⚡ Successfully added ${spellToAdd.name} to ${playerId}'s hand from Manacharge!`);
+                } else {
+                    console.error(`❌ Could not find spell ${randomSpellId} in Kolus's spellbook`);
+                }
+            } else {
+                console.error(`❌ Could not access Kolus's spellbook data`);
+            }
+            
+            return;
+        }
+        
         // Fire Elemental: Summon a Fire Spirit in a random slot
         if (unit.name === 'Fire Elemental' && effectText.toLowerCase().includes('summon a fire spirit')) {
             const state = this.gameState.getState();
@@ -2757,65 +2789,74 @@ class AbilitySystem {
             return;
         }
         
-        for (let i = 0; i < amount; i++) {
-            if (type === 'add-to-hand') {
-                // Add to hand
-                this.gameEngine.dispatch({
-                    type: 'ADD_CARD_TO_HAND',
-                    payload: {
-                        playerId,
-                        card: { ...cardDefinition, handId: Date.now() + i }
-                    }
-                });
-                
-                console.log(`🃏 Added ${cardName} to ${playerId}'s hand`);
-            } else if (type === 'summon') {
-                // Determine which slot to summon to
-                const state = this.gameState.getState();
-                const battlefield = state.players[playerId].battlefield;
-                let targetSlot;
-                
-                if (location === 'same-slot' && slotIndex !== undefined) {
-                    // Summon in the same slot as the dying unit (for "here" effects)
-                    targetSlot = slotIndex;
-                    console.log(`🎯 Summoning ${cardName} in same slot (${targetSlot}) as dying unit`);
-                    console.log(`📍 Current slot ${targetSlot} contents:`, battlefield[targetSlot]);
-                } else {
-                    // Find empty slot to summon to
-                    targetSlot = battlefield.findIndex(slot => slot === null);
-                    console.log(`🔍 Looking for empty slot, found: ${targetSlot}`);
+        if (type === 'add-to-hand') {
+            // Create array of cards to add
+            const cardsToAdd = [];
+            for (let i = 0; i < amount; i++) {
+                cardsToAdd.push({ ...cardDefinition });
+            }
+            
+            // Add all cards in order with hand limit checking
+            this.gameEngine.dispatch({
+                type: 'ADD_CARDS_TO_HAND_IN_ORDER',
+                payload: {
+                    playerId,
+                    cards: cardsToAdd
                 }
-                
-                if (targetSlot !== -1 && targetSlot < battlefield.length) {
-                    // Create unit from card using shared factory
-                    const unit = UnitFactory.createSummonedUnit(cardDefinition, playerId, targetSlot, {
-                        canAttack: false,
-                        summonedThisTurn: true
-                    });
+            });
+            
+            console.log(`🃏 Added ${amount} ${cardName}(s) to ${playerId}'s hand`);
+        } else {
+            // Handle summon effects one by one
+            for (let i = 0; i < amount; i++) {
+                if (type === 'summon') {
+                    // Determine which slot to summon to
+                    const state = this.gameState.getState();
+                    const battlefield = state.players[playerId].battlefield;
+                    let targetSlot;
                     
-                    console.log(`🏗️ Created unit:`, unit);
-                    
-                    // Validate the created unit
-                    if (!UnitFactory.validateUnit(unit)) {
-                        console.error('❌ Failed to create valid summoned unit:', unit);
-                        continue;
+                    if (location === 'same-slot' && slotIndex !== undefined) {
+                        // Summon in the same slot as the dying unit (for "here" effects)
+                        targetSlot = slotIndex;
+                        console.log(`🎯 Summoning ${cardName} in same slot (${targetSlot}) as dying unit`);
+                        console.log(`📍 Current slot ${targetSlot} contents:`, battlefield[targetSlot]);
+                    } else {
+                        // Find empty slot to summon to
+                        targetSlot = battlefield.findIndex(slot => slot === null);
+                        console.log(`🔍 Looking for empty slot, found: ${targetSlot}`);
                     }
                     
-                    // Place on battlefield
-                    console.log(`📦 Dispatching PLACE_UNIT with:`, { playerId, unit, slotIndex: targetSlot });
-                    this.gameEngine.dispatch({
-                        type: 'PLACE_UNIT',
-                        payload: { playerId, unit, slotIndex: targetSlot }
-                    });
-                    
-                    // Check if unit was actually placed
-                    const newState = this.gameState.getState();
-                    const placedUnit = newState.players[playerId].battlefield[targetSlot];
-                    console.log(`✅ After PLACE_UNIT, slot ${targetSlot} contains:`, placedUnit);
-                    
-                    console.log(`⚔️ Summoned ${cardName} to ${playerId}'s slot ${targetSlot}`);
-                } else {
-                    console.log(`❌ No empty slots to summon ${cardName} for ${playerId}`);
+                    if (targetSlot !== -1 && targetSlot < battlefield.length) {
+                        // Create unit from card using shared factory
+                        const unit = UnitFactory.createSummonedUnit(cardDefinition, playerId, targetSlot, {
+                            canAttack: false,
+                            summonedThisTurn: true
+                        });
+                        
+                        console.log(`🏗️ Created unit:`, unit);
+                        
+                        // Validate the created unit
+                        if (!UnitFactory.validateUnit(unit)) {
+                            console.error('❌ Failed to create valid summoned unit:', unit);
+                            continue;
+                        }
+                        
+                        // Place on battlefield
+                        console.log(`📦 Dispatching PLACE_UNIT with:`, { playerId, unit, slotIndex: targetSlot });
+                        this.gameEngine.dispatch({
+                            type: 'PLACE_UNIT',
+                            payload: { playerId, unit, slotIndex: targetSlot }
+                        });
+                        
+                        // Check if unit was actually placed
+                        const newState = this.gameState.getState();
+                        const placedUnit = newState.players[playerId].battlefield[targetSlot];
+                        console.log(`✅ After PLACE_UNIT, slot ${targetSlot} contains:`, placedUnit);
+                        
+                        console.log(`⚔️ Summoned ${cardName} to ${playerId}'s slot ${targetSlot}`);
+                    } else {
+                        console.log(`❌ No empty slots to summon ${cardName} for ${playerId}`);
+                    }
                 }
             }
         }

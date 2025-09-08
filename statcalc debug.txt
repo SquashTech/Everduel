@@ -1,0 +1,47 @@
+Executing Inspire for player Object
+SpellSystem.js:638 🔍 Buffing units with tag "Human" - Attack: +3, Health: +3
+SpellSystem.js:642 Unit at slot 0: Fighter Tags: Array(1)
+SpellSystem.js:642 Unit at slot 1: Squire Tags: Array(1)
+SpellSystem.js:644 ✅ Buffing Squire at slot 1 with +3/+3
+GameState.js:540 🎯 BUFF_UNIT reducer: Squire at slot 1
+GameState.js:541    Before: 3/3 (current: 3/3)
+GameState.js:542    Buffs: +3/+3
+GameState.js:559    After: base=3/3 current=6/6 max=6
+SpellSystem.js:642 Unit at slot 2: Soldier Tags: Array(1)
+SpellSystem.js:644 ✅ Buffing Soldier at slot 2 with +3/+3
+GameState.js:540 🎯 BUFF_UNIT reducer: Soldier at slot 2
+GameState.js:541    Before: 2/4 (current: 2/4)
+GameState.js:542    Buffs: +3/+3
+GameState.js:559    After: base=2/4 current=5/7 max=7
+SpellSystem.js:659 📊 Total units buffed: 2
+OptimizedUIManager.js:105 🔄 UI update #12 - Player: player, Turn: 1
+BattlefieldComponent.js:409 🔄 Updating Fighter: 1/1 (StatCalc: 1/1)
+BattlefieldComponent.js:409 🔄 Updating Squire: 3/6 (StatCalc: 6/6)
+BattlefieldComponent.js:409 🔄 Updating Soldier: 2/7 (StatCalc: 5/7)
+SpellSystem.js:32 🎯 Playing spell: Light of Justice
+BattlefieldComponent.js:129 🖱️ Raw slot click on player slot 1, target: <div class=​"card-ability">​ ​</div>​
+BattlefieldComponent.js:868 🖱️ SLOT CLICK DEBUG: Object
+BattlefieldComponent.js:881 🎯 Spell targeting mode detected - handling spell target selection
+BattlefieldComponent.js:889 ✅ Valid spell target found - executing spell
+SpellSystem.js:467 ✨ Executing Light of Justice for player Object
+SpellSystem.js:551 🎯 Applying slot buff +5/+10 to slot 1 for player Object
+GameState.js:511 🔧 BUFF_SLOT reducer: player slot 1 +5/+10
+GameState.js:515   Old buff: +0/+0
+GameState.js:522   New buff: +5/+10
+SpellSystem.js:563 ✅ BUFF_SLOT action dispatched
+BattlefieldComponent.js:272 🔄 BattlefieldComponent.updateSlotBuff called with data: Object
+BattlefieldComponent.js:277   Looking for buff element with ID: player-slot-1-buff
+BattlefieldComponent.js:278   Element found: true
+BattlefieldComponent.js:324 Updated slot buff: player slot 1 -> +5/+10
+BattlefieldComponent.js:272 🔄 BattlefieldComponent.updateSlotBuff called with data: Object
+BattlefieldComponent.js:277   Looking for buff element with ID: player-slot-1-buff
+BattlefieldComponent.js:278   Element found: true
+BattlefieldComponent.js:324 Updated slot buff: player slot 1 -> +5/+10
+SpellSystem.js:577 🎯 slot:buff-updated event emitted Object
+SpellSystem.js:583 📊 Updating unit stats for Squire in buffed slot
+SpellSystem.js:611   Base(3/3) + UnitBuffs(3/3) + Slot(5/10) = 11/13/13
+SpellSystem.js:626 ✅ Unit stats updated
+OptimizedUIManager.js:105 🔄 UI update #13 - Player: player, Turn: 1
+BattlefieldComponent.js:409 🔄 Updating Fighter: 1/1 (StatCalc: 1/1)
+BattlefieldComponent.js:409 🔄 Updating Squire: 3/13 (StatCalc: 11/13)
+BattlefieldComponent.js:409 🔄 Updating Soldier: 2/7 (StatCalc: 5/7)

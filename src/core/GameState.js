@@ -48,7 +48,10 @@ class GameState {
             draggedCard: null,
             globalEffects: {},
             dragonFlames: { player: 0, ai: 0 },
-            souls: { player: 0, ai: 0 }
+            souls: { player: 0, ai: 0 },
+            champion: null,
+            spellbook: [],
+            portalOpen: false
         };
     }
 
@@ -155,13 +158,55 @@ class GameState {
 
         this.addReducer('ADD_CARD_TO_HAND', (state, { player, playerId, card }) => {
             const targetPlayer = player || playerId || 'player';
+            const currentHand = state.players[targetPlayer].hand;
+            const handLimit = 3; // Maximum hand size
+            
+            // Check if hand is already at capacity
+            if (currentHand.length >= handLimit) {
+                console.log(`⚠️ Cannot add ${card.name} to ${targetPlayer}'s hand - hand is full (${currentHand.length}/${handLimit})`);
+                return state; // Return unchanged state
+            }
+            
             return {
                 ...state,
                 players: {
                     ...state.players,
                     [targetPlayer]: {
                         ...state.players[targetPlayer],
-                        hand: [...state.players[targetPlayer].hand, { ...card, handId: Date.now() }]
+                        hand: [...currentHand, { ...card, handId: Date.now() }]
+                    }
+                }
+            };
+        });
+
+        this.addReducer('ADD_CARDS_TO_HAND_IN_ORDER', (state, { player, playerId, cards }) => {
+            const targetPlayer = player || playerId || 'player';
+            const currentHand = state.players[targetPlayer].hand;
+            const handLimit = 3; // Maximum hand size
+            
+            // Calculate how many cards we can add
+            const spaceAvailable = handLimit - currentHand.length;
+            const cardsToAdd = cards.slice(0, spaceAvailable);
+            
+            if (cardsToAdd.length < cards.length) {
+                console.log(`⚠️ Only adding ${cardsToAdd.length}/${cards.length} cards to ${targetPlayer}'s hand due to space limit`);
+                const skippedCards = cards.slice(spaceAvailable).map(c => c.name).join(', ');
+                console.log(`🚫 Skipped cards: ${skippedCards}`);
+            }
+            
+            // Add cards with unique handIds
+            const newHand = [...currentHand];
+            cardsToAdd.forEach((card, index) => {
+                newHand.push({ ...card, handId: Date.now() + index });
+            });
+            
+            return {
+                ...state,
+                players: {
+                    ...state.players,
+                    [targetPlayer]: {
+                        ...state.players[targetPlayer],
+                        hand: newHand
                     }
                 }
             };
@@ -386,6 +431,182 @@ class GameState {
                     [playerId]: {
                         ...state.players[playerId],
                         battlefield
+                    }
+                }
+            };
+        });
+
+        // Champion and Spellbook reducers
+        this.addReducer('SET_CHAMPION', (state, { champion }) => ({
+            ...state,
+            champion: champion,
+            spellbook: champion ? champion.spellbook.map(spell => ({
+                ...spell,
+                currentStock: spell.stock
+            })) : []
+        }));
+
+        this.addReducer('BUY_SPELL', (state, { spell, playerId }) => {
+            const player = state.players[playerId];
+            
+            // Check basic requirements
+            if (!player || player.gold < spell.cost) {
+                console.warn('BUY_SPELL: Not enough gold or invalid player');
+                return { ...state }; // Return new state reference even on failure
+            }
+            
+            if (player.hand.length >= 3) {
+                console.warn('BUY_SPELL: Hand is full');
+                return { ...state }; // Return new state reference even on failure
+            }
+
+            // Create spell card for hand
+            const spellCard = {
+                ...spell,
+                type: 'spell',
+                handId: `spell_${Date.now()}_${Math.random()}` // Unique ID for hand management
+            };
+
+            return {
+                ...state,
+                players: {
+                    ...state.players,
+                    [playerId]: {
+                        ...player,
+                        gold: player.gold - spell.cost,
+                        hand: [...player.hand, spellCard]
+                    }
+                }
+            };
+        });
+
+        this.addReducer('SUMMON_CHAMPION', (state, { champion, playerId }) => {
+            const player = state.players[playerId];
+            
+            if (player.gold < champion.cost) {
+                return state;
+            }
+
+            return {
+                ...state,
+                portalOpen: false,
+                players: {
+                    ...state.players,
+                    [playerId]: {
+                        ...player,
+                        gold: player.gold - champion.cost,
+                        hand: [...player.hand, { ...champion, type: 'unit' }]
+                    }
+                }
+            };
+        });
+
+        this.addReducer('OPEN_PORTAL', (state) => ({
+            ...state,
+            portalOpen: true
+        }));
+
+        // Spell effect reducers
+        this.addReducer('BUFF_SLOT', (state, { playerId, slotIndex, attackBuff, healthBuff }) => {
+            console.log(`🔧 BUFF_SLOT reducer: ${playerId} slot ${slotIndex} +${attackBuff}/+${healthBuff}`);
+            
+            const slotBuffs = [...state.players[playerId].slotBuffs];
+            const oldBuff = slotBuffs[slotIndex];
+            console.log(`  Old buff: +${oldBuff.attack}/+${oldBuff.health}`);
+            
+            slotBuffs[slotIndex] = {
+                attack: slotBuffs[slotIndex].attack + attackBuff,
+                health: slotBuffs[slotIndex].health + healthBuff
+            };
+            
+            console.log(`  New buff: +${slotBuffs[slotIndex].attack}/+${slotBuffs[slotIndex].health}`);
+
+            return {
+                ...state,
+                players: {
+                    ...state.players,
+                    [playerId]: {
+                        ...state.players[playerId],
+                        slotBuffs
+                    }
+                }
+            };
+        });
+
+        this.addReducer('BUFF_UNIT', (state, { playerId, slotIndex, attackBuff, healthBuff }) => {
+            const unit = state.players[playerId].battlefield[slotIndex];
+            if (!unit) return state;
+
+            console.log(`🎯 BUFF_UNIT reducer: ${unit.name} at slot ${slotIndex}`);
+            console.log(`   Before: ${unit.attack}/${unit.health} (current: ${unit.currentAttack || unit.attack}/${unit.currentHealth || unit.health})`);
+            console.log(`   Buffs: +${attackBuff}/+${healthBuff}`);
+
+            const newBattlefield = [...state.players[playerId].battlefield];
+            const updatedUnit = {
+                ...unit,
+                // Keep base stats unchanged
+                // attack: unit.attack,  // BASE STATS NEVER CHANGE
+                // health: unit.health,  // BASE STATS NEVER CHANGE
+                
+                // Update current stats (these are the buffed values)
+                currentAttack: (unit.currentAttack || unit.attack) + attackBuff,
+                maxHealth: (unit.maxHealth || unit.health) + healthBuff,
+                currentHealth: (unit.currentHealth || unit.health) + healthBuff
+            };
+            
+            newBattlefield[slotIndex] = updatedUnit;
+            
+            console.log(`   After: base=${unit.attack}/${unit.health} current=${updatedUnit.currentAttack}/${updatedUnit.currentHealth} max=${updatedUnit.maxHealth}`);
+
+            return {
+                ...state,
+                players: {
+                    ...state.players,
+                    [playerId]: {
+                        ...state.players[playerId],
+                        battlefield: newBattlefield
+                    }
+                }
+            };
+        });
+
+        this.addReducer('DAMAGE_UNIT', (state, { playerId, slotIndex, damage }) => {
+            const unit = state.players[playerId].battlefield[slotIndex];
+            if (!unit) return state;
+
+            const newHealth = (unit.currentHealth || unit.health) - damage;
+            
+            if (newHealth <= 0) {
+                // Unit dies
+                const newBattlefield = [...state.players[playerId].battlefield];
+                newBattlefield[slotIndex] = null;
+                
+                return {
+                    ...state,
+                    players: {
+                        ...state.players,
+                        [playerId]: {
+                            ...state.players[playerId],
+                            battlefield: newBattlefield
+                        }
+                    }
+                };
+            }
+
+            // Unit survives
+            const newBattlefield = [...state.players[playerId].battlefield];
+            newBattlefield[slotIndex] = {
+                ...unit,
+                currentHealth: newHealth
+            };
+
+            return {
+                ...state,
+                players: {
+                    ...state.players,
+                    [playerId]: {
+                        ...state.players[playerId],
+                        battlefield: newBattlefield
                     }
                 }
             };

@@ -78,6 +78,11 @@ class GameLogger {
             this.logCardDrafted(data);
         });
         
+        // Spell cast events
+        this.eventBus.on('spell:cast', (data) => {
+            this.logSpellCast(data);
+        });
+        
         // Game end events
         this.eventBus.on('game:ended', (data) => {
             this.logGameEnd(data);
@@ -248,6 +253,31 @@ class GameLogger {
     logCardDrafted(data) {
         const player = data.playerId === 'player' ? 'You' : 'Opponent';
         this.logMessage(`🎴 ${player} drafted ${data.selectedCard?.name || 'a card'}`, 'draft');
+    }
+    
+    /**
+     * Spell cast logging
+     */
+    logSpellCast(data) {
+        const player = data.playerId === 'player' ? 'You' : 'Opponent';
+        const spellName = data.spell?.name || 'a spell';
+        
+        // Determine target description
+        let targetText = '';
+        if (data.target) {
+            if (data.target.type === 'player') {
+                targetText = ` on ${data.target.playerId === 'player' ? 'yourself' : 'the opponent'}`;
+            } else if (data.target.type === 'unit' && data.target.unit) {
+                const targetOwner = data.target.unit.owner === 'player' ? 'your' : "opponent's";
+                targetText = ` on ${targetOwner} ${data.target.unit.name}`;
+            } else if (data.target.type === 'slot') {
+                targetText = ` on battlefield slot ${data.target.slotIndex + 1}`;
+            } else if (data.target.name) {
+                targetText = ` on ${data.target.name}`;
+            }
+        }
+        
+        this.logMessage(`🪄 ${player} cast ${spellName}${targetText}`, 'spell');
     }
     
     /**

@@ -85,13 +85,24 @@ class SimpleAISystem {
             const card = hand[i];
             if (!card) continue;
             
-            const emptySlot = this.findEmptySlot();
+            // Check if card has a preferred column (for scripted scenarios)
+            let emptySlot;
+            if (card.preferredColumn) {
+                emptySlot = this.findEmptySlotInColumn(card.preferredColumn);
+                // If preferred column is full, fall back to any empty slot
+                if (emptySlot === -1) {
+                    emptySlot = this.findEmptySlot();
+                }
+            } else {
+                emptySlot = this.findEmptySlot();
+            }
+            
             if (emptySlot === -1) {
                 console.log('🤖 Battlefield full, stopping card play');
                 break;
             }
             
-            console.log(`🤖 Playing ${card.name} to slot ${emptySlot}`);
+            console.log(`🤖 Playing ${card.name} to slot ${emptySlot}${card.preferredColumn ? ` (preferred ${card.preferredColumn} column)` : ''}`);
             
             // Play card using event (existing CardSystem will handle it)
             this.eventBus.emit('card:play', {
@@ -227,6 +238,39 @@ class SimpleAISystem {
         
         const randomIndex = Math.floor(Math.random() * emptySlots.length);
         return emptySlots[randomIndex];
+    }
+
+    /**
+     * Find empty slot in a specific column (for scripted scenarios)
+     */
+    findEmptySlotInColumn(column) {
+        const state = this.gameState.getState();
+        const battlefield = state.players[this.playerId].battlefield || [];
+        
+        // Define column slots
+        // Battlefield layout: [0,1,2] front row, [3,4,5] back row
+        // Columns: left=[0,3], middle=[1,4], right=[2,5]
+        let columnSlots;
+        if (column === 'left') {
+            columnSlots = [0, 3]; // Front left, back left
+        } else if (column === 'middle') {
+            columnSlots = [1, 4]; // Front middle, back middle
+        } else if (column === 'right') {
+            columnSlots = [2, 5]; // Front right, back right
+        } else {
+            // Invalid column, fall back to regular empty slot
+            return this.findEmptySlot();
+        }
+        
+        // Find empty slots in the specified column
+        const emptyColumnSlots = columnSlots.filter(slot => !battlefield[slot]);
+        
+        if (emptyColumnSlots.length === 0) {
+            return -1; // Column is full
+        }
+        
+        // Return first available slot in column (front row preferred)
+        return emptyColumnSlots[0];
     }
 
     /**

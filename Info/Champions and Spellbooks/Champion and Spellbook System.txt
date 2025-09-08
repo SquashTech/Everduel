@@ -1,0 +1,43 @@
+Champion and Spellbook System
+
+When a player is starting a scenario, they will see a Champion select screen.
+Each Champion is a unique card with a unique spellbook.
+
+When a player clicks the Spellbook button, they will see a modal overlay that is essentially a shop of cards for that Champion.
+
+There will be 4 different cards with  different costs and a different number in stock. If the player has enough gold and an open
+spot in their hand, they can buy a spell at any time and it will immediately enter their hand.
+
+When a spell runs out of copies in stock, it can no longer be purchased for the rest of the game.
+
+Spells are one-time effects and are not considered units. They will match the color of the Champion.
+Possible targeting scopes for spells: 
+-Target a friendly unit
+-Target an enemy unit
+-Target a slot
+-Target a row or column
+-Apply to all friendly units with a certain type
+-Target a friendly unit with a specific type
+-Target a random enemy
+-Add cards to your hand
+
+When a Spellbook is fully bought out (there are no more copies left of any spells), the button will transform into "Open the Portal"
+
+Pressing Open the Portal will again open a modal overlay that displays their Champion card along with its cost. This will be a typical
+unit and can be bought at any time if the player has enough gold. Once the Champion is bought, the button changes to "Portal Closed".
+
+The first two Champions:
+
+RED: 
+Godric the Great	8/8	Unleash: Give all of your slots +2/+2.	Human	Cost: 7g
+Spells:			Reinforce: Give a slot +2/+2.		Cost: 3. Copies: 2.
+			Inspire: Your Humans gain +3/+3.		Cost: 4 Copies: 1.
+			Garrison: Add a Squire, Soldier, and Fighter to your hand.		Cost: 5. Copies: 1.
+			Light of Justice: Give a slot +5/+10.		Cost: 8. Copies: 1.
+
+BLUE:
+Kolus the Wise	2/10	Manacharge: Add a Flame Pillar, Frost Wall, or Thunderbolt to your hand.	Mystic	Cost: 7g
+Spells			Flicker: Add a Mana Surge to your hand.		Cost: 1. Copies: 3.
+			Flame Pillar: Deal 3 damage to an enemy column. 		Cost: 5. Copies: 1.
+			Frozen Wall: Give your Front Row slots +0/+3.		Cost: 5. Copies: 1.
+			Thunderbolt: Deal 10 damage to a random enemy.		Cost: 5. Copies: 1.

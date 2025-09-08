@@ -1,0 +1,30 @@
+On all turns, the AI will attack with any unit that legally can.
+Unless otherwise noted, units are played to random slots
+
+On any turn, if there is no Goblin Machine in the front middle slot, the AI will overwrite their turn to play a Goblin Machine in the front middle slot
+
+Description for UI:
+"Don't mind the 25/25, if you keep their board clear it won't even attack you anyway!"
+
+On turn 1, the AI plays Goblin Machine in the front middle slot
+
+On turn 2, the AI plays Muscle Goblin in the left or right column.
+
+On turn 3, the AI plays Spear Goblin in the left or right column. 
+
+On turn 4, the AI plays Knife Goblin and Spear Goblin, both in the same column if possible
+
+On turn 5, the AI plays Sword Goblin in the left or right column
+
+On turn 6, the AI plays Axe Goblin, then Spear Goblin. Both in the same column if possible. 
+
+On turn 7, the AI plays Goblin Mage, then Muscle Goblin. Both in the same column if possible. 
+
+On turn 8, the AI plays Goblin Chief in the left or right column
+
+On turn 9+, the AI randomly chooses one:
+A: Play Goblin Machine in a random slot
+B: Play Goblin Chief, then Sword Goblin
+C: Play Goblin Mage, then Axe Goblin
+D: Play Knife Goblin, then Spear Goblin, then Muscle Goblin
+

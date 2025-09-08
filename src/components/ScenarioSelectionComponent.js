@@ -1,5 +1,6 @@
 import WinTracker from '../utils/WinTracker.js';
 import { CARD_DATABASE } from '../data/EmbeddedGameData.js';
+import ChampionSelectionComponent from './ChampionSelectionComponent.js';
 
 /**
  * Scenario Selection Component
@@ -11,13 +12,16 @@ export default class ScenarioSelectionComponent {
         this.onScenarioSelected = null;
         this.isInitialized = false;
         this.winTracker = new WinTracker();
+        this.championSelection = new ChampionSelectionComponent();
+        this.selectedScenarioId = null;
         
         // Define which scenarios are currently available
         this.availableScenarios = new Set([
             'tutorial-1',  // Easy Mode
             'tutorial-2',  // Behind the Curve
             'medium-1',    // Beasts of Burden
-            'easy-1'       // It Takes a Village
+            'easy-1',      // It Takes a Village
+            'hard-2'       // Goofy Goblins
         ]);
     }
 
@@ -27,6 +31,11 @@ export default class ScenarioSelectionComponent {
     async initialize(scenarioManager, onScenarioSelected) {
         this.scenarioManager = scenarioManager;
         this.onScenarioSelected = onScenarioSelected;
+        
+        // Initialize champion selection with callback
+        this.championSelection.initialize((champion) => {
+            this.onChampionSelected(champion);
+        });
         
         // Set up event listeners
         this.setupEventListeners();
@@ -356,16 +365,35 @@ export default class ScenarioSelectionComponent {
         try {
             console.log(`✅ Scenario confirmed: ${scenarioId}`);
             
+            // Store the selected scenario
+            this.selectedScenarioId = scenarioId;
+            
+            // Show champion selection instead of directly starting
+            this.championSelection.show();
+
+        } catch (error) {
+            console.error('Failed to show champion selection:', error);
+            this.showError(error.message);
+        }
+    }
+    
+    /**
+     * Handle champion selection and start the game
+     */
+    async onChampionSelected(champion) {
+        try {
+            console.log(`👑 Champion selected: ${champion.name}, starting scenario: ${this.selectedScenarioId}`);
+            
             // Show loading state
             this.showLoadingState(true);
             
-            // Notify parent that scenario was confirmed
+            // Notify parent that scenario and champion were selected
             if (this.onScenarioSelected) {
-                await this.onScenarioSelected(scenarioId);
+                await this.onScenarioSelected(this.selectedScenarioId, champion);
             }
 
         } catch (error) {
-            console.error('Failed to start confirmed scenario:', error);
+            console.error('Failed to start scenario with champion:', error);
             this.showError(error.message);
             this.showLoadingState(false);
         }

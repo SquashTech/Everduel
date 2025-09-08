@@ -7,10 +7,12 @@ import CombatSystem from './systems/CombatSystem.js';
 import CardSystem from './systems/CardSystem.js';
 import AbilitySystem from './systems/AbilitySystem.js';
 import SimpleAISystem from './systems/SimpleAISystem.js';
+import SpellSystem from './systems/SpellSystem.js';
 import OptimizedUIManager from './components/OptimizedUIManager.js';
 import DebugCardGenerator from './debug/DebugCardGenerator.js';
 import ScenarioManager from './scenarios/ScenarioManager.js';
 import ScenarioSelectionComponent from './components/ScenarioSelectionComponent.js';
+import SpellbookComponent from './components/SpellbookComponent.js';
 import AttackAnimationManager from './animations/AttackAnimationManager.js';
 import KeywordSystem from './components/KeywordSystem.js';
 
@@ -24,8 +26,10 @@ class SimpleCardGameApp {
         this.systems = {};
         this.scenarioManager = null;
         this.scenarioSelectionComponent = null;
+        this.spellbookComponent = null;
         this.keywordSystem = null;
         this.gameStarted = false;
+        this.selectedChampion = null;
     }
 
     /**
@@ -88,6 +92,7 @@ class SimpleCardGameApp {
         this.systems.cards = new CardSystem();
         this.systems.abilities = new AbilitySystem();
         this.systems.ai = new SimpleAISystem(); // Use new simple AI
+        this.systems.spells = new SpellSystem(this.gameEngine); // Spell system
         this.systems.ui = new OptimizedUIManager(); // Fixed OptimizedUIManager - now has components!
         this.systems.animationManager = new AttackAnimationManager(this.gameEngine.eventBus); // Animation manager
         
@@ -98,6 +103,7 @@ class SimpleCardGameApp {
         this.gameEngine.registerSystem('CombatSystem', this.systems.combat);
         this.gameEngine.registerSystem('CardSystem', this.systems.cards);
         this.gameEngine.registerSystem('AbilitySystem', this.systems.abilities);
+        this.gameEngine.registerSystem('SpellSystem', this.systems.spells);
         this.gameEngine.registerSystem('ai', this.systems.ai);  // AI system registered as 'ai'
         this.gameEngine.registerSystem('UIManager', this.systems.ui);
         this.gameEngine.registerSystem('AnimationManager', this.systems.animationManager);
@@ -197,9 +203,20 @@ class SimpleCardGameApp {
     /**
      * Handle scenario selection
      */
-    async onScenarioSelected(scenarioId) {
+    async onScenarioSelected(scenarioId, champion = null) {
         try {
-            console.log(`🎬 Loading scenario: ${scenarioId}`);
+            console.log(`🎬 Loading scenario: ${scenarioId} with champion: ${champion?.name || 'none'}`);
+            
+            // Store the selected champion
+            this.selectedChampion = champion;
+            
+            // Set champion in game state if provided
+            if (champion && this.gameEngine) {
+                this.gameEngine.gameState.dispatch({
+                    type: 'SET_CHAMPION',
+                    payload: { champion }
+                });
+            }
             
             // Select and load the scenario
             await this.scenarioManager.selectScenario(scenarioId);
@@ -224,6 +241,13 @@ class SimpleCardGameApp {
             // Hide scenario selection and show game
             this.hideScenarioSelection();
             this.showGame();
+            
+            // Initialize Spellbook component if champion selected
+            if (champion) {
+                this.spellbookComponent = new SpellbookComponent();
+                this.spellbookComponent.initialize(this.gameEngine, champion);
+                console.log(`📖 Spellbook initialized for ${champion.name}`);
+            }
             
             // Start the game with the selected scenario
             this.gameEngine.startGame();

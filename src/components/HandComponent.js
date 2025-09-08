@@ -81,16 +81,23 @@ class HandComponent {
      */
     createHandCardElement(card, index) {
         const isSelected = this.selectedCard && this.selectedCard.handId === card.handId;
+        const isSpell = card.type === 'spell';
         
         // Create main card container
         const cardElement = DOMSanitizer.createElement('div', '', 
-            `game-card game-card--hand hand-card ${card.color} ${isSelected ? 'selected' : ''}`);
+            `game-card game-card--hand hand-card ${card.color} ${isSelected ? 'selected' : ''} ${isSpell ? 'spell-card' : ''}`);
         
         cardElement.setAttribute('data-card-index', index);
         cardElement.setAttribute('data-hand-id', card.handId);
+        cardElement.setAttribute('data-card-type', card.type || 'unit');
         cardElement.setAttribute('draggable', 'true');
         
-        // Add tier indicator if available
+        // Check if it's a spell card
+        if (isSpell) {
+            return this.createSpellCardElement(card, index, cardElement);
+        }
+        
+        // Add tier indicator if available (for units)
         const tierDisplay = UnitFactory.getCardTierDisplay(card);
         if (tierDisplay) {
             const tierIndicator = DOMSanitizer.createElement('div', tierDisplay, 'tier-indicator');
@@ -138,6 +145,44 @@ class HandComponent {
         
         return cardElement;
     }
+    
+    /**
+     * Create spell card element
+     * @param {Object} spell - Spell card data
+     * @param {number} index - Card index in hand
+     * @param {HTMLElement} cardElement - Base card element
+     * @returns {HTMLElement} Spell card element
+     */
+    createSpellCardElement(spell, index, cardElement) {
+        // Add tier indicator if available (same as units)
+        const tierDisplay = UnitFactory.getCardTierDisplay(spell);
+        if (tierDisplay) {
+            const tierIndicator = DOMSanitizer.createElement('div', tierDisplay, 'tier-indicator');
+            cardElement.appendChild(tierIndicator);
+        }
+        
+        // Create and append header (same as units)
+        const header = DOMSanitizer.createElement('div', '', 'card-header');
+        const nameDiv = DOMSanitizer.createElement('div', spell.name, 'card-name');
+        header.appendChild(nameDiv);
+        cardElement.appendChild(header);
+        
+        // Create and append ability/effect (same as units)
+        const abilityDiv = DOMSanitizer.createElement('div', spell.description || spell.effect || '', 'card-ability');
+        cardElement.appendChild(abilityDiv);
+        
+        // Create stats area but without Attack/Health - just like unit cards but empty stats
+        const statsDiv = DOMSanitizer.createElement('div', '', 'card-stats');
+        cardElement.appendChild(statsDiv);
+        
+        // Create and append tags (same as units, but show "Spell")
+        const tagsDiv = DOMSanitizer.createElement('div', '', 'card-tags');
+        const spellTag = DOMSanitizer.createElement('span', 'Spell', 'tag');
+        tagsDiv.appendChild(spellTag);
+        cardElement.appendChild(tagsDiv);
+        
+        return cardElement;
+    }
 
     /**
      * Create HTML for a hand card (deprecated - use createHandCardElement instead)
@@ -158,26 +203,40 @@ class HandComponent {
         const handCards = document.querySelectorAll('.hand-card');
         
         handCards.forEach((cardElement, index) => {
-            // Click to select
+            const cardType = cardElement.getAttribute('data-card-type');
+            const isSpell = cardType === 'spell';
+            
+            // Click to select or cast spell
             cardElement.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.selectCard(index);
+                if (isSpell) {
+                    this.castSpell(index);
+                } else {
+                    this.selectCard(index);
+                }
             });
 
-            // Drag start
+            // Setup drag for all cards (units and spells)
             cardElement.addEventListener('dragstart', (e) => {
-                this.handleDragStart(e, index);
+                if (isSpell) {
+                    this.handleSpellDragStart(e, index);
+                } else {
+                    this.handleDragStart(e, index);
+                }
             });
 
-            // Drag end
             cardElement.addEventListener('dragend', (e) => {
                 this.handleDragEnd(e);
             });
 
-            // Double click to auto-place (if possible)
+            // Double click to auto-place/cast
             cardElement.addEventListener('dblclick', (e) => {
                 e.preventDefault();
-                this.tryAutoPlace(index);
+                if (isSpell) {
+                    this.castSpell(index);
+                } else {
+                    this.tryAutoPlace(index);
+                }
             });
 
             // Hover effects
@@ -195,6 +254,30 @@ class HandComponent {
                 }
             });
         });
+    }
+    
+    /**
+     * Cast a spell card
+     * @param {number} cardIndex - Index of spell card to cast
+     */
+    castSpell(cardIndex) {
+        const state = this.gameState.getState();
+        const hand = state.players.player.hand;
+        
+        if (cardIndex < 0 || cardIndex >= hand.length) return;
+        
+        const spell = hand[cardIndex];
+        
+        // Check if it's actually a spell
+        if (spell.type !== 'spell') return;
+        
+        // Get the spell system and cast the spell
+        const spellSystem = this.gameEngine.systems.get('SpellSystem');
+        if (spellSystem) {
+            spellSystem.playSpell(spell, 'player');
+        } else {
+            console.error('SpellSystem not found');
+        }
     }
 
     /**
@@ -237,6 +320,46 @@ class HandComponent {
     }
 
     /**
+     * Handle spell drag start
+     * @param {Event} e - Drag event
+     * @param {number} cardIndex - Spell card index
+     */
+    handleSpellDragStart(e, cardIndex) {
+        const state = this.gameState.getState();
+        const spell = state.players.player.hand[cardIndex];
+        
+        if (!spell) return;
+
+        // Check if it's player's turn
+        if (state.currentPlayer !== 'player') {
+            e.preventDefault();
+            this.uiManager.showNotification("It's not your turn!", 'warning');
+            return;
+        }
+
+        // Set drag data for spell
+        e.dataTransfer.setData('text/plain', JSON.stringify({ ...spell, isSpell: true }));
+        e.dataTransfer.effectAllowed = 'move';
+
+        // Visual feedback
+        e.target.style.opacity = '0.5';
+
+        // Store dragged spell globally for battlefield component to access
+        this.draggedCard = spell;
+        window.currentDraggedCard = spell; // Make accessible to other components
+
+        console.log('Started dragging spell:', spell.name);
+        
+        // If this is a battlefield-targeting spell, highlight the battlefield immediately
+        if (spell.requiresBattlefieldTargeting) {
+            const playerBattlefield = document.getElementById('playerBattlefield');
+            if (playerBattlefield) {
+                playerBattlefield.classList.add('battlefield-drag-ready');
+            }
+        }
+    }
+
+    /**
      * Handle drag start
      * @param {Event} e - Drag event
      * @param {number} cardIndex - Card index
@@ -263,6 +386,7 @@ class HandComponent {
 
         // Store dragged card
         this.draggedCard = card;
+        window.currentDraggedCard = card; // Make accessible to other components
 
         // Add visual cues to valid drop zones
         this.highlightValidDropZones();
@@ -277,6 +401,15 @@ class HandComponent {
     handleDragEnd(e) {
         // Clean up visual feedback
         this.resetDragStyling();
+        
+        // Clear global drag reference
+        window.currentDraggedCard = null;
+        
+        // Remove battlefield highlighting
+        const playerBattlefield = document.getElementById('playerBattlefield');
+        if (playerBattlefield) {
+            playerBattlefield.classList.remove('battlefield-drag-ready', 'battlefield-drag-over');
+        }
     }
 
     /**

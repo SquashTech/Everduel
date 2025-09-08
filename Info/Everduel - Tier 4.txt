@@ -1,6 +1,6 @@
 Unit,Attack,Health,Ability,Tags,Notes
 Royal Guard,4,10,"When you buff a slot, give it an additional +2/+2.",Human,
-Champion,12,10,,Human,
+Swordsman,12,10,,Human,
 Tavernmaster,5,5,Unleash: Give your other Dwarves +5/+5.,Dwarf,
 Dragon,4,4,Flying. Unleash: Gain +3+3 for each Dragon Flame.,Dragon,
 Mammoth,9,9,Trample. ,Beast,

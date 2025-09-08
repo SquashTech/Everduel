@@ -118,8 +118,18 @@ class DebugCardGenerator {
                 border: none;
                 cursor: pointer;
                 font-weight: bold;
-                margin-bottom: 10px;
+                margin-bottom: 5px;
             ">Clear Hand</button>
+            <button id="debug-max-gold" style="
+                width: 100%;
+                padding: 5px;
+                background: #ffd700;
+                color: #000;
+                border: none;
+                cursor: pointer;
+                font-weight: bold;
+                margin-bottom: 10px;
+            ">Max Gold (10)</button>
             <button id="debug-fill-opponent-battlefield" style="
                 width: 100%;
                 padding: 5px;
@@ -145,6 +155,7 @@ class DebugCardGenerator {
         const generateBtn = document.getElementById('debug-generate-btn');
         const fillHandBtn = document.getElementById('debug-fill-hand');
         const clearHandBtn = document.getElementById('debug-clear-hand');
+        const maxGoldBtn = document.getElementById('debug-max-gold');
         const fillOpponentBattlefieldBtn = document.getElementById('debug-fill-opponent-battlefield');
 
         searchInput.addEventListener('input', () => {
@@ -166,6 +177,10 @@ class DebugCardGenerator {
 
         clearHandBtn.addEventListener('click', () => {
             this.clearHand();
+        });
+
+        maxGoldBtn.addEventListener('click', () => {
+            this.setMaxGold();
         });
 
         fillOpponentBattlefieldBtn.addEventListener('click', () => {
@@ -305,6 +320,21 @@ class DebugCardGenerator {
         });
 
         this.showNotification('Hand cleared', 'info');
+        
+        this.gameEngine.eventBus.emit('ui:refresh');
+    }
+
+    setMaxGold() {
+        this.gameEngine.gameState.dispatch({
+            type: 'SET_PLAYER_GOLD',
+            payload: { 
+                playerId: 'player',
+                gold: 10,
+                maxGold: 10
+            }
+        });
+
+        this.showNotification('Gold set to maximum (10)', 'success');
         
         this.gameEngine.eventBus.emit('ui:refresh');
     }

@@ -769,6 +769,22 @@ body {
     border-left: 2px solid rgba(74, 144, 226, 0.5);
 }
 
+/* Specific styling for different log entry types */
+.game-log-spell {
+    border-left-color: rgba(138, 43, 226, 0.8); /* Purple border for spells */
+    background: rgba(138, 43, 226, 0.1); /* Light purple background */
+}
+
+.game-log-combat {
+    border-left-color: rgba(220, 20, 60, 0.8); /* Red border for combat */
+    background: rgba(220, 20, 60, 0.1); /* Light red background */
+}
+
+.game-log-ability {
+    border-left-color: rgba(255, 215, 0, 0.8); /* Gold border for abilities */
+    background: rgba(255, 215, 0, 0.1); /* Light gold background */
+}
+
 .player-info-box h3 {
     margin: 0;
     font-size: 14px;
@@ -1769,6 +1785,26 @@ body {
     padding-top: 1px;
 }
 
+.crown-indicator {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #8B4513;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 215, 0, 0.8);
+    z-index: 5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
 /* === IN-PLAY UNIT CARDS === */
 .unit {
     width: 165px; /* Wider for better text readability */
@@ -1946,10 +1982,10 @@ body {
 /* === HAND CARDS - EXTENDED BOTTOM RIGHT === */
 .hand-cards-horizontal {
     position: fixed;
-    bottom: 75px; /* Moved up for final positioning */
+    bottom: 72px; /* Moved up for final positioning */
     right: 10px; /* Extend to screen edge */
     left: calc(100% - 550px); /* Start from appropriate left position */
-    height: 195px; /* Reduced height for better proportions */
+    height: 198px; /* Reduced height for better proportions */
     display: flex;
     flex-direction: column;
     padding: 15px;
@@ -3585,4 +3621,661 @@ body {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-5px); }
     75% { transform: translateX(5px); }
+}
+
+/* ==================== CHAMPION SELECTION STYLES ==================== */
+
+.champion-selection-modal {
+    z-index: 20000;
+}
+
+.champion-selection-content {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 20px;
+    padding: 1rem;
+    max-width: 1200px;
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.champion-selection-header {
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.champion-selection-header h1 {
+    font-size: 2rem;
+    color: #ffd700;
+    margin-bottom: 0.25rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.champion-selection-header p {
+    color: #aaa;
+    font-size: 1.1rem;
+}
+
+/* Champion Cards Display (Card Library Format) */
+.champion-cards-display {
+    background: linear-gradient(135deg, #2a2a3e 0%, #1a1a2e 100%);
+    border-radius: 15px;
+    padding: 1rem;
+    border: 2px solid #444;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+}
+
+.champion-cards-with-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    justify-items: center;
+    max-width: 100%;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.card-with-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.card-info-below {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    min-height: 40px;
+    padding: 0.25rem;
+}
+
+.card-cost {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.card-copies {
+    color: #aaa;
+    font-size: 0.85rem;
+    font-weight: normal;
+    text-align: center;
+}
+
+.champion-cards-placeholder {
+    color: #888;
+    font-size: 1.2rem;
+    text-align: center;
+    font-style: italic;
+}
+
+.champion-spellbook-header {
+    color: #ffd700;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-align: center;
+    margin: 0;
+    padding: 0.5rem 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 140px; /* Match card height */
+    min-width: 160px;
+    border: 2px solid rgba(255, 215, 0, 0.5);
+    border-radius: 8px;
+    background: rgba(255, 215, 0, 0.1);
+}
+
+/* Champion Selection Grid (5x2 by Color) */
+.champion-selection-grid {
+    margin-top: 0;
+}
+
+.champion-grid-body {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 8px;
+    min-height: 120px;
+}
+
+.champion-grid-slot {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+}
+
+/* Champion Grid Buttons */
+.champion-grid-btn {
+    border: 3px solid;
+    border-radius: 12px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: bold;
+    width: 100%;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+
+.champion-grid-btn:hover:not(.champion-grid-placeholder) {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.champion-grid-btn.selected {
+    border-width: 4px;
+    box-shadow: 0 0 20px rgba(255,255,255,0.5);
+    transform: scale(1.05);
+}
+
+.champion-grid-btn-red { 
+    border-color: #ff6b6b;
+    background: linear-gradient(135deg, rgba(255,107,107,0.4), rgba(220,88,88,0.4));
+}
+.champion-grid-btn-yellow { 
+    border-color: #ffd93d;
+    background: linear-gradient(135deg, rgba(255,217,61,0.4), rgba(255,193,7,0.4));
+}
+.champion-grid-btn-green { 
+    border-color: #6bcf7f;
+    background: linear-gradient(135deg, rgba(107,207,127,0.4), rgba(72,178,95,0.4));
+}
+.champion-grid-btn-blue { 
+    border-color: #4ecdc4;
+    background: linear-gradient(135deg, rgba(78,205,196,0.4), rgba(52,152,219,0.4));
+}
+.champion-grid-btn-purple { 
+    border-color: #8a63d2;
+    background: linear-gradient(135deg, rgba(111,66,193,0.4), rgba(89,53,154,0.4));
+}
+
+.champion-grid-placeholder {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(80%);
+}
+
+.champion-grid-placeholder:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.champion-grid-name {
+    font-weight: bold;
+    font-size: 0.8rem;
+    text-align: center;
+    line-height: 1.1;
+}
+
+.champion-grid-stats {
+    font-size: 0.75rem;
+    color: #aaa;
+    font-weight: normal;
+}
+
+/* PLAY Button */
+.champion-selection-actions {
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem 0;
+    margin: 0.25rem 0 0.5rem 0;
+}
+
+.play-champion-btn {
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+    color: #fff;
+    border: none;
+    border-radius: 15px;
+    padding: 1rem 3rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.play-champion-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
+}
+
+.play-champion-btn:disabled {
+    background: linear-gradient(135deg, #666 0%, #444 100%);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.play-champion-btn:disabled:hover {
+    transform: none;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Spell card stats styling for champion selection */
+.champion-cards-display .spell-cost,
+.champion-cards-display .spell-stock {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.champion-cards-display .spell-cost {
+    background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+}
+
+.champion-cards-display .spell-stock {
+    background: rgba(70, 130, 180, 0.15);
+    color: #4682b4;
+}
+
+/* ==================== SPELLBOOK STYLES ==================== */
+
+.spellbook-modal {
+    z-index: 15000;
+    background: rgba(0, 0, 0, 0.6); /* Less dark so battlefield is visible */
+    align-items: flex-start; /* Align to top instead of center */
+    padding-top: 5vh; /* Add top padding to move modal up */
+}
+
+.spellbook-content {
+    background: linear-gradient(135deg, #2a1a3e 0%, #1a0e2e 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 1200px;
+    width: 95%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.spellbook-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #ffd700;
+    padding-bottom: 1rem;
+}
+
+.spellbook-header h2 {
+    color: #ffd700;
+    font-size: 2rem;
+}
+
+.spellbook-gold-display {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #ffd700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.spellbook-gold-display span {
+    font-size: 2rem;
+}
+
+.spellbook-spells-grid {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+}
+
+.spell-card-with-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.spell-buy-button {
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+    text-align: center;
+}
+
+.spell-buy-button:hover:not(.disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #5fddd4 0%, #55b09d 100%);
+}
+
+.spell-buy-button.disabled {
+    background: linear-gradient(135deg, #555 0%, #444 100%);
+    color: #999;
+    cursor: not-allowed;
+    opacity: 0.7;
+    border: 1px solid #666;
+}
+
+.spell-buy-button.disabled:hover {
+    transform: none;
+    box-shadow: none;
+    background: linear-gradient(135deg, #555 0%, #444 100%);
+}
+
+/* Gray out the entire card when spell is not available */
+.spell-card-with-button:has(.spell-buy-button.disabled) .game-card {
+    opacity: 0.6;
+    filter: grayscale(30%);
+}
+
+.spell-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+/* Spell stock indicator below buy buttons */
+.spell-stock-indicator {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.spell-name {
+    color: #fff;
+    font-weight: bold;
+}
+
+.spell-cost {
+    background: #ffd700;
+    color: #000;
+    padding: 0.2rem 0.4rem;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.spell-description {
+    color: #ddd;
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.spell-stock {
+    color: #999;
+    font-size: 0.8rem;
+    margin-bottom: 0.75rem;
+}
+
+.spell-buy-btn {
+    width: 100%;
+    padding: 0.5rem;
+    background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.spell-buy-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 5px 10px rgba(76, 175, 80, 0.4);
+}
+
+.spell-buy-btn:disabled {
+    background: #444;
+    cursor: not-allowed;
+}
+
+.spellbook-footer {
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid #444;
+}
+
+.spellbook-status {
+    color: #aaa;
+    font-size: 1.1rem;
+}
+
+.spellbook-status.portal-ready {
+    color: #ffd700;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+/* Portal styles */
+.portal-modal {
+    z-index: 15000;
+}
+
+.portal-content {
+    background: radial-gradient(circle, #4a148c 0%, #1a0e2e 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
+}
+
+.portal-header h2 {
+    color: #ffd700;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    animation: glow 2s ease-in-out infinite;
+}
+
+.champion-portal-card {
+    margin-bottom: 2rem;
+}
+
+.champion-summon-card {
+    background: linear-gradient(135deg, #3a2a4e 0%, #2a1a3e 100%);
+    border: 3px solid #ffd700;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+}
+
+.summon-champion-btn {
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.summon-champion-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.6);
+}
+
+.summon-champion-btn:disabled,
+.summon-champion-btn.disabled {
+    background: #666 !important;
+    color: #999 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Spellbook button states */
+#spellDraftBtn.portal-ready {
+    background: linear-gradient(135deg, #9c27b0 0%, #6a1b9a 100%);
+    animation: pulse 2s infinite;
+}
+
+#spellDraftBtn.portal-open {
+    background: linear-gradient(135deg, #9c27b0 0%, #6a1b9a 100%);
+    color: #fff;
+    animation: glow 2s ease-in-out infinite;
+}
+
+#spellDraftBtn.portal-closed {
+    background: #444;
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* Spell cards in hand now use the same styling as unit cards - only minor adjustments needed */
+.hand-card.spell-card {
+    /* Spells inherit all styling from .game-card and .hand-card - no special styling needed */
+}
+
+/* Remove any spell-specific hover behavior - let unit card hover take precedence */
+
+/* Remove old spell-specific elements that we're not using anymore */
+.spell-indicator {
+    display: none;
+}
+
+.spell-effect {
+    /* This is now handled by .card-ability */
+}
+
+.cast-indicator {
+    display: none;
+}
+
+/* Spell targeting */
+.spell-target-valid {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.8) !important;
+    cursor: crosshair !important;
+}
+
+/* Ensure battlefield always has consistent border for stable dimensions */
+.battlefield {
+    border: 2px solid transparent !important;
+    border-radius: 8px !important;
+    box-sizing: border-box !important;
+}
+
+/* Special highlighting for battlefield targeting */
+.battlefield.spell-target-valid {
+    background: rgba(255, 215, 0, 0.15) !important;
+    border-color: rgba(255, 215, 0, 0.8) !important;
+    animation: battlefield-glow 2s infinite alternate !important;
+}
+
+@keyframes battlefield-glow {
+    0% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+    100% { box-shadow: 0 0 35px rgba(255, 215, 0, 1); }
+}
+
+/* Column targeting overlays */
+.column-overlay {
+    background: rgba(255, 215, 0, 0.15);
+    border: 2px solid rgba(255, 215, 0, 0.8);
+    border-radius: 8px;
+    cursor: crosshair;
+    animation: column-glow 2s infinite alternate;
+    transition: all 0.3s ease;
+}
+
+.column-overlay:hover {
+    background: rgba(255, 215, 0, 0.25);
+    border-color: rgba(255, 215, 0, 1);
+}
+
+@keyframes column-glow {
+    0% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); }
+    100% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.9); }
+}
+
+/* Row targeting overlays */
+.row-overlay {
+    background: rgba(255, 215, 0, 0.15);
+    border: 2px solid rgba(255, 215, 0, 0.8);
+    border-radius: 8px;
+    cursor: crosshair;
+    animation: row-glow 2s infinite alternate;
+    transition: all 0.3s ease;
+}
+
+.row-overlay:hover {
+    background: rgba(255, 215, 0, 0.25);
+    border-color: rgba(255, 215, 0, 1);
+}
+
+@keyframes row-glow {
+    0% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); }
+    100% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.9); }
+}
+
+/* Battlefield drag ready effect (when dragging starts) */
+.battlefield.battlefield-drag-ready {
+    background: rgba(255, 215, 0, 0.1) !important;
+    border-color: rgba(255, 215, 0, 0.6) !important;
+    animation: battlefield-pulse 2s infinite alternate !important;
+}
+
+/* Battlefield drag over effect (when hovering over) */
+.battlefield.battlefield-drag-over {
+    background: rgba(255, 215, 0, 0.2) !important;
+    border-color: rgba(255, 215, 0, 1) !important;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.9) !important;
+}
+
+@keyframes battlefield-pulse {
+    0% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); }
+    100% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.8); }
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes glow {
+    0% { text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+    50% { text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.5); }
+    100% { text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
 }

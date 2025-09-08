@@ -741,8 +741,8 @@ export const CARD_DATABASE = {
       "color": "red"
     },
     {
-      "id": "champion",
-      "name": "Champion",
+      "id": "swordsman",
+      "name": "Swordsman",
       "attack": 12,
       "health": 10,
       "ability": "",
@@ -1072,6 +1072,173 @@ export const CARD_DATABASE = {
       "color": "purple"
     }
   ]
+};
+
+/**
+ * Champion and Spellbook Data
+ */
+export const CHAMPIONS = {
+  "godric": {
+    "id": "godric",
+    "name": "Godric the Great",
+    "attack": 8,
+    "health": 8,
+    "cost": 7,
+    "ability": "Unleash: Give all of your slots +2/+2.",
+    "tags": ["Human"],
+    "color": "red",
+    "spellbook": [
+      {
+        "id": "reinforce",
+        "name": "Reinforce",
+        "type": "spell",
+        "color": "red",
+        "cost": 3,
+        "stock": 2,
+        "maxStock": 2,
+        "effect": "Give a slot +2/+2.",
+        "targetType": "slot",
+        "targetScope": "friendly",
+        "description": "Target a friendly slot to give it +2/+2",
+        "tags": ["Spell"]
+      },
+      {
+        "id": "inspire",
+        "name": "Inspire",
+        "type": "spell",
+        "color": "red",
+        "cost": 4,
+        "stock": 1,
+        "maxStock": 1,
+        "effect": "Your Humans gain +3/+3.",
+        "targetType": "global",
+        "targetScope": "friendlyType",
+        "targetTag": "Human",
+        "description": "All your Human units gain +3/+3",
+        "requiresBattlefieldTargeting": true,
+        "tags": ["Spell"]
+      },
+      {
+        "id": "garrison",
+        "name": "Garrison",
+        "type": "spell",
+        "color": "red",
+        "cost": 5,
+        "stock": 1,
+        "maxStock": 1,
+        "effect": "Add a Squire, Soldier, and Fighter to your hand.",
+        "targetType": "self",
+        "targetScope": "hand",
+        "description": "Add a Squire, Soldier, and Fighter to your hand.",
+        "requiresBattlefieldTargeting": true,
+        "tags": ["Spell"]
+      },
+      {
+        "id": "light_of_justice",
+        "name": "Light of Justice",
+        "type": "spell",
+        "color": "red",
+        "cost": 8,
+        "stock": 1,
+        "maxStock": 1,
+        "effect": "Give a slot +5/+10.",
+        "targetType": "slot",
+        "targetScope": "friendly",
+        "description": "Target a friendly slot to give it +5/+10",
+        "tags": ["Spell"]
+      }
+    ]
+  },
+  "kolus": {
+    "id": "kolus",
+    "name": "Kolus the Wise",
+    "attack": 2,
+    "health": 10,
+    "cost": 7,
+    "ability": "Manacharge: Add a Flame Pillar, Frost Wall, or Thunderbolt to your hand.",
+    "tags": ["Mystic"],
+    "color": "blue",
+    "spellbook": [
+      {
+        "id": "flicker",
+        "name": "Flicker",
+        "type": "spell",
+        "color": "blue",
+        "cost": 1,
+        "stock": 3,
+        "maxStock": 3,
+        "effect": "Add a Mana Surge to your hand.",
+        "targetType": "self",
+        "targetScope": "hand",
+        "description": "Add a Mana Surge to your hand",
+        "requiresBattlefieldTargeting": true,
+        "tags": ["Spell"]
+      },
+      {
+        "id": "flame_pillar",
+        "name": "Flame Pillar",
+        "type": "spell",
+        "color": "blue",
+        "cost": 5,
+        "stock": 1,
+        "maxStock": 1,
+        "effect": "Deal 4 damage to an enemy column.",
+        "targetType": "column",
+        "targetScope": "enemy",
+        "description": "Deal 4 damage to all enemies in a column",
+        "tags": ["Spell"]
+      },
+      {
+        "id": "frost_wall",
+        "name": "Frost Wall",
+        "type": "spell",
+        "color": "blue",
+        "cost": 5,
+        "stock": 1,
+        "maxStock": 1,
+        "effect": "Give your Front Row slots +0/+3.",
+        "targetType": "row",
+        "targetScope": "friendlyFront",
+        "description": "Give all your front row slots +0/+3",
+        "tags": ["Spell"]
+      },
+      {
+        "id": "thunderbolt",
+        "name": "Thunderbolt",
+        "type": "spell",
+        "color": "blue",
+        "cost": 5,
+        "stock": 1,
+        "maxStock": 1,
+        "effect": "Deal 12 damage to a random enemy.",
+        "targetType": "random",
+        "targetScope": "enemy",
+        "description": "Deal 12 damage to a random enemy unit",
+        "requiresBattlefieldTargeting": true,
+        "tags": ["Spell"]
+      }
+    ]
+  }
+};
+
+/**
+ * Special spell cards that are added by certain spells
+ */
+export const SPELL_TOKENS = {
+  "mana_surge": {
+    "id": "mana_surge",
+    "name": "Mana Surge",
+    "type": "spell",
+    "color": "blue",
+    "cost": 0,
+    "effect": "Gain 2 gold.",
+    "targetType": "self",
+    "targetScope": "gold",
+    "description": "Immediately gain 2 gold",
+    "requiresBattlefieldTargeting": true,
+    "isToken": true,
+    "tags": ["Spell"]
+  }
 };
 
 export const GAME_CONFIG = {

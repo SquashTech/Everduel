@@ -24,6 +24,8 @@ class StatCalculator {
     calculateEffectiveAttack(unit) {
         if (!unit || !this.gameState) return 0;
 
+        // Use the unit's current attack value (which includes buffs from BUFF_UNIT)
+        // currentAttack contains buffed values, fall back to base attack if not set
         let attack = unit.currentAttack || unit.attack;
         const state = this.gameState.getState();
 
@@ -49,15 +51,15 @@ class StatCalculator {
     calculateEffectiveHealth(unit) {
         if (!unit || !this.gameState) return 0;
 
+        // Use currentHealth for damage tracking, but health for max health calculations
         let health = unit.currentHealth || unit.health;
         const state = this.gameState.getState();
 
-        // Apply conditional bonuses
-        health += this.getConditionalHealthBonus(unit, state);
+        // Apply conditional bonuses (these don't affect current health, only max health)
+        // For display purposes, we want to show current health, not max health with bonuses
         
-        // Apply passive aura bonuses
-        health += this.getPassiveAuraHealthBonus(unit, state);
-
+        // Apply passive aura bonuses - these don't change current health
+        
         // Apply temporary modifiers
         if (unit.tempHealthBonus) {
             health += unit.tempHealthBonus;

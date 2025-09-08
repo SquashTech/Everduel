@@ -1,0 +1,21 @@
+Test Instructions for Inspire Fix:
+
+1. Load the game (http://localhost:8080)
+2. Start any scenario (e.g., "Easy Mode")
+3. Choose any champion
+4. Use Max Gold button (`) to get gold
+5. Draft some units to place on battlefield
+6. Get an Inspire spell (if not in starting hand, purchase from Spellbook)
+7. Cast Inspire spell
+8. Check if battlefield units now show increased attack stats (should be +3 attack visible)
+
+Expected Behavior After Fix:
+- Units should show +3 attack in their display after Inspire
+- Console should show "🔄 Forcing UI update after spell buff"
+- UI signature should include attack values, preventing duplicate update skipping
+- Attack stats should be visually displayed on units
+
+Check the browser console for:
+- Spell buff application logs
+- Force UI update log
+- UI update execution logs
