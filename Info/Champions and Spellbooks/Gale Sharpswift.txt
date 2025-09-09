@@ -1,0 +1,16 @@
+Gale Sharpswift - 4 Attack/4 Health. Elf tag. "Ranged. After this attacks, return it to your hand."
+Cost: 3.
+
+Spells:
+
+Line of Sight: Give a slot +2/+0.		Cost: 1. Copies: 2.
+Quick Escape: Return a unit to your hand.		Cost: 2. Copies: 2.
+Archery Tower: Give your back row +3/+0.		Cost: 4. Copies: 1.
+Rain of Arrows: Deal 5 damage in each enemy column.		Cost: 7. Copies: 1.
+
+Battlefield Integration:
+Line of Sight functions identically to the spell Reinforce
+When clicking Quick Escape, the player's units in-play will be highlighted. Selecting any of them will immediately remove Quick Escape from hand, then move that unit to their hand.
+Archery Tower functions exactly like Frost Wall, except for the back row.
+When clicking Rain of Arrows, the player's battlefield will glow. Clicking in the battlefield casts the spell. Dealing damage in a column is a source of damage that is deterministically
+targeted just like a normal attack (Front Row -> Back Row -> Enemy Player).

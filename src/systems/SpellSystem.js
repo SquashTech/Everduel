@@ -158,6 +158,11 @@ export default class SpellSystem {
                     targets.push({ type: 'row', row: 'front', playerId });
                 } else if (spell.targetScope === 'friendlyBack') {
                     targets.push({ type: 'row', row: 'back', playerId });
+                } else if (spell.targetScope === 'enemy') {
+                    // Enemy rows - add both front and back for player to choose
+                    const enemyId = playerId === 'player' ? 'ai' : 'player';
+                    targets.push({ type: 'row', row: 'front', playerId: enemyId });
+                    targets.push({ type: 'row', row: 'back', playerId: enemyId });
                 }
                 break;
         }
@@ -518,7 +523,7 @@ export default class SpellSystem {
 
         // Remove spell from hand BEFORE executing for spells that add cards to hand
         // This ensures proper hand size calculation
-        const addCardSpells = ['garrison', 'flicker', 'call_of_the_wild'];
+        const addCardSpells = ['garrison', 'flicker', 'call_of_the_wild', 'quick_escape', 'harvest', 'blood_summon'];
         if (addCardSpells.includes(spell.id)) {
             this.removeSpellFromHand(spell, playerId);
         }
@@ -573,6 +578,40 @@ export default class SpellSystem {
 
             case 'call_of_the_wild':
                 this.addRandomBeasts(playerId);
+                break;
+
+            // Gale Sharpswift's spells
+            case 'line_of_sight':
+                this.applySlotBuff(target, 2, 0);
+                break;
+
+            case 'quick_escape':
+                this.returnUnitToHand(target, playerId);
+                break;
+
+            case 'archery_tower':
+                this.buffBackRow(target, 3, 0, playerId);
+                break;
+
+            case 'rain_of_arrows':
+                this.damageAllEnemyColumns(5, playerId);
+                break;
+
+            // Lord Vladimus's spells
+            case 'drain':
+                this.drainUnit(target, playerId);
+                break;
+
+            case 'harvest':
+                this.harvestSouls(target, playerId);
+                break;
+
+            case 'blood_summon':
+                this.summonVampireBats(playerId);
+                break;
+
+            case 'plague':
+                this.plagueRow(target, playerId);
                 break;
 
             // Special spells
@@ -1165,6 +1204,374 @@ export default class SpellSystem {
             });
 
             console.log(`  Added ${randomBeast.name} to hand`);
+        }
+    }
+
+    /**
+     * Return a unit to hand (for Quick Escape)
+     */
+    returnUnitToHand(target, playerId) {
+        if (!target || !target.unit) {
+            console.warn('No valid unit to return to hand');
+            return;
+        }
+
+        const state = this.gameEngine.gameState.getState();
+        const unit = target.unit;
+        const { slotIndex } = target;
+        const playerHand = state.players[playerId].hand;
+
+        console.log(`🏹 Quick Escape: Attempting to return ${unit.name} to hand`);
+
+        // Check if hand is full (max 3 cards)
+        if (playerHand.length >= 3) {
+            console.log(`✋ ${unit.name} cannot return to hand - hand is full`);
+            this.showNotification(`Hand is full! Cannot return ${unit.name}`, 'warning');
+            return;
+        }
+
+        // Create card for hand (convert unit back to card format using original stats)
+        const cardForHand = {
+            id: unit.id,
+            name: unit.name,
+            attack: unit.originalAttack || unit.attack, // Use original card stats
+            health: unit.originalHealth || unit.health, // Use original card stats
+            ability: unit.ability,
+            tags: unit.tags,
+            color: unit.color,
+            tier: unit.tier,
+            handId: Date.now() // Unique identifier for this card instance
+        };
+
+        // Remove unit from battlefield
+        this.gameEngine.dispatch({
+            type: 'REMOVE_UNIT',
+            payload: { 
+                playerId, 
+                slotIndex 
+            }
+        });
+
+        // Add unit to hand
+        this.gameEngine.dispatch({
+            type: 'ADD_CARD_TO_HAND',
+            payload: {
+                playerId,
+                card: cardForHand
+            }
+        });
+
+        console.log(`✅ ${unit.name} returned to hand with original stats ${cardForHand.attack}/${cardForHand.health}`);
+    }
+
+    /**
+     * Buff all units in back row (for Archery Tower)
+     */
+    buffBackRow(target, attackBuff, healthBuff, playerId) {
+        console.log(`🏹 Archery Tower buffing back row slots for ${playerId}: +${attackBuff}/+${healthBuff}`);
+        
+        for (let i = 3; i < 6; i++) { // Back row slots are 3, 4, 5
+            // Dispatch the slot buff
+            this.gameEngine.dispatch({
+                type: 'BUFF_SLOT',
+                payload: {
+                    playerId,
+                    slotIndex: i,
+                    attackBuff,
+                    healthBuff
+                }
+            });
+            
+            // Get updated state and emit UI event for each slot
+            const state = this.gameEngine.gameState.getState();
+            const updatedSlotBuff = state.players[playerId].slotBuffs[i];
+            
+            this.gameEngine.eventBus.emit('slot:buff-updated', {
+                player: playerId,
+                slot: i,
+                attack: updatedSlotBuff.attack,
+                health: updatedSlotBuff.health,
+                type: 'slot-buff'
+            });
+            
+            console.log(`🎯 Updated slot ${i} buff UI: +${updatedSlotBuff.attack}/+${updatedSlotBuff.health}`);
+            
+            // Apply buffs to current unit in slot if any
+            const currentUnit = state.players[playerId].battlefield[i];
+            
+            if (currentUnit && (updatedSlotBuff.attack > 0 || updatedSlotBuff.health > 0)) {
+                console.log(`📊 Updating unit stats for ${currentUnit.name} in buffed slot ${i}`);
+                
+                // Calculate stats from base stats + total slot buff, but preserve existing unit buffs
+                const baseAttack = currentUnit.attack;  // Original card attack
+                const baseHealth = currentUnit.health;  // Original card health
+                const currentAttackBeforeSlot = currentUnit.currentAttack || baseAttack;
+                const currentMaxHealthBeforeSlot = currentUnit.maxHealth || baseHealth;
+                
+                // Calculate the damage the unit has taken (if any)
+                const currentDamage = currentUnit.maxHealth ? 
+                    (currentUnit.maxHealth - currentUnit.currentHealth) : 0;
+                
+                // Apply the TOTAL slot buff to the ALREADY BUFFED current stats
+                // This preserves any unit buffs (like Inspire) that were applied earlier
+                
+                // For attack: keep any existing unit buffs and add slot buff
+                const unitAttackBuff = currentAttackBeforeSlot - baseAttack; // How much the unit was already buffed
+                const newCurrentAttack = baseAttack + unitAttackBuff + updatedSlotBuff.attack;
+                
+                // For health: keep any existing unit buffs and add slot buff
+                const unitHealthBuff = currentMaxHealthBeforeSlot - baseHealth; // How much the unit's health was already buffed
+                const newMaxHealth = baseHealth + unitHealthBuff + updatedSlotBuff.health;
+                const finalCurrentHealth = newMaxHealth - currentDamage; // Preserve damage
+                
+                const buffedUnit = {
+                    ...currentUnit,
+                    currentAttack: newCurrentAttack,
+                    currentHealth: finalCurrentHealth,
+                    maxHealth: newMaxHealth
+                };
+                
+                console.log(`  Base(${baseAttack}/${baseHealth}) + UnitBuffs(${unitAttackBuff}/${unitHealthBuff}) + Slot(${updatedSlotBuff.attack}/${updatedSlotBuff.health}) = ${buffedUnit.currentAttack}/${buffedUnit.currentHealth}/${buffedUnit.maxHealth}${currentDamage > 0 ? ` (preserved ${currentDamage} damage)` : ''}`);
+                
+                this.gameEngine.dispatch({
+                    type: 'UPDATE_UNIT',
+                    payload: {
+                        playerId,
+                        slotIndex: i,
+                        updates: {
+                            currentAttack: buffedUnit.currentAttack,
+                            currentHealth: buffedUnit.currentHealth,
+                            maxHealth: buffedUnit.maxHealth
+                        }
+                    }
+                });
+                
+                console.log('✅ Unit stats updated');
+            }
+        }
+    }
+
+    /**
+     * Rain of Arrows: Deal damage in each enemy column with unit-attack priority (Front → Back → Player)
+     */
+    damageAllEnemyColumns(damage, playerId) {
+        console.log(`🏹 Rain of Arrows: Dealing ${damage} damage in each enemy column (Front → Back → Player priority)`);
+        
+        const state = this.gameEngine.gameState.getState();
+        const enemyId = playerId === 'player' ? 'ai' : 'player';
+        const enemyBattlefield = state.players[enemyId].battlefield;
+        
+        // Process each of the 3 columns
+        for (let column = 0; column < 3; column++) {
+            const frontSlot = column;        // 0, 1, 2
+            const backSlot = column + 3;     // 3, 4, 5
+            
+            console.log(`🏹 Column ${column}: Checking front slot ${frontSlot}, back slot ${backSlot}`);
+            
+            // Check for units in priority order: Front → Back → Player
+            const frontUnit = enemyBattlefield[frontSlot];
+            const backUnit = enemyBattlefield[backSlot];
+            
+            if (frontUnit) {
+                console.log(`🏹 Column ${column}: Targeting front unit ${frontUnit.name} at slot ${frontSlot}`);
+                this.gameEngine.eventBus.emit('combat:damage', {
+                    target: { 
+                        type: 'unit', 
+                        unit: frontUnit, 
+                        slotIndex: frontSlot, 
+                        playerId: enemyId 
+                    },
+                    amount: damage,
+                    source: { name: 'Rain of Arrows' },
+                    type: 'ability'
+                });
+            } else if (backUnit) {
+                console.log(`🏹 Column ${column}: Targeting back unit ${backUnit.name} at slot ${backSlot}`);
+                this.gameEngine.eventBus.emit('combat:damage', {
+                    target: { 
+                        type: 'unit', 
+                        unit: backUnit, 
+                        slotIndex: backSlot, 
+                        playerId: enemyId 
+                    },
+                    amount: damage,
+                    source: { name: 'Rain of Arrows' },
+                    type: 'ability'
+                });
+            } else {
+                console.log(`🏹 Column ${column}: No units, targeting player ${enemyId}`);
+                this.gameEngine.eventBus.emit('combat:damage', {
+                    target: { type: 'player', playerId: enemyId },
+                    amount: damage,
+                    source: { name: 'Rain of Arrows' },
+                    type: 'ability'
+                });
+            }
+        }
+        
+        console.log('🏹 Rain of Arrows completed');
+    }
+
+    /**
+     * Drain: Deal damage to unit and heal player (for Lord Vladimus)
+     */
+    drainUnit(target, playerId) {
+        if (!target || !target.unit) {
+            console.warn('No valid unit target for Drain');
+            return;
+        }
+
+        console.log(`🩸 Drain: Dealing 3 damage to ${target.unit.name} and healing player`);
+
+        // Deal 3 damage to target unit
+        this.damageUnit(target, 3);
+
+        // Heal player for 3
+        const state = this.gameEngine.gameState.getState();
+        const currentHealth = state.players[playerId].health;
+        const maxHealth = 30;
+        const newHealth = Math.min(currentHealth + 3, maxHealth);
+
+        this.gameEngine.dispatch({
+            type: 'SET_PLAYER_HEALTH',
+            payload: { 
+                playerId, 
+                health: newHealth 
+            }
+        });
+
+        console.log(`💚 Drain healed ${playerId} for 3 (${currentHealth} -> ${newHealth})`);
+
+        this.gameEngine.eventBus.emit('player:healed', {
+            playerId,
+            amount: 3,
+            source: { name: 'Drain' },
+            type: 'drain'
+        });
+    }
+
+    /**
+     * Harvest: Consume souls and draw cards (like Phantom ability)
+     */
+    harvestSouls(target, playerId) {
+        const state = this.gameEngine.gameState.getState();
+        const currentSouls = state.souls[playerId] || 0;
+        const soulsToConsume = Math.min(3, currentSouls);
+
+        console.log(`👻 Harvest: Player has ${currentSouls} souls, consuming ${soulsToConsume} souls to draw ${soulsToConsume} cards`);
+
+        if (soulsToConsume === 0) {
+            console.log('No souls to consume');
+            this.showNotification('No souls to consume!', 'warning');
+            return;
+        }
+
+        // Consume souls
+        this.gameEngine.dispatch({
+            type: 'SET_PLAYER_SOULS',
+            payload: { 
+                playerId, 
+                souls: currentSouls - soulsToConsume
+            }
+        });
+
+        // Draw cards equal to souls consumed
+        for (let i = 0; i < soulsToConsume; i++) {
+            this.gameEngine.eventBus.emit('card:draw', {
+                playerId,
+                source: 'harvest',
+                free: true
+            });
+        }
+
+        console.log(`✅ Harvest consumed ${soulsToConsume} souls and drew ${soulsToConsume} cards`);
+    }
+
+    /**
+     * Blood Summon: Add 2 Vampire Bats to hand
+     */
+    summonVampireBats(playerId) {
+        console.log(`🦇 Blood Summon: Adding 2 Vampire Bats to hand`);
+
+        // Create 2 Vampire Bat cards
+        for (let i = 0; i < 2; i++) {
+            const vampireBat = {
+                id: 'vampire_bat',
+                name: 'Vampire Bat',
+                attack: 6,
+                health: 1,
+                ability: 'Flying. Lifesteal',
+                tags: ['Undead'],
+                color: 'purple',
+                tier: 2,
+                handId: Date.now() + i // Unique ID for each instance
+            };
+
+            this.gameEngine.dispatch({
+                type: 'ADD_CARD_TO_HAND',
+                payload: {
+                    playerId,
+                    card: vampireBat
+                }
+            });
+
+            console.log(`  Added Vampire Bat ${i + 1} to hand`);
+        }
+
+        console.log('✅ Blood Summon completed - 2 Vampire Bats added');
+    }
+
+    /**
+     * Plague: Destroy all units in chosen enemy row
+     */
+    plagueRow(target, playerId) {
+        if (!target || !target.row) {
+            console.warn('No valid row target for Plague');
+            return;
+        }
+
+        const enemyId = playerId === 'player' ? 'ai' : 'player';
+        const isBackRow = target.row === 'back';
+        
+        console.log(`☠️ Plague: Destroying all units in enemy ${target.row} row`);
+
+        // Determine which slots to target (front row: 0,1,2 | back row: 3,4,5)
+        const slotsToDestroy = isBackRow ? [3, 4, 5] : [0, 1, 2];
+        let unitsDestroyed = 0;
+
+        const state = this.gameEngine.gameState.getState();
+        const enemyBattlefield = state.players[enemyId].battlefield;
+
+        // Destroy all units in the target row
+        for (const slotIndex of slotsToDestroy) {
+            const unit = enemyBattlefield[slotIndex];
+            if (unit) {
+                console.log(`  Destroying ${unit.name} at slot ${slotIndex}`);
+                
+                // Remove unit from battlefield
+                this.gameEngine.dispatch({
+                    type: 'REMOVE_UNIT',
+                    payload: { 
+                        playerId: enemyId, 
+                        slotIndex 
+                    }
+                });
+
+                // Trigger death events
+                this.gameEngine.eventBus.emit('unit:dies', {
+                    unit: unit,
+                    owner: enemyId,
+                    slotIndex: slotIndex
+                });
+
+                unitsDestroyed++;
+            }
+        }
+
+        console.log(`☠️ Plague destroyed ${unitsDestroyed} units from ${target.row} row`);
+        
+        if (unitsDestroyed === 0) {
+            this.showNotification(`No units in ${target.row} row to destroy`, 'warning');
         }
     }
 

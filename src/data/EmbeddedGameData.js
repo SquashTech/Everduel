@@ -471,8 +471,8 @@ export const CARD_DATABASE = {
       "name": "Vampire Bat",
       "attack": 6,
       "health": 1,
-      "ability": "Flying",
-      "tags": ["Beast"],
+      "ability": "Flying. Lifesteal",
+      "tags": ["Undead"],
       "color": "purple"
     },
     {
@@ -1286,6 +1286,145 @@ export const CHAMPIONS = {
         "targetScope": "addBeasts",
         "description": "Add two random Tier 3 Beasts to your hand",
         "requiresBattlefieldTargeting": true,
+        "tags": ["Spell"]
+      }
+    ]
+  },
+  "gale_sharpswift": {
+    "id": "gale_sharpswift",
+    "name": "Gale Sharpswift",
+    "attack": 4,
+    "health": 4,
+    "cost": 3,
+    "ability": "Ranged. After this attacks, return it to your hand.",
+    "tags": ["Elf"],
+    "color": "green",
+    "spellbook": [
+      {
+        "id": "line_of_sight",
+        "name": "Line of Sight",
+        "type": "spell",
+        "color": "green",
+        "cost": 1,
+        "stock": 2,
+        "maxStock": 2,
+        "effect": "Give a slot +2/+0.",
+        "targetType": "slot",
+        "targetScope": "friendly",
+        "description": "Target a friendly slot to give it +2/+0",
+        "tags": ["Spell"]
+      },
+      {
+        "id": "quick_escape",
+        "name": "Quick Escape",
+        "type": "spell",
+        "color": "green",
+        "cost": 2,
+        "stock": 2,
+        "maxStock": 2,
+        "effect": "Return a unit to your hand.",
+        "targetType": "unit",
+        "targetScope": "friendly",
+        "description": "Return a friendly unit to your hand",
+        "tags": ["Spell"]
+      },
+      {
+        "id": "archery_tower",
+        "name": "Archery Tower",
+        "type": "spell",
+        "color": "green",
+        "cost": 4,
+        "stock": 1,
+        "maxStock": 1,
+        "effect": "Give your Back Row slots +3/+0.",
+        "targetType": "row",
+        "targetScope": "friendlyBack",
+        "description": "Give all your back row slots +3/+0",
+        "tags": ["Spell"]
+      },
+      {
+        "id": "rain_of_arrows",
+        "name": "Rain of Arrows",
+        "type": "spell",
+        "color": "green",
+        "cost": 7,
+        "stock": 1,
+        "maxStock": 1,
+        "effect": "Deal 5 damage in each enemy column.",
+        "targetType": "global",
+        "targetScope": "allEnemyColumns",
+        "description": "Deal 5 damage in each enemy column",
+        "requiresBattlefieldTargeting": true,
+        "tags": ["Spell"]
+      }
+    ]
+  },
+  "lord_vladimus": {
+    "id": "lord_vladimus",
+    "name": "Lord Vladimus",
+    "attack": 20,
+    "health": 20,
+    "cost": 10,
+    "ability": "Rush. Lifesteal",
+    "tags": ["Undead"],
+    "color": "purple",
+    "spellbook": [
+      {
+        "id": "drain",
+        "name": "Drain",
+        "type": "spell",
+        "color": "purple",
+        "cost": 3,
+        "stock": 3,
+        "maxStock": 3,
+        "effect": "Deal 3 damage to a unit. Heal 3 to your player.",
+        "targetType": "unit",
+        "targetScope": "enemy",
+        "description": "Deal 3 damage to an enemy unit and heal 3 to your player",
+        "tags": ["Spell"]
+      },
+      {
+        "id": "harvest",
+        "name": "Harvest",
+        "type": "spell",
+        "color": "purple",
+        "cost": 2,
+        "stock": 1,
+        "maxStock": 1,
+        "effect": "Consume up to 3 Souls. Draw that many cards.",
+        "targetType": "self",
+        "targetScope": "souls",
+        "description": "Consume up to 3 Souls and draw that many cards",
+        "requiresBattlefieldTargeting": true,
+        "tags": ["Spell"]
+      },
+      {
+        "id": "blood_summon",
+        "name": "Blood Summon",
+        "type": "spell",
+        "color": "purple",
+        "cost": 6,
+        "stock": 1,
+        "maxStock": 1,
+        "effect": "Add 2 Vampire Bats to your hand.",
+        "targetType": "self",
+        "targetScope": "hand",
+        "description": "Add 2 Vampire Bats to your hand",
+        "requiresBattlefieldTargeting": true,
+        "tags": ["Spell"]
+      },
+      {
+        "id": "plague",
+        "name": "Plague",
+        "type": "spell",
+        "color": "purple",
+        "cost": 10,
+        "stock": 1,
+        "maxStock": 1,
+        "effect": "Destroy all units in the front or back enemy row.",
+        "targetType": "row",
+        "targetScope": "enemy",
+        "description": "Choose an enemy row and destroy all units in it",
         "tags": ["Spell"]
       }
     ]

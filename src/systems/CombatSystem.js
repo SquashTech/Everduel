@@ -221,6 +221,18 @@ class CombatSystem {
                 source: attacker,
                 type: 'combat'
             });
+            
+            // Handle Lifesteal for direct player attacks
+            if (attacker) {
+                console.log(`🩸 Lifesteal check (direct player attack): ${attacker.name} ability: "${attacker.ability}"`);
+                const hasLifesteal = this.hasAbility(attacker, 'Lifesteal');
+                console.log(`🩸 hasAbility(${attacker.name}, 'Lifesteal'): ${hasLifesteal}`);
+                if (hasLifesteal) {
+                    this.handleLifesteal(attacker, damage);
+                }
+            } else {
+                console.log('🩸 No attacker for Lifesteal check (direct player attack)');
+            }
         }
 
         // Handle Sneaky first attack - mark as having targeted player
@@ -391,6 +403,18 @@ class CombatSystem {
                 source,
                 type: 'combat'
             });
+            
+            // Check for Lifesteal on the attacking unit
+            if (source) {
+                console.log(`🩸 Lifesteal check: ${source.name} ability: "${source.ability}"`);
+                const hasLifesteal = this.hasAbility(source, 'Lifesteal');
+                console.log(`🩸 hasAbility(${source.name}, 'Lifesteal'): ${hasLifesteal}`);
+                if (hasLifesteal) {
+                    this.handleLifesteal(source, damage);
+                }
+            } else {
+                console.log('🩸 No source unit for Lifesteal check');
+            }
         } else if (target.type === 'player') {
             this.eventBus.emit('combat:damage', {
                 target: { type: 'player', playerId: target.playerId },
@@ -398,7 +422,57 @@ class CombatSystem {
                 source,
                 type: 'combat'
             });
+            
+            // Check for Lifesteal on the attacking unit
+            if (source) {
+                console.log(`🩸 Lifesteal check: ${source.name} ability: "${source.ability}"`);
+                const hasLifesteal = this.hasAbility(source, 'Lifesteal');
+                console.log(`🩸 hasAbility(${source.name}, 'Lifesteal'): ${hasLifesteal}`);
+                if (hasLifesteal) {
+                    this.handleLifesteal(source, damage);
+                }
+            } else {
+                console.log('🩸 No source unit for Lifesteal check');
+            }
         }
+    }
+
+    /**
+     * Handle Lifesteal healing for a unit that dealt damage
+     * @param {Object} source - The unit with Lifesteal that dealt damage
+     * @param {number} damage - Amount of damage dealt
+     */
+    handleLifesteal(source, damage) {
+        if (!source || !source.owner) {
+            console.warn('⚔️ Lifesteal: Invalid source unit');
+            return;
+        }
+
+        const playerId = source.owner;
+        const state = this.gameState.getState();
+        const currentHealth = state.players[playerId].health;
+        const maxHealth = 30; // Updated max health
+        const healAmount = damage;
+        const newHealth = Math.min(currentHealth + healAmount, maxHealth);
+
+        console.log(`💚 Lifesteal: ${source.name} dealt ${damage} damage, healing ${playerId} for ${healAmount} (${currentHealth} -> ${newHealth})`);
+
+        // Update player health
+        this.gameEngine.dispatch({
+            type: 'SET_PLAYER_HEALTH',
+            payload: { 
+                playerId, 
+                health: newHealth 
+            }
+        });
+
+        // Emit healing event for visual feedback
+        this.eventBus.emit('player:healed', {
+            playerId,
+            amount: healAmount,
+            source: source,
+            type: 'lifesteal'
+        });
     }
 
     /**
@@ -477,17 +551,33 @@ class CombatSystem {
      * @returns {boolean} True if unit has the ability
      */
     hasAbility(unit, ability) {
+        // Debug logging for Lifesteal specifically
+        if (ability.toLowerCase() === 'lifesteal') {
+            console.log(`🔍 hasAbility debug: unit.ability = "${unit.ability}"`);
+            console.log(`🔍 Looking for: "${ability}" (lowercase: "${ability.toLowerCase()}")`);
+        }
+        
         // First check innate ability
         if (unit.ability && unit.ability.toLowerCase().includes(ability.toLowerCase())) {
+            if (ability.toLowerCase() === 'lifesteal') {
+                console.log(`🔍 Found ${ability} in innate ability text!`);
+            }
             return true;
         }
         
         // Then check if the ability is granted by an aura (like Lich)
         if (this.statCalculator) {
             const state = this.gameEngine.getState();
-            return this.statCalculator.hasAbility(unit, ability, state);
+            const auraResult = this.statCalculator.hasAbility(unit, ability, state);
+            if (ability.toLowerCase() === 'lifesteal' && auraResult) {
+                console.log(`🔍 Found ${ability} in aura abilities!`);
+            }
+            return auraResult;
         }
         
+        if (ability.toLowerCase() === 'lifesteal') {
+            console.log(`🔍 ${ability} not found anywhere`);
+        }
         return false;
     }
 

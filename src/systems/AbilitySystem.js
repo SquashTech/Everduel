@@ -3331,6 +3331,60 @@ class AbilitySystem {
                 });
             }
         }
+        
+        // Check for Gale Sharpswift's ability: "After this attacks, return it to your hand"
+        if (attacker && attacker.ability && attacker.ability.toLowerCase().includes('after this attacks, return it to your hand')) {
+            console.log(`🏹 ${attacker.name} attacked, attempting to return to hand`);
+            
+            const playerId = attacker.owner;
+            const state = this.gameState.getState();
+            const playerHand = state.players[playerId].hand;
+            
+            // Check if hand is full (max 3 cards)
+            if (playerHand.length >= 3) {
+                console.log(`✋ ${attacker.name} cannot return to hand - hand is full`);
+            } else {
+                // Create card for hand (convert unit back to card format using original stats)
+                const cardForHand = {
+                    id: attacker.id,
+                    name: attacker.name,
+                    attack: attacker.originalAttack || attacker.attack,
+                    health: attacker.originalHealth || attacker.health,
+                    ability: attacker.ability,
+                    tags: attacker.tags,
+                    color: attacker.color,
+                    tier: attacker.tier,
+                    cost: attacker.cost,
+                    handId: Date.now()
+                };
+                
+                // Remove unit from battlefield
+                this.gameEngine.dispatch({
+                    type: 'REMOVE_UNIT',
+                    payload: { 
+                        playerId, 
+                        slotIndex: attackerSlot 
+                    }
+                });
+                
+                // Add unit to hand
+                this.gameEngine.dispatch({
+                    type: 'ADD_CARD_TO_HAND',
+                    payload: {
+                        playerId,
+                        card: cardForHand
+                    }
+                });
+                
+                console.log(`✅ ${attacker.name} returned to hand with original stats ${cardForHand.attack}/${cardForHand.health}`);
+                
+                this.eventBus.emit('ability:activated', {
+                    type: 'after-attack-return',
+                    unit: attacker,
+                    effect: 'Returned to hand after attacking'
+                });
+            }
+        }
     }
     
     /**

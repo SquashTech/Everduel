@@ -1,0 +1,18 @@
+Lord Vladimus - 20 Attack/20 Health. Undead tag. "Rush. Lifesteal" Cost: 10
+
+Lifesteal is a new keyword that needs to be defined as such for the purposes of tooltips.
+
+Lifesteal: Damage dealt by this is healed to your player.
+
+Spells:
+
+Drain: Deal 3 damage to a unit. Heal 3 to your player.		Cost: 3. Copies: 3.
+Harvest: Consume up to 3 Souls. Draw that many cards.		Cost: 2. Copies: 1.
+Blood Summon: Add 2 Vampire Bats to your hand.		Cost: 6. Copies: 1.
+Plague: Destroy all units in the front or back enemy row.		Cost: 10. Copies: 1.
+
+Battlefield Integration:
+Clicking Drain should highlight every enemy unit. Clicking one of the units should deal 3 damage to it and heal 3 to the player.
+Clicking Harvest should highlight the player battlefield. Clicking the battlefield will cast the spell. The spell's functionality is identical to the unit Phantom.
+Blood Summon should function identically to spells like Call of the Wild
+Plague should highlight both the front and back enemy rows. The player then clicks one. All enemy units at the clicked row are immediately destroyed.

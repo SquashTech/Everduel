@@ -46,6 +46,10 @@ export class KeywordSystem {
             'banish': {
                 name: 'Banish',
                 description: 'Removed from game permanently (doesn\'t return to deck)'
+            },
+            'lifesteal': {
+                name: 'Lifesteal',
+                description: 'Damage dealt by this unit heals your player'
             }
         };
         
