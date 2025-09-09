@@ -64,6 +64,15 @@ export default class SpellSystem {
         this.currentSpell = spell;
         this.validTargets = this.getValidTargets(spell, playerId);
 
+        console.log(`🎯 Starting targeting for ${spell.name} (${spell.targetType}/${spell.targetScope})`, this.validTargets);
+        
+        if (this.validTargets.length === 0) {
+            console.warn(`⚠️ No valid targets found for ${spell.name}`);
+            this.showNotification(`No valid targets for ${spell.name}`, 'error');
+            this.clearTargeting();
+            return;
+        }
+
         // Highlight valid targets
         this.highlightTargets();
 
@@ -114,16 +123,25 @@ export default class SpellSystem {
                 if (spell.targetScope === 'friendly') {
                     state.players[playerId].battlefield.forEach((unit, index) => {
                         if (unit) {
-                            targets.push({ type: 'unit', playerId, slotIndex: index });
+                            targets.push({ type: 'unit', playerId, slotIndex: index, unit });
                         }
                     });
                 } else if (spell.targetScope === 'enemy') {
                     const enemyId = playerId === 'player' ? 'ai' : 'player';
                     state.players[enemyId].battlefield.forEach((unit, index) => {
                         if (unit) {
-                            targets.push({ type: 'unit', playerId: enemyId, slotIndex: index });
+                            targets.push({ type: 'unit', playerId: enemyId, slotIndex: index, unit });
                         }
                     });
+                } else if (spell.targetScope === 'enemyFront') {
+                    // Only enemy front row units (slots 0, 1, 2)
+                    const enemyId = playerId === 'player' ? 'ai' : 'player';
+                    for (let index = 0; index < 3; index++) {
+                        const unit = state.players[enemyId].battlefield[index];
+                        if (unit) {
+                            targets.push({ type: 'unit', playerId: enemyId, slotIndex: index, unit });
+                        }
+                    }
                 }
                 break;
 
@@ -156,12 +174,17 @@ export default class SpellSystem {
             el.classList.remove('spell-target-valid');
         });
 
+        console.log(`🎨 Highlighting ${this.validTargets.length} targets for ${this.currentSpell.name}`);
+
         // Add highlights
         this.validTargets.forEach(target => {
             const element = this.getTargetElement(target);
             if (element) {
+                console.log(`  ✓ Highlighting target at slot ${target.slotIndex}:`, target.unit ? target.unit.name : 'empty');
                 element.classList.add('spell-target-valid');
                 element.addEventListener('click', () => this.selectTarget(target), { once: true });
+            } else {
+                console.warn(`  ✗ Could not find element for target slot ${target.slotIndex}`);
             }
         });
     }
@@ -495,7 +518,7 @@ export default class SpellSystem {
 
         // Remove spell from hand BEFORE executing for spells that add cards to hand
         // This ensures proper hand size calculation
-        const addCardSpells = ['garrison', 'flicker'];
+        const addCardSpells = ['garrison', 'flicker', 'call_of_the_wild'];
         if (addCardSpells.includes(spell.id)) {
             this.removeSpellFromHand(spell, playerId);
         }
@@ -507,7 +530,7 @@ export default class SpellSystem {
                 break;
 
             case 'inspire':
-                this.buffUnitsByTag('Human', 3, 3, playerId);
+                this.buffUnitsByTag('Human', 1, 1, playerId);
                 break;
 
             case 'garrison':
@@ -528,11 +551,28 @@ export default class SpellSystem {
                 break;
 
             case 'frost_wall':
-                this.buffFrontRow(target, 0, 3, playerId);
+                this.buffFrontRow(target, 0, 4, playerId);
                 break;
 
             case 'thunderbolt':
                 this.damageRandomEnemy(12, playerId);
+                break;
+
+            // Stoneclaw Prince's spells
+            case 'claw_swipe':
+                this.damageUnit(target, 2);
+                break;
+
+            case 'on_the_prowl':
+                this.summonRandomTier1Beast(playerId);
+                break;
+
+            case 'mighty_pounce':
+                this.buffBeastUnits(3, 0, playerId);
+                break;
+
+            case 'call_of_the_wild':
+                this.addRandomBeasts(playerId);
                 break;
 
             // Special spells
@@ -933,6 +973,198 @@ export default class SpellSystem {
                     cardIndex: index
                 }
             });
+        }
+    }
+
+    /**
+     * Damage a specific unit (for Claw Swipe)
+     */
+    damageUnit(target, damage) {
+        if (!target) {
+            console.warn('No target provided for Claw Swipe');
+            return;
+        }
+
+        // Get the unit from the battlefield if not provided
+        const state = this.gameEngine.gameState.getState();
+        const unit = target.unit || state.players[target.playerId].battlefield[target.slotIndex];
+        
+        if (!unit) {
+            console.warn('No valid unit at target location for Claw Swipe');
+            return;
+        }
+
+        const { playerId, slotIndex } = target;
+        const newHealth = Math.max(0, unit.currentHealth - damage);
+
+        console.log(`🦁 Claw Swipe dealing ${damage} damage to ${unit.name}`);
+
+        if (newHealth <= 0) {
+            // Unit dies
+            this.gameEngine.dispatch({
+                type: 'REMOVE_UNIT',
+                payload: { playerId, slotIndex }
+            });
+            console.log(`💀 ${unit.name} destroyed by Claw Swipe`);
+        } else {
+            // Update unit health
+            this.gameEngine.dispatch({
+                type: 'UPDATE_UNIT',
+                payload: {
+                    playerId,
+                    slotIndex,
+                    updates: { currentHealth: newHealth }
+                }
+            });
+        }
+    }
+
+    /**
+     * Summon a random tier 1 Beast to a random slot (for On the Prowl)
+     */
+    summonRandomTier1Beast(playerId) {
+        const cardDatabase = this.gameEngine.getCardDatabase();
+        const tier1Beasts = [];
+
+        // Find all Tier 1 Beast units
+        if (cardDatabase[1]) {
+            cardDatabase[1].forEach(card => {
+                if (card.tags && card.tags.includes('Beast')) {
+                    tier1Beasts.push({ ...card, tier: 1 });
+                }
+            });
+        }
+
+        if (tier1Beasts.length === 0) {
+            console.log('🦁 No Tier 1 Beasts available to summon');
+            return;
+        }
+
+        // Pick a random Tier 1 Beast
+        const randomBeast = tier1Beasts[Math.floor(Math.random() * tier1Beasts.length)];
+        
+        // Find empty slots
+        const state = this.gameEngine.gameState.getState();
+        const battlefield = state.players[playerId].battlefield;
+        const emptySlots = [];
+        for (let i = 0; i < 6; i++) {
+            if (!battlefield[i]) {
+                emptySlots.push(i);
+            }
+        }
+
+        if (emptySlots.length === 0) {
+            console.log('🦁 No empty slots available for summoning');
+            this.showNotification('No empty slots for On the Prowl', 'warning');
+            return;
+        }
+
+        // Pick a random empty slot
+        const randomSlot = emptySlots[Math.floor(Math.random() * emptySlots.length)];
+        
+        console.log(`🦁 On the Prowl: Summoning ${randomBeast.name} to slot ${randomSlot}`);
+
+        // Create unit and place on battlefield
+        const unit = {
+            ...randomBeast,
+            unitId: Date.now(),
+            currentHealth: randomBeast.health,
+            currentAttack: randomBeast.attack,
+            canAttack: false,
+            buffs: [],
+            owner: playerId
+        };
+
+        this.gameEngine.dispatch({
+            type: 'PLACE_UNIT',
+            payload: {
+                playerId,
+                unit: unit,
+                slotIndex: randomSlot
+            }
+        });
+
+        // Trigger summon abilities
+        this.gameEngine.eventBus.emit('unit:summoned', {
+            unit: unit,
+            owner: playerId,
+            slotIndex: randomSlot
+        });
+    }
+
+    /**
+     * Buff all Beast units (for Mighty Pounce)
+     */
+    buffBeastUnits(attackBuff, healthBuff, playerId) {
+        const state = this.gameEngine.gameState.getState();
+        const player = state.players[playerId];
+        let buffedUnits = 0;
+
+        console.log(`🦁 Mighty Pounce: Buffing Beast units +${attackBuff}/+${healthBuff}`);
+
+        player.battlefield.forEach((unit, index) => {
+            if (unit && unit.tags && unit.tags.includes('Beast')) {
+                const newAttack = unit.currentAttack + attackBuff;
+                const newHealth = unit.currentHealth + healthBuff;
+                const newMaxHealth = (unit.maxHealth || unit.health) + healthBuff;
+
+                this.gameEngine.dispatch({
+                    type: 'UPDATE_UNIT',
+                    payload: {
+                        playerId,
+                        slotIndex: index,
+                        updates: {
+                            currentAttack: newAttack,
+                            currentHealth: newHealth,
+                            maxHealth: newMaxHealth
+                        }
+                    }
+                });
+
+                buffedUnits++;
+                console.log(`  Buffed ${unit.name} to ${newAttack}/${newHealth}`);
+            }
+        });
+
+        console.log(`🦁 Buffed ${buffedUnits} Beast units`);
+    }
+
+    /**
+     * Add random Tier 3 Beasts to hand (for Call of the Wild)
+     */
+    addRandomBeasts(playerId) {
+        const cardDatabase = this.gameEngine.getCardDatabase();
+        const tier3Beasts = [];
+
+        // Find all Tier 3 Beast units
+        if (cardDatabase[3]) {
+            cardDatabase[3].forEach(card => {
+                if (card.tags && card.tags.includes('Beast')) {
+                    tier3Beasts.push({ ...card, tier: 3 });
+                }
+            });
+        }
+
+        if (tier3Beasts.length === 0) {
+            console.log('🦁 No Tier 3 Beasts available');
+            return;
+        }
+
+        console.log('🦁 Call of the Wild: Adding 2 random Tier 3 Beasts');
+
+        // Add 2 random beasts (can be duplicates)
+        for (let i = 0; i < 2; i++) {
+            const randomBeast = tier3Beasts[Math.floor(Math.random() * tier3Beasts.length)];
+            
+            this.gameEngine.dispatch({
+                type: 'ADD_CARD_TO_HAND',
+                payload: {
+                    playerId,
+                    card: { ...randomBeast }
+                }
+            });
+
+            console.log(`  Added ${randomBeast.name} to hand`);
         }
     }
 

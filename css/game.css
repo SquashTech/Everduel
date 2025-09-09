@@ -3894,6 +3894,13 @@ body {
     color: #4682b4;
 }
 
+/* Increase tag size for champion selection screen */
+.champion-cards-display .tag {
+    font-size: 12px !important;
+    padding: 3px 8px !important;
+    margin: 0 3px !important;
+}
+
 /* ==================== SPELLBOOK STYLES ==================== */
 
 .spellbook-modal {
@@ -4082,6 +4089,13 @@ body {
     color: #ffd700;
     font-weight: bold;
     animation: pulse 2s infinite;
+}
+
+/* Increase tag size for spellbook */
+.spellbook-modal .tag {
+    font-size: 12px !important;
+    padding: 3px 8px !important;
+    margin: 0 3px !important;
 }
 
 /* Portal styles */

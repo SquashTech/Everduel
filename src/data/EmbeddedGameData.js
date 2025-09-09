@@ -1089,6 +1089,22 @@ export const CHAMPIONS = {
     "color": "red",
     "spellbook": [
       {
+        "id": "inspire",
+        "name": "Inspire",
+        "type": "spell",
+        "color": "red",
+        "cost": 1,
+        "stock": 2,
+        "maxStock": 2,
+        "effect": "Give your Humans +1/+1.",
+        "targetType": "global",
+        "targetScope": "friendlyType",
+        "targetTag": "Human",
+        "description": "Give all your Human units +1/+1",
+        "requiresBattlefieldTargeting": true,
+        "tags": ["Spell"]
+      },
+      {
         "id": "reinforce",
         "name": "Reinforce",
         "type": "spell",
@@ -1100,22 +1116,6 @@ export const CHAMPIONS = {
         "targetType": "slot",
         "targetScope": "friendly",
         "description": "Target a friendly slot to give it +2/+2",
-        "tags": ["Spell"]
-      },
-      {
-        "id": "inspire",
-        "name": "Inspire",
-        "type": "spell",
-        "color": "red",
-        "cost": 4,
-        "stock": 1,
-        "maxStock": 1,
-        "effect": "Your Humans gain +3/+3.",
-        "targetType": "global",
-        "targetScope": "friendlyType",
-        "targetTag": "Human",
-        "description": "All your Human units gain +3/+3",
-        "requiresBattlefieldTargeting": true,
         "tags": ["Spell"]
       },
       {
@@ -1196,10 +1196,10 @@ export const CHAMPIONS = {
         "cost": 5,
         "stock": 1,
         "maxStock": 1,
-        "effect": "Give your Front Row slots +0/+3.",
+        "effect": "Give your Front Row slots +0/+4.",
         "targetType": "row",
         "targetScope": "friendlyFront",
-        "description": "Give all your front row slots +0/+3",
+        "description": "Give all your front row slots +0/+4",
         "tags": ["Spell"]
       },
       {
@@ -1214,6 +1214,77 @@ export const CHAMPIONS = {
         "targetType": "random",
         "targetScope": "enemy",
         "description": "Deal 12 damage to a random enemy unit",
+        "requiresBattlefieldTargeting": true,
+        "tags": ["Spell"]
+      }
+    ]
+  },
+  "stoneclaw": {
+    "id": "stoneclaw",
+    "name": "Stoneclaw Prince",
+    "attack": 10,
+    "health": 5,
+    "cost": 5,
+    "ability": "Sneaky. After this attacks, give your Beasts +5/+0.",
+    "tags": ["Beast"],
+    "color": "yellow",
+    "spellbook": [
+      {
+        "id": "claw_swipe",
+        "name": "Claw Swipe",
+        "type": "spell",
+        "color": "yellow",
+        "cost": 2,
+        "stock": 3,
+        "maxStock": 3,
+        "effect": "Deal 2 damage to a front-row enemy.",
+        "targetType": "unit",
+        "targetScope": "enemyFront",
+        "description": "Deal 2 damage to a front-row enemy unit",
+        "tags": ["Spell"]
+      },
+      {
+        "id": "on_the_prowl",
+        "name": "On the Prowl",
+        "type": "spell",
+        "color": "yellow",
+        "cost": 1,
+        "stock": 1,
+        "maxStock": 1,
+        "effect": "Summon a random tier 1 Beast to a random slot.",
+        "targetType": "self",
+        "targetScope": "summonBeast",
+        "description": "Summon a random tier 1 Beast to a random slot",
+        "requiresBattlefieldTargeting": true,
+        "tags": ["Spell"]
+      },
+      {
+        "id": "mighty_pounce",
+        "name": "Mighty Pounce",
+        "type": "spell",
+        "color": "yellow",
+        "cost": 3,
+        "stock": 1,
+        "maxStock": 1,
+        "effect": "Give your Beasts +3/+0.",
+        "targetType": "global",
+        "targetScope": "friendlyBeasts",
+        "description": "Give all your Beast units +3/+0",
+        "requiresBattlefieldTargeting": true,
+        "tags": ["Spell"]
+      },
+      {
+        "id": "call_of_the_wild",
+        "name": "Call of the Wild",
+        "type": "spell",
+        "color": "yellow",
+        "cost": 8,
+        "stock": 1,
+        "maxStock": 1,
+        "effect": "Get two random Tier 3 Beasts.",
+        "targetType": "self",
+        "targetScope": "addBeasts",
+        "description": "Add two random Tier 3 Beasts to your hand",
         "requiresBattlefieldTargeting": true,
         "tags": ["Spell"]
       }

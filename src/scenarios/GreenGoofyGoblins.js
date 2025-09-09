@@ -156,6 +156,7 @@ export default class GreenGoofyGoblins extends BaseScenario {
         
         let targetCards = [];
         let forceToSameColumn = false; // Flag for turns that need same-column placement
+        let preferredColumn = null; // Declare preferredColumn at the beginning
         
         // Determine what to play based on turn number
         switch(turn) {
@@ -167,10 +168,14 @@ export default class GreenGoofyGoblins extends BaseScenario {
             case 2:
                 // Turn 2: Play Muscle Goblin in left or right column
                 targetCards = ['Muscle Goblin'];
+                // Force to left or right column, avoiding middle
+                preferredColumn = Math.random() < 0.5 ? 'left' : 'right';
                 break;
             case 3:
                 // Turn 3: Play Spear Goblin in left or right column
                 targetCards = ['Spear Goblin'];
+                // Force to left or right column, avoiding middle
+                preferredColumn = Math.random() < 0.5 ? 'left' : 'right';
                 break;
             case 4:
                 // Turn 4: Play Knife Goblin and Spear Goblin, both in same column if possible
@@ -180,6 +185,8 @@ export default class GreenGoofyGoblins extends BaseScenario {
             case 5:
                 // Turn 5: Play Sword Goblin in left or right column
                 targetCards = ['Sword Goblin'];
+                // Force to left or right column, avoiding middle
+                preferredColumn = Math.random() < 0.5 ? 'left' : 'right';
                 break;
             case 6:
                 // Turn 6: Play Axe Goblin, then Spear Goblin. Both in same column if possible
@@ -194,6 +201,8 @@ export default class GreenGoofyGoblins extends BaseScenario {
             case 8:
                 // Turn 8: Play Goblin Chief in left or right column
                 targetCards = ['Goblin Chief'];
+                // Force to left or right column, avoiding middle
+                preferredColumn = Math.random() < 0.5 ? 'left' : 'right';
                 break;
             default: // Turn 9+
                 // Randomly choose one of four options
@@ -208,8 +217,6 @@ export default class GreenGoofyGoblins extends BaseScenario {
         }
         
         // For turns that need same-column placement or special placement, set preference tags
-        let preferredColumn = null;
-        
         // Special case for Goblin Machine on turn 1 - always goes to middle column
         if (turn === 1 && targetCards.includes('Goblin Machine')) {
             preferredColumn = 'middle';
@@ -245,7 +252,7 @@ export default class GreenGoofyGoblins extends BaseScenario {
                 const cardWithMeta = {
                     ...card,
                     handId: Date.now() + i,
-                    preferredColumn: (forceToSameColumn || turn === 1) ? preferredColumn : null
+                    preferredColumn: preferredColumn // Use preferredColumn if set for any turn
                 };
                 
                 // Add card directly to AI hand

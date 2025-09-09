@@ -3207,6 +3207,45 @@ class AbilitySystem {
                 }
             }
             
+            // Check for buffing Beasts after attacking (Stoneclaw Prince)
+            if (abilityText.includes('give your beasts +5/+0')) {
+                console.log(`🦁 ${attacker.name} triggered Beast buff after attacking`);
+                
+                this.eventBus.emit('ability:activated', {
+                    type: 'after-attack',
+                    unit: attacker,
+                    effect: 'Gave all Beasts +5/+0 after attacking'
+                });
+
+                // Buff all Beast units
+                const state = this.gameState.getState();
+                const playerId = attacker.owner;
+                const player = state.players[playerId];
+                let buffedUnits = 0;
+
+                player.battlefield.forEach((unit, index) => {
+                    if (unit && unit.tags && unit.tags.includes('Beast')) {
+                        const newAttack = unit.currentAttack + 5;
+                        
+                        this.gameEngine.dispatch({
+                            type: 'UPDATE_UNIT',
+                            payload: {
+                                playerId,
+                                slotIndex: index,
+                                updates: {
+                                    currentAttack: newAttack
+                                }
+                            }
+                        });
+
+                        buffedUnits++;
+                        console.log(`  Buffed ${unit.name} to ${newAttack} attack`);
+                    }
+                });
+
+                console.log(`🦁 Buffed ${buffedUnits} Beast units with +5/+0`);
+            }
+            
             if (abilityText.includes('give this slot +1/+1')) {
                 console.log(`🐺 ${attacker.name} triggered slot buff after attacking`);
                 

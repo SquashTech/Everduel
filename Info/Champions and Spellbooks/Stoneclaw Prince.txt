@@ -1,0 +1,13 @@
+Stoneclaw Prince - 10 Attack/5 Health. Beast tag. "Sneaky. After this attacks, draw a Sneaky unit from your deck."
+Cost: 5.
+
+Spells:
+
+Claw Swipe: Deal 2 damage to a front-row enemy. Cost: 2. Copies: 3.
+On the Prowl: Draw a Sneaky unit from your deck. Cost: 2. Copies: 1.
+Mighty Pounce: Give your Sneaky units +5/+0. Cost: 4. Copies: 1.
+Call of the Wild: Get two random Tier 3 Beasts. Cost: 8. Copies: 1.
+
+Battlefield Integration:
+When the player clicks Claw Swipe, the enemy's front row slots will be highlighted. If the player then clicks a slot that contains an enemy unit, that units takes 2 damage.
+When the player clicks On the Prowl, Mighty Pounce, or Call of the Wild, their battlefield lights up and they must click that area. Identical to other spells like Flicker.
